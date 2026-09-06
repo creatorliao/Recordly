@@ -28,6 +28,7 @@ import {
 import { ensureMediaServer } from "./mediaServer";
 import { hardenWebContentsNavigation, shouldHardenWebContentsType } from "./navigationPolicy";
 import { shouldGrantDisplayCapture, shouldGrantMediaPermission } from "./permissionPolicy";
+import { getAssetRootPath } from "./ipc/project/manager";
 import { ensurePackagedRendererServer, getPackagedRendererBaseUrl } from "./rendererServer";
 import {
 	createEditorWindow,
@@ -418,20 +419,20 @@ function setupApplicationMenu() {
 
 	template.push(
 		{
-			label: "File",
+			label: "文件",
 			submenu: [
 				{
-					label: "Open Projects…",
+					label: "打开项目…",
 					accelerator: "CmdOrCtrl+O",
 					click: () => sendEditorMenuAction("menu-load-project"),
 				},
 				{
-					label: "Save Project…",
+					label: "保存项目…",
 					accelerator: "CmdOrCtrl+S",
 					click: () => sendEditorMenuAction("menu-save-project"),
 				},
 				{
-					label: "Save Project As…",
+					label: "项目另存为…",
 					accelerator: "CmdOrCtrl+Shift+S",
 					click: () => sendEditorMenuAction("menu-save-project-as"),
 				},
@@ -439,41 +440,44 @@ function setupApplicationMenu() {
 					? []
 					: [
 							{ type: "separator" as const },
-							{ role: "quit" as const, accelerator: "CmdOrCtrl+Q" },
+							{ role: "quit" as const, label: "退出", accelerator: "CmdOrCtrl+Q" },
 						]),
 			],
 		},
 		{
-			label: "Edit",
+			label: "编辑",
 			submenu: [
-				{ role: "undo" },
-				{ role: "redo" },
+				{ role: "undo", label: "撤销" },
+				{ role: "redo", label: "重做" },
 				{ type: "separator" },
-				{ role: "cut" },
-				{ role: "copy" },
-				{ role: "paste" },
-				{ role: "selectAll" },
+				{ role: "cut", label: "剪切" },
+				{ role: "copy", label: "复制" },
+				{ role: "paste", label: "粘贴" },
+				{ role: "selectAll", label: "全选" },
 			],
 		},
 		{
-			label: "View",
+			label: "查看",
 			submenu: [
-				{ role: "reload" },
-				{ role: "forceReload" },
-				{ role: "toggleDevTools" },
+				{ role: "reload", label: "重新加载" },
+				{ role: "forceReload", label: "强制重新加载" },
+				{ role: "toggleDevTools", label: "开发者工具" },
 				{ type: "separator" },
-				{ role: "resetZoom" },
-				{ role: "zoomIn" },
-				{ role: "zoomOut" },
+				{ role: "resetZoom", label: "重置缩放" },
+				{ role: "zoomIn", label: "放大" },
+				{ role: "zoomOut", label: "缩小" },
 				{ type: "separator" },
-				{ role: "togglefullscreen" },
+				{ role: "togglefullscreen", label: "全屏" },
 			],
 		},
 		{
-			label: "Window",
+			label: "窗口",
 			submenu: isMac
 				? [{ role: "minimize" }, { role: "zoom" }, { type: "separator" }, { role: "front" }]
-				: [{ role: "minimize" }, { role: "close" }],
+				: [
+						{ role: "minimize", label: "最小化" },
+						{ role: "close", label: "关闭" },
+					],
 		},
 	);
 
@@ -847,7 +851,9 @@ app.whenReady().then(async () => {
 	await Promise.all([
 		ensureRecordingsDir(),
 		!VITE_DEV_SERVER_URL
-			? ensurePackagedRendererServer(RENDERER_DIST).catch((error) => {
+			? ensurePackagedRendererServer(RENDERER_DIST, {
+					wallpapers: path.join(getAssetRootPath(), "wallpapers"),
+				}).catch((error) => {
 					console.warn(
 						"[renderer-server] Failed to start packaged renderer server:",
 						error,

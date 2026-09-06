@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
+import path from "node:path";
 import { BrowserWindow } from "electron";
 import { ensureNativeCursorMonitorBinary, getCursorMonitorExePath } from "../paths/binaries";
 import {
@@ -113,8 +114,10 @@ export async function startNativeCursorMonitor() {
 
 		let proc: ReturnType<typeof spawn> | null;
 		try {
+			// cwd 必须是 helper 所在目录，打包后 DLL 才能跟 exe 一起被找到
 			proc = spawn(helperPath, [], {
 				stdio: ["pipe", "pipe", "pipe"],
+				cwd: path.dirname(helperPath),
 			});
 		} catch (spawnError) {
 			console.warn("Failed to spawn cursor monitor:", spawnError);

@@ -37,20 +37,20 @@
 			"tahoe-inverted": "Tahoe 反相",
 			"windows11": "Windows 11",
 			"dot": "圆点",
-			"figma": "Minimal",
-			"lavender": "Lavender",
-			"parched": "Parched",
+			"figma": "极简",
+			"lavender": "薰衣草",
+			"parched": "羊皮纸",
 			"chooper": "Chooper",
 			"amongus": "Among Us",
-			"turtle": "Turtle"
+			"turtle": "乌龟"
 		},
 		"backgroundBlur": "模糊",
 		"zoomMotionBlur": "缩放运动模糊",
-		"temporalZoomMotionBlur": "Temporal Zoom Blur",
-		"temporalZoomMotionBlurDescription": "Control the shutter window and frame samples used by the newer zoom blur pass.",
-		"zoomMotionBlurSamples": "Blur Samples",
-		"zoomMotionBlurShutter": "Shutter",
-		"auto": "Auto",
+		"temporalZoomMotionBlur": "时间缩放模糊",
+		"temporalZoomMotionBlurDescription": "控制较新缩放模糊通道使用的快门窗口与采样帧数。",
+		"zoomMotionBlurSamples": "模糊采样",
+		"zoomMotionBlurShutter": "快门",
+		"auto": "自动",
 		"connectZooms": "连接缩放",
 		"connectZoomsDescription": "将连续的缩放区域平滑连接为一次连续的镜头移动。",
 		"autoApplyFreshRecordingZooms": "自动为新录制应用缩放",
@@ -99,29 +99,29 @@
 		"cursorSpringMass": "光标弹簧质量",
 		"off": "关",
 		"cursorClickEffects": {
-			"title": "Click Effects",
-			"advanced": "Advanced",
-			"advancedShow": "Show advanced click effect controls",
-			"advancedHide": "Hide advanced click effect controls",
-			"color": "Effect Color",
-			"size": "Effect Size",
-			"opacity": "Effect Opacity",
-			"duration": "Effect Duration",
+			"title": "点击效果",
+			"advanced": "高级",
+			"advancedShow": "显示高级点击效果控件",
+			"advancedHide": "隐藏高级点击效果控件",
+			"color": "效果颜色",
+			"size": "效果大小",
+			"opacity": "效果不透明度",
+			"duration": "效果时长",
 			"none": {
-				"label": "Off",
-				"description": "No click graphic. Only the cursor motion changes when you click."
+				"label": "关闭",
+				"description": "不显示点击图形，仅光标动作随点击变化。"
 			},
 			"ripple": {
-				"label": "Ripple",
-				"description": "Expanding rings radiate from each click so taps read clearly in motion."
+				"label": "涟漪",
+				"description": "从点击处扩散圆环，动作更易看清。"
 			},
 			"spotlight": {
-				"label": "Spotlight",
-				"description": "A soft halo flashes around the pointer to emphasize the clicked area."
+				"label": "聚光",
+				"description": "指针周围闪一下柔光，突出点击位置。"
 			},
 			"echo": {
-				"label": "Echo",
-				"description": "A pair of soft rings that spread outward with a cleaner pulse."
+				"label": "回声",
+				"description": "两圈柔和圆环向外扩散，脉冲更干净。"
 			}
 		},
 		"cursorMotionBlur": "光标运动模糊",
@@ -164,7 +164,9 @@
 		"cursor": "光标",
 		"webcam": "摄像头",
 		"frame": "边框",
-		"crop": "裁剪"
+		"crop": "裁剪",
+		"settings": "设置",
+		"extensions": "扩展"
 	},
 	"captions": {
 		"selectOnTimeline": "在时间轴上选择字幕进行编辑。",
@@ -195,12 +197,12 @@
 		"backgroundOpacity": "背景透明度",
 		"textColor": "文字颜色",
 		"editor": {
-			"text": "Text",
-			"start": "Start",
-			"end": "End",
-			"split": "Split",
-			"merge": "Merge",
-			"delete": "Delete"
+			"text": "文本",
+			"start": "开始",
+			"end": "结束",
+			"split": "拆分",
+			"merge": "合并",
+			"delete": "删除"
 		}
 	},
 	"crop": {
@@ -241,7 +243,25 @@
 		"sizePresetLargeShort": "大",
 		"loadProject": "加载项目",
 		"saveProject": "保存项目",
-		"exportVideo": "导出{{format}}",
+		"encodingTitle": "编码",
+		"encoding": {
+			"fast": "快速",
+			"balanced": "均衡",
+			"quality": "画质"
+		},
+		"exportVideo": "导出视频",
+		"exportGif": "导出 GIF",
+		"nvidiaCuda": {
+			"title": "NVIDIA CUDA",
+			"badge": "实验性",
+			"hint": "在本机 Windows 上尝试 GPU 导出。",
+			"toggle": "启用实验性 NVIDIA CUDA 导出"
+		},
+		"captionSidecar": {
+			"title": "同时导出字幕文件",
+			"hint": "在导出视频旁保存 .srt 和 .vtt。",
+			"toggle": "导出字幕旁路文件"
+		},
 		"reportBug": "报告问题",
 		"starOnGithub": "在 GitHub 上点赞"
 	},

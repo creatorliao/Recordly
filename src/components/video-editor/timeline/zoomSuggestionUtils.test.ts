@@ -155,13 +155,13 @@ describe("buildInteractionZoomSuggestions (click-cluster logic)", () => {
 		expect(s.end).toBe(4_000 + CLICK_CLUSTER_PAD_MS);
 	});
 
-	it("returns no-interactions when there are no click telemetry points", () => {
-		// Move events only — no clicks
+	it("returns no-interactions when there are no clicks and no dwells", () => {
+		// 一直在挪、没有停，启发式也产不出块
 		const telemetry: CursorTelemetryPoint[] = [
-			{ timeMs: 0, cx: 0.5, cy: 0.5, interactionType: "move" },
-			{ timeMs: 1_000, cx: 0.5, cy: 0.5, interactionType: "move" },
-			{ timeMs: 2_000, cx: 0.6, cy: 0.6, interactionType: "move" },
-			{ timeMs: TOTAL_MS, cx: 0.6, cy: 0.6, interactionType: "move" },
+			{ timeMs: 0, cx: 0.1, cy: 0.1, interactionType: "move" },
+			{ timeMs: 1_000, cx: 0.4, cy: 0.2, interactionType: "move" },
+			{ timeMs: 2_000, cx: 0.8, cy: 0.7, interactionType: "move" },
+			{ timeMs: TOTAL_MS, cx: 0.2, cy: 0.9, interactionType: "move" },
 		];
 
 		const result = buildInteractionZoomSuggestions({
@@ -174,7 +174,7 @@ describe("buildInteractionZoomSuggestions (click-cluster logic)", () => {
 		expect(result.suggestions).toHaveLength(0);
 	});
 
-	it("ignores dwell-derived click-like heuristics when there are no explicit clicks", () => {
+	it("falls back to dwell heuristics when packaged builds have no explicit clicks", () => {
 		const telemetry: CursorTelemetryPoint[] = [
 			makeMove(0, 0.5, 0.5),
 			makeMove(200, 0.5005, 0.5005),
@@ -188,8 +188,29 @@ describe("buildInteractionZoomSuggestions (click-cluster logic)", () => {
 			defaultDurationMs: 3_000,
 		});
 
-		expect(result.status).toBe("no-interactions");
-		expect(result.suggestions).toHaveLength(0);
+		expect(result.status).toBe("ok");
+		expect(result.suggestions.length).toBeGreaterThan(0);
+	});
+
+	it("extends the zoom window to cover a click-then-drag until mouseup", () => {
+		const telemetry: CursorTelemetryPoint[] = [
+			makeMove(0),
+			makeClick(4_000, 0.2, 0.3),
+			makeMove(4_400, 0.35, 0.32),
+			{ timeMs: 5_200, cx: 0.55, cy: 0.34, interactionType: "mouseup" },
+			makeMove(TOTAL_MS),
+		];
+
+		const result = buildInteractionZoomSuggestions({
+			cursorTelemetry: telemetry,
+			totalMs: TOTAL_MS,
+			defaultDurationMs: 3_000,
+		});
+
+		expect(result.status).toBe("ok");
+		expect(result.suggestions).toHaveLength(1);
+		expect(result.suggestions[0].start).toBe(4_000 - CLICK_CLUSTER_PAD_MS);
+		expect(result.suggestions[0].end).toBe(5_200 + CLICK_CLUSTER_PAD_MS);
 	});
 
 	it("skips clusters that overlap reserved spans", () => {

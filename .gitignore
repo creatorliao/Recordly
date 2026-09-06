@@ -24,6 +24,7 @@ dist-ssr
 *.sln
 *.sw?
 release/**
+release-portable/**
 *.kiro/
 # npx electron-builder --mac --win
 .tmp/
@@ -43,6 +44,10 @@ electron/native/bin/*/whisper-runtime.json
 electron/native/bin/*/whisper.dll
 electron/native/bin/*/ggml*.dll
 electron/native/bin/*/SDL2.dll
+
+# 本机自动下载的便携 CMake（不进仓）
+tools/cmake-*/
+tools/*.zip
 
 # Local debug helpers
 tmp-*.ps1

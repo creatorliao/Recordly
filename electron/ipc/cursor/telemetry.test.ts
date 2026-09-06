@@ -30,11 +30,13 @@ vi.mock("../utils", () => ({
 }));
 
 import { activeCursorSamples, setActiveCursorSamples, setCursorCaptureStartTimeMs } from "../state";
+import { setPendingCursorSamples } from "../state";
 import {
 	getCursorCaptureElapsedMs,
 	normalizeCursorTelemetrySamples,
 	pauseCursorCapture,
 	pauseCursorCaptureAtBoundary,
+	persistPendingCursorTelemetry,
 	pushCursorSample,
 	resetCursorCaptureClock,
 	resumeCursorCapture,
@@ -118,5 +120,24 @@ describe("cursor telemetry pause clock", () => {
 
 		expect(rm).toHaveBeenCalledWith("/tmp/recording.cursor.json", { force: true });
 		expect(writeFile).not.toHaveBeenCalled();
+	});
+
+	it("persist 时 pending 为空则从 active 快照，空写不删 sidecar", async () => {
+		setPendingCursorSamples([]);
+		setActiveCursorSamples([{ timeMs: 10, cx: 0.2, cy: 0.3, interactionType: "move" }]);
+
+		await persistPendingCursorTelemetry("/tmp/recording.mp4");
+
+		expect(writeFile).toHaveBeenCalled();
+		expect(rm).not.toHaveBeenCalled();
+
+		writeFile.mockReset();
+		setPendingCursorSamples([]);
+		setActiveCursorSamples([]);
+
+		await persistPendingCursorTelemetry("/tmp/recording.mp4");
+
+		expect(writeFile).not.toHaveBeenCalled();
+		expect(rm).not.toHaveBeenCalled();
 	});
 });

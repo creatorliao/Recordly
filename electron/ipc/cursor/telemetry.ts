@@ -263,18 +263,17 @@ export function sampleCursorPoint() {
 }
 
 export async function persistPendingCursorTelemetry(videoPath: string) {
-	const telemetryPath = getTelemetryPathForVideo(videoPath);
-	if (pendingCursorSamples.length > 0) {
-		await fs.writeFile(
-			telemetryPath,
-			JSON.stringify(
-				{ version: CURSOR_TELEMETRY_VERSION, samples: pendingCursorSamples },
-				null,
-				2,
-			),
-			"utf-8",
-		);
+	// 停录时 set-recording-state(false) 可能先清掉 active；二次 finalize 时 pending 也空。
+	// 空 payload 不得走 writeCursorTelemetry([])，否则会删掉已经写下的 sidecar。
+	if (pendingCursorSamples.length === 0 && activeCursorSamples.length > 0) {
+		snapshotCursorTelemetryForPersistence();
 	}
+
+	if (pendingCursorSamples.length === 0) {
+		return;
+	}
+
+	await writeCursorTelemetry(videoPath, pendingCursorSamples);
 	setPendingCursorSamples([]);
 }
 

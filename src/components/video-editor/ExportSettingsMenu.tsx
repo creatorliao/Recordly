@@ -456,9 +456,9 @@ export function ExportSettingsMenu({
 				className="h-11 w-full gap-2 rounded-lg bg-[#2563EB] text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#2563EB]/90"
 			>
 				<Download className="h-4 w-4" />
-				{tSettings("export.exportVideo", undefined, {
-					format: exportFormat === "gif" ? "GIF" : "Video",
-				})}
+				{exportFormat === "gif"
+					? tSettings("export.exportGif")
+					: tSettings("export.exportVideo")}
 			</Button>
 		</div>
 	);

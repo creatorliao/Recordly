@@ -121,6 +121,12 @@
 		"open": "打开项目…",
 		"save": "保存项目",
 		"saveAs": "项目另存为…",
+		"projects": "打开项目",
+		"renameInput": "项目名称",
+		"renameTitle": "重命名项目",
+		"saveTitle": "保存项目",
+		"saveNameLabel": "项目名称",
+		"saving": "正在保存...",
 		"unsavedChangesTitle": "未保存的更改",
 		"unsavedChangesDescription": "在{{action}}之前保存当前项目吗？",
 		"discardChanges": "放弃更改",
@@ -141,6 +147,9 @@
 		"exporting": "正在导出",
 		"renderingFile": "正在渲染你的文件。",
 		"preparing": "正在准备导出...",
+		"saving": "正在打开保存对话框...",
+		"renderingAudio": "正在渲染音频 {{percent}}%",
+		"renderSpeed": "渲染速度 {{fps}} FPS",
 		"completePercent": "已完成 {{percent}}%",
 		"issue": "导出问题",
 		"complete": "导出完成",
@@ -157,5 +166,22 @@
 		"expand": "展开时间轴",
 		"collapse": "折叠时间轴"
 	},
-	"openRecordingsFolder": "打开录制文件夹"
+	"openRecordingsFolder": "打开录制文件夹",
+	"theme": {
+		"appearance": "外观",
+		"light": "浅色",
+		"dark": "深色",
+		"system": "跟随系统"
+	},
+	"presets": {
+		"label": "预设",
+		"open": "打开预设",
+		"saveCurrentAs": "将当前设置另存为预设",
+		"namePlaceholder": "预设名称",
+		"savedList": "已保存的预设",
+		"empty": "还没有预设。",
+		"errors": {
+			"nameRequired": "请输入预设名称。"
+		}
+	}
 }

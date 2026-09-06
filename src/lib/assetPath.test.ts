@@ -11,7 +11,7 @@ describe("getAssetPath", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("uses the packaged asset directory from an HTTP renderer", async () => {
+	it("HTTP 渲染窗口走站点根路径，不用 file://（打包 img 才能命中 /wallpapers）", async () => {
 		vi.stubGlobal("window", {
 			location: { protocol: "http:" },
 			electronAPI: {
@@ -22,7 +22,7 @@ describe("getAssetPath", () => {
 		});
 
 		await expect(getAssetPath("wallpapers/tahoe-light.jpg")).resolves.toBe(
-			"file:///Applications/Recordly.app/Contents/Resources/assets/wallpapers/tahoe-light.jpg",
+			"/wallpapers/tahoe-light.jpg",
 		);
 	});
 

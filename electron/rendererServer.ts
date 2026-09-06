@@ -37,25 +37,56 @@ function getCacheControl(filePath: string): string {
 		: "no-cache";
 }
 
-function resolveRequestedFilePath(rootDir: string, requestPathname: string): string | null {
+/** HTTP 路径第一段 → 磁盘目录，例如 wallpapers → resources/assets/wallpapers */
+export type PackagedRendererExtraRoots = Record<string, string>;
+
+function isPathInsideRoot(resolvedFilePath: string, resolvedRootDir: string): boolean {
+	return (
+		resolvedFilePath === resolvedRootDir ||
+		resolvedFilePath.startsWith(`${resolvedRootDir}${path.sep}`)
+	);
+}
+
+export function resolveRequestedFilePath(
+	rootDir: string,
+	requestPathname: string,
+	extraRoots?: PackagedRendererExtraRoots,
+): string | null {
 	const trimmedPathname = requestPathname === "/" ? "/index.html" : requestPathname;
+
+	let decodedPathname: string;
+	try {
+		decodedPathname = decodeURIComponent(trimmedPathname);
+	} catch {
+		return null;
+	}
+	// 解码后再拦 ..，避免 /wallpapers/%2e%2e/ 跳出 extraResources。
+	if (decodedPathname.split(/[/\\]/).includes("..")) {
+		return null;
+	}
 
 	// path.normalize() on Windows converts / to \, making the leading-slash
 	// regex fail and causing path.resolve to escape to the drive root.
-	const normalizedPosix = path.posix.normalize(decodeURIComponent(trimmedPathname));
+	const normalizedPosix = path.posix.normalize(decodedPathname);
 	const relativePath = normalizedPosix.replace(/^\/+/, "");
 
 	if (!relativePath) {
 		return null;
 	}
 
+	const firstSegment = relativePath.split("/")[0];
+	const extraRoot = extraRoots?.[firstSegment];
+	if (extraRoot) {
+		const rest = relativePath.slice(firstSegment.length).replace(/^[/\\]+/, "");
+		const resolvedExtraRoot = path.resolve(extraRoot);
+		const resolvedFilePath = path.resolve(resolvedExtraRoot, rest);
+		return isPathInsideRoot(resolvedFilePath, resolvedExtraRoot) ? resolvedFilePath : null;
+	}
+
 	const resolvedRootDir = path.resolve(rootDir);
 	const resolvedFilePath = path.resolve(resolvedRootDir, relativePath);
 
-	if (
-		resolvedFilePath !== resolvedRootDir &&
-		!resolvedFilePath.startsWith(`${resolvedRootDir}${path.sep}`)
-	) {
+	if (!isPathInsideRoot(resolvedFilePath, resolvedRootDir)) {
 		return null;
 	}
 
@@ -66,10 +97,15 @@ async function servePackagedRendererRequest(
 	rootDir: string,
 	request: IncomingMessage,
 	response: ServerResponse,
+	extraRoots?: PackagedRendererExtraRoots,
 ): Promise<void> {
 	try {
 		const requestUrl = new URL(request.url ?? "/", "http://127.0.0.1");
-		const resolvedFilePath = resolveRequestedFilePath(rootDir, requestUrl.pathname);
+		const resolvedFilePath = resolveRequestedFilePath(
+			rootDir,
+			requestUrl.pathname,
+			extraRoots,
+		);
 
 		if (!resolvedFilePath) {
 			response.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
@@ -107,7 +143,10 @@ export function getPackagedRendererBaseUrl(): string | null {
 	return packagedRendererBaseUrl;
 }
 
-export async function ensurePackagedRendererServer(rootDir: string): Promise<string> {
+export async function ensurePackagedRendererServer(
+	rootDir: string,
+	extraRoots?: PackagedRendererExtraRoots,
+): Promise<string> {
 	if (packagedRendererBaseUrl) {
 		return packagedRendererBaseUrl;
 	}
@@ -118,7 +157,7 @@ export async function ensurePackagedRendererServer(rootDir: string): Promise<str
 
 	packagedRendererServerStartPromise = new Promise((resolve, reject) => {
 		const server = createServer((request, response) => {
-			void servePackagedRendererRequest(rootDir, request, response);
+			void servePackagedRendererRequest(rootDir, request, response, extraRoots);
 		});
 
 		server.once("error", (error) => {

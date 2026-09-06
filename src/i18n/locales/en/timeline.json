@@ -14,7 +14,8 @@
 		"addedSuggestions": "Added {{count}} interaction-based zoom suggestion(s)",
 		"label": "Zoom {{index}}",
 		"addZoom": "Add Zoom (Z)",
-		"suggestZooms": "Suggest Zooms from Cursor"
+		"suggestZooms": "Suggest Zooms from Cursor",
+		"suggestedUnavailableLoop": "Suggested zooms are unavailable while cursor looping is enabled."
 	},
 	"trim": {
 		"cannotPlace": "Cannot place trim here",

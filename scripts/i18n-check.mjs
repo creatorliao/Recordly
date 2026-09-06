@@ -4,13 +4,8 @@ import path from "node:path";
 const root = process.cwd();
 const localesDir = path.join(root, "src", "i18n", "locales");
 
-const locales = fs
-	.readdirSync(localesDir)
-	.filter((entry) => {
-		const fullPath = path.join(localesDir, entry);
-		return fs.statSync(fullPath).isDirectory();
-	})
-	.sort((left, right) => left.localeCompare(right));
+// 产品只维护简体中文 + 英文；磁盘上其他语种目录不进界面、也不进本检查。
+const locales = ["en", "zh-CN"];
 
 if (!locales.includes("en")) {
 	console.error('i18n-check: expected base locale directory "en"');

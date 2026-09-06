@@ -170,7 +170,9 @@
 		"cursor": "Cursor",
 		"webcam": "Webcam",
 		"frame": "Frame",
-		"crop": "Crop"
+		"crop": "Crop",
+		"settings": "Settings",
+		"extensions": "Extensions"
 	},
 	"captions": {
 		"selectOnTimeline": "Select a caption on the timeline to edit it.",
@@ -247,7 +249,25 @@
 		"sizePresetLargeShort": "Lar",
 		"loadProject": "Load Project",
 		"saveProject": "Save Project",
-		"exportVideo": "Export {{format}}",
+		"encodingTitle": "Encoding",
+		"encoding": {
+			"fast": "Fast",
+			"balanced": "Balanced",
+			"quality": "Quality"
+		},
+		"exportVideo": "Export Video",
+		"exportGif": "Export GIF",
+		"nvidiaCuda": {
+			"title": "NVIDIA CUDA",
+			"badge": "Experimental",
+			"hint": "Try GPU export on this Windows device.",
+			"toggle": "Enable experimental NVIDIA CUDA export"
+		},
+		"captionSidecar": {
+			"title": "Export captions file",
+			"hint": "Save .srt and .vtt files next to your exported video.",
+			"toggle": "Export captions sidecar files"
+		},
 		"reportBug": "Report Bug",
 		"starOnGithub": "Star on GitHub"
 	},

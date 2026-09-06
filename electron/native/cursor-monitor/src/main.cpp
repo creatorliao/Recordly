@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 static std::atomic<bool> g_running{true};
+static HHOOK g_mouseHook = NULL;
 
 static void stdinListener() {
     std::string line;
@@ -17,6 +18,32 @@ static void stdinListener() {
         }
     }
     g_running.store(false);
+}
+
+// Studio 自动缩放只认 click / mouseup。旧 helper 只报 STATE（光标形状），
+// 打包后 uiohook 再失败，时间轴就加不上拖放/点击缩放块。
+static LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode == HC_ACTION) {
+        switch (wParam) {
+            case WM_LBUTTONDOWN:
+                std::cout << "INTERACTION:mousedown:1" << std::endl;
+                break;
+            case WM_LBUTTONUP:
+            case WM_RBUTTONUP:
+            case WM_MBUTTONUP:
+                std::cout << "INTERACTION:mouseup" << std::endl;
+                break;
+            case WM_RBUTTONDOWN:
+                std::cout << "INTERACTION:mousedown:2" << std::endl;
+                break;
+            case WM_MBUTTONDOWN:
+                std::cout << "INTERACTION:mousedown:3" << std::endl;
+                break;
+            default:
+                break;
+        }
+    }
+    return CallNextHookEx(g_mouseHook, nCode, wParam, lParam);
 }
 
 int main() {
@@ -37,6 +64,8 @@ int main() {
     std::thread listener(stdinListener);
     listener.detach();
 
+    g_mouseHook = SetWindowsHookExW(WH_MOUSE_LL, LowLevelMouseProc, GetModuleHandleW(NULL), 0);
+
     std::string lastType;
 
     while (g_running.load()) {
@@ -53,7 +82,18 @@ int main() {
             }
         }
 
-        Sleep(50);
+        // 低级鼠标钩子必须在本线程泵消息，否则 INTERACTION 不会出来
+        MSG msg;
+        while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+        Sleep(10);
+    }
+
+    if (g_mouseHook) {
+        UnhookWindowsHookEx(g_mouseHook);
+        g_mouseHook = NULL;
     }
 
     return 0;

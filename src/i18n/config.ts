@@ -1,17 +1,7 @@
-export const DEFAULT_LOCALE = "en" as const;
+/** 本仓界面默认简体中文；可选英文。 */
+export const DEFAULT_LOCALE = "zh-CN" as const;
 
-export const SUPPORTED_LOCALES = [
-	"en",
-	"es",
-	"fr",
-	"de",
-	"it",
-	"nl",
-	"ko",
-	"pt-BR",
-	"zh-CN",
-	"zh-TW",
-] as const;
+export const SUPPORTED_LOCALES = ["zh-CN", "en"] as const;
 
 export const I18N_NAMESPACES = [
 	"common",

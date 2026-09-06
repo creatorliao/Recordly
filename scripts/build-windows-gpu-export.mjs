@@ -9,6 +9,8 @@ import {
 } from "./native-helper-manifest.mjs";
 import {
 	configureWithWindowsCmakeGenerator,
+	resolveBuiltExe,
+	tryNmakeAfterVsGeneratorFailure,
 	WINDOWS_VISUAL_STUDIO_INSTALL_DIRS,
 } from "./windows-cmake-generators.mjs";
 
@@ -120,6 +122,7 @@ function clearCmakeCache() {
 }
 
 console.log("[build-windows-gpu-export] Configuring CMake...");
+let usedNmake = false;
 try {
 	configureWithWindowsCmakeGenerator({
 		prefix: "build-windows-gpu-export",
@@ -135,23 +138,47 @@ try {
 			),
 	});
 } catch (error) {
-	console.error("[build-windows-gpu-export] CMake configure failed:", error.message);
-	process.exit(1);
+	try {
+		usedNmake = tryNmakeAfterVsGeneratorFailure({
+			prefix: "build-windows-gpu-export",
+			cmake,
+			buildDir,
+			clearCache: clearCmakeCache,
+		});
+	} catch (nmakeError) {
+		if (existsSync(bundledExePath)) {
+			console.warn(`[build-windows-gpu-export] NMake 构建失败，改用已暂存 helper: ${nmakeError.message}`);
+			console.log(`[build-windows-gpu-export] Using bundled helper: ${bundledExePath}`);
+			process.exit(0);
+		}
+		console.error("[build-windows-gpu-export] NMake 构建失败:", nmakeError.message);
+		process.exit(1);
+	}
+	if (!usedNmake) {
+		if (existsSync(bundledExePath)) {
+			console.warn(`[build-windows-gpu-export] CMake configure failed，改用已暂存 helper: ${error.message}`);
+			process.exit(0);
+		}
+		console.error("[build-windows-gpu-export] CMake configure failed:", error.message);
+		process.exit(1);
+	}
 }
 
-console.log("[build-windows-gpu-export] Building Windows GPU export helper...");
-try {
-	execSync(`${cmake} --build . --config Release`, {
-		cwd: buildDir,
-		stdio: "inherit",
-		timeout: 300000,
-	});
-} catch (error) {
-	console.error("[build-windows-gpu-export] Build failed:", error.message);
-	process.exit(1);
+if (!usedNmake) {
+	console.log("[build-windows-gpu-export] Building Windows GPU export helper...");
+	try {
+		execSync(`${cmake} --build . --config Release`, {
+			cwd: buildDir,
+			stdio: "inherit",
+			timeout: 300000,
+		});
+	} catch (error) {
+		console.error("[build-windows-gpu-export] Build failed:", error.message);
+		process.exit(1);
+	}
 }
 
-const exePath = path.join(buildDir, "Release", "gpu-export-probe.exe");
+const exePath = resolveBuiltExe(buildDir, "gpu-export-probe.exe");
 if (!existsSync(exePath)) {
 	console.error("[build-windows-gpu-export] Expected exe not found at", exePath);
 	process.exit(1);

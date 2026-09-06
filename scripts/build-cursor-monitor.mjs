@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -45,6 +45,7 @@ function findCmake() {
 	}
 
 	const standaloneCmakePaths = [
+		path.join(projectRoot, "tools", "cmake-3.31.6-windows-x86_64", "bin", "cmake.exe"),
 		path.join("C:", "Program Files", "CMake", "bin", "cmake.exe"),
 		path.join("C:", "Program Files (x86)", "CMake", "bin", "cmake.exe"),
 	];
@@ -87,6 +88,34 @@ function findCmake() {
 	return null;
 }
 
+function findVcvars64() {
+	const editions = ["BuildTools", "Community", "Professional", "Enterprise"];
+	const versions = ["18", "2022", "2019"];
+	const roots = [
+		path.join("C:", "Program Files (x86)", "Microsoft Visual Studio"),
+		path.join("C:", "Program Files", "Microsoft Visual Studio"),
+	];
+	for (const root of roots) {
+		for (const version of versions) {
+			for (const edition of editions) {
+				const vcvars = path.join(
+					root,
+					version,
+					edition,
+					"VC",
+					"Auxiliary",
+					"Build",
+					"vcvars64.bat",
+				);
+				if (existsSync(vcvars)) {
+					return vcvars;
+				}
+			}
+		}
+	}
+	return null;
+}
+
 const cmake = findCmake();
 if (!cmake) {
 	if (existsSync(bundledExePath)) {
@@ -120,6 +149,7 @@ function clearCmakeCache() {
 }
 
 console.log("[build-cursor-monitor] Configuring CMake...");
+let usedNmake = false;
 try {
 	configureWithWindowsCmakeGenerator({
 		prefix: "build-cursor-monitor",
@@ -131,24 +161,62 @@ try {
 				timeout: 120000,
 			}),
 	});
-} catch (error) {
-	console.error("[build-cursor-monitor] CMake configure failed:", error.message);
-	process.exit(1);
+} catch (vsError) {
+	const vcvars = findVcvars64();
+	if (!vcvars) {
+		console.error("[build-cursor-monitor] CMake configure failed:", vsError.message);
+		process.exit(1);
+	}
+	console.warn(
+		"[build-cursor-monitor] Visual Studio 生成器未注册实例，改用 vcvars64 + NMake。",
+	);
+	clearCmakeCache();
+	usedNmake = true;
+	const cmakeExe = cmake.replace(/^"|"$/g, "");
+	const nmakeCmdPath = path.join(buildDir, "_nmake-build.cmd");
+	writeFileSync(
+		nmakeCmdPath,
+		[
+			"@echo off",
+			`call "${vcvars}"`,
+			"if errorlevel 1 exit /b 1",
+			`cd /d "${buildDir}"`,
+			`"${cmakeExe}" .. -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release`,
+			"if errorlevel 1 exit /b 1",
+			`"${cmakeExe}" --build .`,
+			"exit /b %ERRORLEVEL%",
+		].join("\r\n"),
+		"utf8",
+	);
+	try {
+		execSync(`cmd.exe /c "${nmakeCmdPath}"`, {
+			cwd: buildDir,
+			stdio: "inherit",
+			timeout: 300000,
+		});
+	} catch (nmakeError) {
+		console.error("[build-cursor-monitor] NMake 构建失败:", nmakeError.message);
+		process.exit(1);
+	}
 }
 
-console.log("[build-cursor-monitor] Building...");
-try {
-	execSync(`${cmake} --build . --config Release`, {
-		cwd: buildDir,
-		stdio: "inherit",
-		timeout: 300000,
-	});
-} catch (error) {
-	console.error("[build-cursor-monitor] Build failed:", error.message);
-	process.exit(1);
+if (!usedNmake) {
+	console.log("[build-cursor-monitor] Building...");
+	try {
+		execSync(`${cmake} --build . --config Release`, {
+			cwd: buildDir,
+			stdio: "inherit",
+			timeout: 300000,
+		});
+	} catch (error) {
+		console.error("[build-cursor-monitor] Build failed:", error.message);
+		process.exit(1);
+	}
 }
 
-const exePath = path.join(buildDir, "Release", "cursor-monitor.exe");
+const exePath = existsSync(path.join(buildDir, "Release", "cursor-monitor.exe"))
+	? path.join(buildDir, "Release", "cursor-monitor.exe")
+	: path.join(buildDir, "cursor-monitor.exe");
 if (existsSync(exePath)) {
 	console.log(`[build-cursor-monitor] Built successfully: ${exePath}`);
 	mkdirSync(bundledDir, { recursive: true });

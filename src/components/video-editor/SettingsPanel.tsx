@@ -695,29 +695,14 @@ const BUILTIN_CURSOR_STYLE_OPTIONS: CursorStyleOption[] = [
 ];
 
 const CAPTION_LANGUAGE_OPTIONS = [
-	{ value: "auto", label: "Auto Detect" },
+	{ value: "auto", label: "自动检测" },
+	{ value: "zh", label: "简体中文" },
 	{ value: "en", label: "English" },
-	{ value: "es", label: "Spanish" },
-	{ value: "fr", label: "French" },
-	{ value: "de", label: "German" },
-	{ value: "it", label: "Italian" },
-	{ value: "pt", label: "Portuguese" },
-	{ value: "zh", label: "Chinese (Simplified)" },
-	{ value: "ja", label: "Japanese" },
-	{ value: "ko", label: "Korean" },
 ] as const;
 
 const APP_LANGUAGE_LABELS: Record<AppLocale, string> = {
-	en: "English",
-	es: "Español",
-	fr: "Français",
-	de: "Deutsch",
-	it: "Italiano",
-	nl: "Nederlands",
-	ko: "한국어",
-	"pt-BR": "Português",
 	"zh-CN": "简体中文",
-	"zh-TW": "繁體中文",
+	en: "English",
 };
 
 function loadPreviewImage(url: string) {
@@ -1158,11 +1143,26 @@ export function SettingsPanel({
 					setWallpaperPreviewPaths(resolved);
 				}
 			} catch {
+				if (!mounted) {
+					return;
+				}
+				setBuiltInWallpapers(BUILT_IN_WALLPAPERS);
+				// 打包窗口 /wallpapers 会 404；失败时仍走 extraResources 解析，不用裸路径当 img src。
+				const fallbackPreviews = await Promise.all(
+					BUILT_IN_WALLPAPERS.map(async (wallpaper) => {
+						try {
+							const assetUrl = await getAssetPath(wallpaper.relativePath);
+							if (isVideoWallpaperSource(wallpaper.publicPath)) {
+								return getRenderableVideoUrl(assetUrl);
+							}
+							return getWallpaperThumbnailUrl(assetUrl);
+						} catch {
+							return wallpaper.publicPath;
+						}
+					}),
+				);
 				if (mounted) {
-					setBuiltInWallpapers(BUILT_IN_WALLPAPERS);
-					setWallpaperPreviewPaths(
-						BUILT_IN_WALLPAPERS.map((wallpaper) => wallpaper.publicPath),
-					);
+					setWallpaperPreviewPaths(fallbackPreviews);
 				}
 			}
 		})();

@@ -1962,31 +1962,45 @@ export function registerRecordingHandlers(
 	});
 
 	ipcMain.handle("get-cursor-telemetry", async (_, videoPath?: string) => {
-		const targetVideoPath = normalizeVideoSourcePath(videoPath ?? currentVideoPath);
-		if (!targetVideoPath) {
+		const candidatePaths = [
+			normalizeVideoSourcePath(videoPath),
+			normalizeVideoSourcePath(currentVideoPath),
+		].filter((candidate, index, list): candidate is string => {
+			return Boolean(candidate) && list.indexOf(candidate) === index;
+		});
+
+		if (candidatePaths.length === 0) {
 			return { success: true, samples: [] };
 		}
 
-		const telemetryPath = getTelemetryPathForVideo(targetVideoPath);
-		try {
-			const content = await fs.readFile(telemetryPath, "utf-8");
-			const parsed = parseJsonWithByteOrderMark<unknown>(content);
-			const samples = normalizeCursorTelemetrySamples(parsed);
-
-			return { success: true, samples };
-		} catch (error) {
-			const nodeError = error as NodeJS.ErrnoException;
-			if (nodeError.code === "ENOENT") {
-				return { success: true, samples: [] };
+		let lastError: unknown = null;
+		for (const targetVideoPath of candidatePaths) {
+			const telemetryPath = getTelemetryPathForVideo(targetVideoPath);
+			try {
+				const content = await fs.readFile(telemetryPath, "utf-8");
+				const parsed = parseJsonWithByteOrderMark<unknown>(content);
+				const samples = normalizeCursorTelemetrySamples(parsed);
+				return { success: true, samples };
+			} catch (error) {
+				const nodeError = error as NodeJS.ErrnoException;
+				if (nodeError.code === "ENOENT") {
+					continue;
+				}
+				lastError = error;
+				console.error("Failed to load cursor telemetry:", error);
 			}
-			console.error("Failed to load cursor telemetry:", error);
+		}
+
+		if (lastError) {
 			return {
 				success: false,
 				message: "Failed to load cursor telemetry",
-				error: String(error),
+				error: String(lastError),
 				samples: [],
 			};
 		}
+
+		return { success: true, samples: [] };
 	});
 
 	ipcMain.handle(

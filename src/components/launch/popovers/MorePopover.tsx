@@ -21,15 +21,8 @@ import { DropdownItem, HudPopover } from "./PopoverScaffold";
 const POPOVER_ID = "more";
 
 const LOCALE_LABELS: Record<string, string> = {
-	en: "English",
-	es: "Español",
-	fr: "Français",
-	it: "Italiano",
-	nl: "Nederlands",
-	ko: "한국어",
-	"pt-BR": "Português",
 	"zh-CN": "简体中文",
-	"zh-TW": "繁體中文",
+	en: "English",
 };
 
 export function MorePopover({
@@ -52,7 +45,7 @@ export function MorePopover({
 	appVersion: string | null;
 }) {
 	const t = useScopedT("launch");
-	const { locale, setLocale } = useI18n();
+	const { locale, setLocale, t: tGlobal } = useI18n();
 	const { preference, setPreference } = useTheme();
 	const { isOpen, requestOpen, requestClose } = useLaunchPopoverCoordinator();
 	const open = isOpen(POPOVER_ID);
@@ -109,7 +102,7 @@ export function MorePopover({
 				{t("recording.openProject")}
 			</DropdownItem>
 			<div className={styles.ddLabel} style={{ marginTop: 4 }}>
-				{t("recording.appearance", "Appearance")}
+				{tGlobal("editor.theme.appearance")}
 			</div>
 			<DropdownItem
 				icon={<SunIcon size={16} />}
@@ -119,7 +112,7 @@ export function MorePopover({
 					requestClose(POPOVER_ID);
 				}}
 			>
-				{t("common.light", "Light")}
+				{tGlobal("editor.theme.light")}
 			</DropdownItem>
 			<DropdownItem
 				icon={<MoonIcon size={16} />}
@@ -129,7 +122,7 @@ export function MorePopover({
 					requestClose(POPOVER_ID);
 				}}
 			>
-				{t("common.dark", "Dark")}
+				{tGlobal("editor.theme.dark")}
 			</DropdownItem>
 			<DropdownItem
 				icon={<DesktopIcon size={16} />}
@@ -139,7 +132,7 @@ export function MorePopover({
 					requestClose(POPOVER_ID);
 				}}
 			>
-				{t("common.system", "System")}
+				{tGlobal("editor.theme.system")}
 			</DropdownItem>
 			<div className={styles.ddLabel} style={{ marginTop: 4 }}>
 				{t("recording.language")}

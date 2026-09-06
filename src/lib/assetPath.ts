@@ -59,6 +59,12 @@ export async function getAssetPath(relativePath: string): Promise<string> {
 	const isWebContext =
 		typeof window !== "undefined" && Boolean(window.location?.protocol?.startsWith("http"));
 
+	// 打包窗口是本机 HTTP。/wallpapers 已映射 extraResources。
+	// 若优先返回 file://，缩略图 img 会裂图，HTTP 映射等于没用上。
+	if (isWebContext) {
+		return `/${encodedRelativePath}`;
+	}
+
 	try {
 		if (typeof window !== "undefined") {
 			if (typeof window.electronAPI?.getAssetBasePath === "function") {
@@ -69,15 +75,7 @@ export async function getAssetPath(relativePath: string): Promise<string> {
 			}
 		}
 	} catch (error) {
-		if (!isWebContext) {
-			throw error;
-		}
-	}
-
-	if (isWebContext) {
-		// Dev and browser contexts serve public assets from the site root. Packaged
-		// Electron windows resolve above to the single extraResources asset copy.
-		return `/${encodedRelativePath}`;
+		throw error;
 	}
 
 	throw new Error(`Failed to resolve asset base path for ${relativePath}`);
@@ -87,16 +85,25 @@ const BASE64_CHUNK_SIZE = 0x8000;
 const localFileDataUrlCache = new Map<string, string>();
 
 function toLocalFilePath(resourceUrl: string) {
-	if (!resourceUrl.startsWith("file://")) {
+	if (!resourceUrl.startsWith("file:")) {
 		return null;
 	}
 
-	const decodedPath = decodeURIComponent(resourceUrl.replace(/^file:\/\//, ""));
-	if (/^\/[A-Za-z]:/.test(decodedPath)) {
-		return decodedPath.slice(1);
+	try {
+		const parsed = new URL(resourceUrl);
+		let pathname = decodeURIComponent(parsed.pathname);
+		// Chromium: file:///C:/foo → pathname=/C:/foo
+		if (/^\/[A-Za-z]:/.test(pathname)) {
+			return pathname.slice(1);
+		}
+		return pathname;
+	} catch {
+		const decodedPath = decodeURIComponent(resourceUrl.replace(/^file:\/\//, ""));
+		if (/^\/[A-Za-z]:/.test(decodedPath)) {
+			return decodedPath.slice(1);
+		}
+		return decodedPath;
 	}
-
-	return decodedPath;
 }
 
 function getMimeTypeForAsset(resourceUrl: string) {

@@ -21,6 +21,8 @@ export interface CursorInteractionCandidate extends ZoomDwellCandidate {
 		| "text-selection"
 		| "text-field-click";
 	source: "explicit" | "heuristic";
+	/** 拖放时用抬起时间作为区间终点；单击则与 centerTimeMs 相同 */
+	endTimeMs?: number;
 }
 
 export interface SuggestedZoomRegion {
@@ -82,6 +84,33 @@ function isExplicitClickType(
 	interactionType: CursorTelemetryPoint["interactionType"],
 ): interactionType is NonNullable<CursorTelemetryPoint["interactionType"]> {
 	return typeof interactionType === "string" && EXPLICIT_CLICK_TYPES.has(interactionType);
+}
+
+/**
+ * 按下后拖过足够距离再抬起，视为一次拖放。
+ * 旧版会把这类操作落成时间轴缩放块；只看 click 时间会缩成按下附近 1 秒，拖动段看起来像「没加上」。
+ */
+export function findDragEndMs(
+	samples: CursorTelemetryPoint[],
+	clickSample: CursorTelemetryPoint,
+): number | null {
+	const clickTime = clickSample.timeMs;
+	const mouseUpAfter = samples.find(
+		(sample) =>
+			sample.interactionType === "mouseup" &&
+			sample.timeMs > clickTime &&
+			sample.timeMs - clickTime < 8000,
+	);
+	if (!mouseUpAfter) {
+		return null;
+	}
+
+	const dragDuration = mouseUpAfter.timeMs - clickTime;
+	const dragDistance = Math.hypot(mouseUpAfter.cx - clickSample.cx, mouseUpAfter.cy - clickSample.cy);
+	if (dragDuration >= 160 && dragDistance > 0.015) {
+		return mouseUpAfter.timeMs;
+	}
+	return null;
 }
 
 function normalizeTelemetrySample(
@@ -247,12 +276,14 @@ export function detectInteractionCandidates(
 							? 1100
 							: 900;
 
+		const dragEndMs = findDragEndMs(samples, clickSample);
 		explicitInteractionCandidates.push({
 			centerTimeMs: Math.round(clickSample.timeMs),
 			focus: { cx: clickSample.cx, cy: clickSample.cy },
 			strength: baseStrength,
 			kind,
 			source: "explicit",
+			endTimeMs: Math.round(dragEndMs ?? clickSample.timeMs),
 		});
 	}
 
@@ -316,7 +347,7 @@ function buildClickClusters(
 	const clusters: Array<{ firstMs: number; lastMs: number; focus: ZoomFocus }> = [];
 
 	let clusterStart = sorted[0].centerTimeMs;
-	let clusterEnd = sorted[0].centerTimeMs;
+	let clusterEnd = Math.max(sorted[0].centerTimeMs, sorted[0].endTimeMs ?? sorted[0].centerTimeMs);
 	let bestStrength = sorted[0].strength;
 	let bestFocus = sorted[0].focus;
 	let sumCx = sorted[0].focus.cx;
@@ -329,7 +360,7 @@ function buildClickClusters(
 
 		if (gap <= mergeGapMs) {
 			// Extend current cluster
-			clusterEnd = Math.max(clusterEnd, click.centerTimeMs);
+			clusterEnd = Math.max(clusterEnd, click.centerTimeMs, click.endTimeMs ?? click.centerTimeMs);
 			if (click.strength > bestStrength) {
 				bestStrength = click.strength;
 				bestFocus = click.focus;
@@ -345,7 +376,7 @@ function buildClickClusters(
 				focus: bestFocus ?? { cx: sumCx / count, cy: sumCy / count },
 			});
 			clusterStart = click.centerTimeMs;
-			clusterEnd = click.centerTimeMs;
+			clusterEnd = Math.max(click.centerTimeMs, click.endTimeMs ?? click.centerTimeMs);
 			bestStrength = click.strength;
 			bestFocus = click.focus;
 			sumCx = click.focus.cx;
@@ -397,17 +428,22 @@ export function buildInteractionZoomSuggestions(params: {
 		return { status: "no-telemetry", suggestions: [] };
 	}
 
-	// Only use explicit click events (uiohook telemetry) – ignore dwell heuristics
-	const clickCandidates = detectInteractionCandidates(normalizedSamples).filter(
-		(candidate) => candidate.source === "explicit",
-	);
+	// 优先用按下/点击（uiohook 或 Windows cursor-monitor 的 INTERACTION）。
+	// 打包后 uiohook 常加载失败，且旧版 Windows helper 不报按下——这时退回停留启发式，
+	// 否则时间轴上会完全没有自动缩放。
+	const allCandidates = detectInteractionCandidates(normalizedSamples);
+	const clickCandidates = allCandidates.filter((candidate) => candidate.source === "explicit");
+	const interactionCandidates =
+		clickCandidates.length > 0
+			? clickCandidates
+			: allCandidates.filter((candidate) => candidate.source === "heuristic");
 
-	if (clickCandidates.length === 0) {
+	if (interactionCandidates.length === 0) {
 		return { status: "no-interactions", suggestions: [] };
 	}
 
 	// Group nearby clicks into clusters, then derive zoom windows from those clusters
-	const clusters = buildClickClusters(clickCandidates, mergeGapMs);
+	const clusters = buildClickClusters(interactionCandidates, mergeGapMs);
 
 	const reserved = [...reservedSpans].sort((a, b) => a.start - b.start);
 	const suggestions: SuggestedZoomRegion[] = [];

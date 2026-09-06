@@ -33,11 +33,24 @@ import {
 export { normalizePath, normalizeVideoSourcePath };
 
 export function getAssetRootPath() {
-	if (app.isPackaged) {
-		return path.join(process.resourcesPath, "assets");
+	if (!app.isPackaged) {
+		return path.join(app.getAppPath(), "public");
 	}
 
-	return path.join(app.getAppPath(), "public");
+	// 打包后 extraResources 落在 resources/assets；portable / 异常布局再试相邻路径。
+	const candidates = [
+		path.join(process.resourcesPath, "assets"),
+		path.join(path.dirname(process.execPath), "resources", "assets"),
+		path.join(app.getAppPath(), "..", "assets"),
+	];
+
+	for (const candidate of candidates) {
+		if (existsSync(path.join(candidate, "wallpapers")) || existsSync(candidate)) {
+			return candidate;
+		}
+	}
+
+	return candidates[0];
 }
 
 export function isPathInsideDirectory(candidatePath: string, directoryPath: string) {

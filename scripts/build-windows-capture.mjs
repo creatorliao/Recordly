@@ -9,6 +9,8 @@ import {
 } from "./native-helper-manifest.mjs";
 import {
 	configureWithWindowsCmakeGenerator,
+	resolveBuiltExe,
+	tryNmakeAfterVsGeneratorFailure,
 	WINDOWS_VISUAL_STUDIO_INSTALL_DIRS,
 } from "./windows-cmake-generators.mjs";
 
@@ -90,8 +92,7 @@ function findCmake() {
 	return null;
 }
 
-const cmake = findCmake();
-if (!cmake) {
+function fallbackToBundledHelperOrExit(reason) {
 	if (existsSync(bundledExePath)) {
 		const verification = verifyNativeHelperManifest({
 			projectRoot,
@@ -103,14 +104,20 @@ if (!cmake) {
 		if (!verification.ok) {
 			console.warn(formatNativeHelperManifestWarning("build-windows-capture", verification));
 		}
+		console.warn(`[build-windows-capture] ${reason}`);
 		console.log(`[build-windows-capture] Using bundled helper: ${bundledExePath}`);
 		process.exit(0);
 	}
 
-	console.error(
-		"[build-windows-capture] CMake not found. Install Visual Studio with C++ CMake tools or standalone CMake.",
-	);
+	console.error(`[build-windows-capture] ${reason}`);
 	process.exit(1);
+}
+
+const cmake = findCmake();
+if (!cmake) {
+	fallbackToBundledHelperOrExit(
+		"CMake not found. Install Visual Studio with C++ CMake tools or standalone CMake.",
+	);
 }
 
 mkdirSync(buildDir, { recursive: true });
@@ -123,6 +130,7 @@ function clearCmakeCache() {
 }
 
 console.log("[build-windows-capture] Configuring CMake...");
+let usedNmake = false;
 try {
 	configureWithWindowsCmakeGenerator({
 		prefix: "build-windows-capture",
@@ -138,23 +146,36 @@ try {
 			),
 	});
 } catch (error) {
-	console.error("[build-windows-capture] CMake configure failed:", error.message);
-	process.exit(1);
+	try {
+		usedNmake = tryNmakeAfterVsGeneratorFailure({
+			prefix: "build-windows-capture",
+			cmake,
+			buildDir,
+			clearCache: clearCmakeCache,
+		});
+	} catch (nmakeError) {
+		fallbackToBundledHelperOrExit(`NMake 构建失败: ${nmakeError.message}`);
+	}
+	if (!usedNmake) {
+		fallbackToBundledHelperOrExit(`CMake configure failed: ${error.message}`);
+	}
 }
 
-console.log("[build-windows-capture] Building native Windows capture helper...");
-try {
-	execSync(`${cmake} --build . --config Release`, {
-		cwd: buildDir,
-		stdio: "inherit",
-		timeout: 300000,
-	});
-} catch (error) {
-	console.error("[build-windows-capture] Build failed:", error.message);
-	process.exit(1);
+if (!usedNmake) {
+	console.log("[build-windows-capture] Building native Windows capture helper...");
+	try {
+		execSync(`${cmake} --build . --config Release`, {
+			cwd: buildDir,
+			stdio: "inherit",
+			timeout: 300000,
+		});
+	} catch (error) {
+		console.error("[build-windows-capture] Build failed:", error.message);
+		process.exit(1);
+	}
 }
 
-const exePath = path.join(buildDir, "Release", "wgc-capture.exe");
+const exePath = resolveBuiltExe(buildDir, "wgc-capture.exe");
 if (existsSync(exePath)) {
 	console.log(`[build-windows-capture] Built successfully: ${exePath}`);
 	mkdirSync(bundledDir, { recursive: true });

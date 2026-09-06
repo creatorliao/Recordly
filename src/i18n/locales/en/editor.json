@@ -121,6 +121,12 @@
 		"open": "Open projects…",
 		"save": "Save project",
 		"saveAs": "Save project as…",
+		"projects": "Open projects",
+		"renameInput": "Project name",
+		"renameTitle": "Rename project",
+		"saveTitle": "Save Project",
+		"saveNameLabel": "Project name",
+		"saving": "Saving...",
 		"unsavedChangesTitle": "Unsaved changes",
 		"unsavedChangesDescription": "Save your current project before you {{action}}?",
 		"discardChanges": "Discard changes",
@@ -141,6 +147,9 @@
 		"exporting": "Exporting",
 		"renderingFile": "Rendering your file.",
 		"preparing": "Preparing export...",
+		"saving": "Opening save dialog...",
+		"renderingAudio": "Rendering audio {{percent}}%",
+		"renderSpeed": "Render speed {{fps}} FPS",
 		"completePercent": "{{percent}}% complete",
 		"issue": "Export issue",
 		"complete": "Export complete",
@@ -157,5 +166,22 @@
 		"expand": "Expand Timeline",
 		"collapse": "Collapse Timeline"
 	},
-	"openRecordingsFolder": "Open recordings folder"
+	"openRecordingsFolder": "Open recordings folder",
+	"theme": {
+		"appearance": "Appearance",
+		"light": "Light",
+		"dark": "Dark",
+		"system": "System"
+	},
+	"presets": {
+		"label": "Presets",
+		"open": "Open presets",
+		"saveCurrentAs": "Save current preset as",
+		"namePlaceholder": "Preset name",
+		"savedList": "Saved presets",
+		"empty": "No presets yet.",
+		"errors": {
+			"nameRequired": "Enter a preset name."
+		}
+	}
 }

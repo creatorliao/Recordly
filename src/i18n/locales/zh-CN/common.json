@@ -4,7 +4,8 @@
 		"editorTitle": "Recordly 编辑器",
 		"subtitle": "屏幕录制与编辑",
 		"language": "语言",
-		"manageRecordings": "打开录制文件夹"
+		"manageRecordings": "打开录制文件夹",
+		"discord": "加入 Discord"
 	},
 	"actions": {
 		"cancel": "取消",
@@ -18,6 +19,7 @@
 		"delete": "删除",
 		"done": "完成"
 	},
+	"loading": "正在刷新...",
 	"errors": {
 		"invalidFileType": "无效的文件类型",
 		"failedToUploadImage": "上传图片失败",
