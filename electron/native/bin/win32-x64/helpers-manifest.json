@@ -19,10 +19,10 @@
     },
     "recordly-gpu-export": {
       "binaryName": "recordly-gpu-export.exe",
-      "binarySha256": "7bfeab7cfc0944ccc53364d7d1f83b872f6c384b6b08637e27038743a49cac4d",
+      "binarySha256": "62914368f0305278ef0c436c044a08908228a581c011b0e8c334ecaa400f1fda",
       "sourceDir": "electron/native/gpu-export-probe",
       "sourceFingerprint": "37a5842eba63cdeccfddd02cc278a98207248fb0aa6b56153fb85ed152c908c1",
-      "updatedAt": "2026-09-06T08:32:41.666Z"
+      "updatedAt": "2026-09-06T10:36:37.447Z"
     },
     "recordly-nvidia-cuda-compositor": {
       "binaryName": "recordly-nvidia-cuda-compositor.exe",
