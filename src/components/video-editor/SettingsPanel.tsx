@@ -29,6 +29,12 @@ import {
 	shouldUseRootRelativeAssetImg,
 } from "@/lib/assetPath";
 import { cn } from "@/lib/utils";
+import { loadAppSetting, saveAppSetting } from "@/lib/appSettings";
+import {
+	CAPTURE_PRESET_VALUES,
+	type CapturePreset,
+	DEFAULT_CAPTURE_PRESET,
+} from "@/lib/capturePreset";
 import type { BuiltInWallpaper } from "@/lib/wallpapers";
 import {
 	BUILT_IN_WALLPAPERS,
@@ -146,6 +152,12 @@ const CAPTION_ANIMATION_OPTIONS: Array<{ value: AutoCaptionAnimation; labelKey: 
 	{ value: "rise", labelKey: "captions.animationRise" },
 	{ value: "pop", labelKey: "captions.animationPop" },
 ];
+
+const CAPTURE_PRESET_LABEL_KEYS: Record<CapturePreset, string> = {
+	economy: "launch.recording.capturePresetEconomy",
+	standard: "launch.recording.capturePresetStandard",
+	high: "launch.recording.capturePresetHigh",
+};
 
 const CLICK_EFFECT_COLOR_OPTIONS = [
 	"#2563EB",
@@ -1072,6 +1084,15 @@ export function SettingsPanel({
 	const tSettings = useScopedT("settings");
 	const { locale, setLocale, t } = useI18n();
 	const { preference: themePreference, setPreference: setThemePreference } = useTheme();
+	// 启动/关窗偏好走 app settings，主进程冷启动与关窗时直接读，默认不改变今日行为。
+	const [startupScreen, setStartupScreen] = useState<"recording" | "editor">(
+		loadAppSetting<string>("startupScreen") === "editor" ? "editor" : "recording",
+	);
+	const [closeWindowBehavior, setCloseWindowBehavior] = useState<"exit" | "tray">(
+		loadAppSetting<string>("closeWindowBehavior") === "tray" ? "tray" : "exit",
+	);
+	const [recordingCapturePreset, setRecordingCapturePreset] =
+		useState<CapturePreset>(DEFAULT_CAPTURE_PRESET);
 	const isBackgroundPanel = panelMode === "background";
 	const initialEditorPreferences = useMemo(() => loadEditorPreferences(), []);
 	const [builtInWallpapers, setBuiltInWallpapers] =
@@ -1112,6 +1133,19 @@ export function SettingsPanel({
 
 	useEffect(() => {
 		void shouldUseRootRelativeAssetImg().then(setUseRootRelativeWallpaperPreview);
+	}, []);
+
+	useEffect(() => {
+		let cancelled = false;
+		void (async () => {
+			const result = await window.electronAPI.getRecordingPreferences();
+			if (!cancelled && result.success && result.capturePreset) {
+				setRecordingCapturePreset(result.capturePreset);
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
 	}, []);
 
 	useEffect(() => {
@@ -2489,6 +2523,98 @@ export function SettingsPanel({
 							))}
 						</SelectContent>
 					</Select>
+				</section>
+
+				<section className="flex flex-col gap-2">
+					<SectionLabel>{t("editor.startup.title", "Open at startup")}</SectionLabel>
+					<div className="flex rounded-lg border border-foreground/10 bg-foreground/5 p-0.5">
+						{(
+							[
+								{
+									value: "recording",
+									label: t("editor.startup.recordingToolbar", "Recording toolbar"),
+								},
+								{ value: "editor", label: t("editor.startup.editor", "Editor") },
+							] as const
+						).map((option) => (
+							<button
+								key={option.value}
+								type="button"
+								onClick={() => {
+									setStartupScreen(option.value);
+									saveAppSetting("startupScreen", option.value);
+								}}
+								className={cn(
+									"flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+									startupScreen === option.value
+										? "bg-neutral-800 text-white shadow-sm dark:bg-white dark:text-black"
+										: "text-muted-foreground hover:text-foreground",
+								)}
+							>
+								{option.label}
+							</button>
+						))}
+					</div>
+				</section>
+
+				<section className="flex flex-col gap-2">
+					<SectionLabel>{t("editor.closeWindow.title", "When closing window")}</SectionLabel>
+					<div className="flex rounded-lg border border-foreground/10 bg-foreground/5 p-0.5">
+						{(
+							[
+								{ value: "exit", label: t("editor.closeWindow.exit", "Quit app") },
+								{
+									value: "tray",
+									label: t("editor.closeWindow.tray", "Minimize to tray"),
+								},
+							] as const
+						).map((option) => (
+							<button
+								key={option.value}
+								type="button"
+								onClick={() => {
+									setCloseWindowBehavior(option.value);
+									saveAppSetting("closeWindowBehavior", option.value);
+								}}
+								className={cn(
+									"flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+									closeWindowBehavior === option.value
+										? "bg-neutral-800 text-white shadow-sm dark:bg-white dark:text-black"
+										: "text-muted-foreground hover:text-foreground",
+								)}
+							>
+								{option.label}
+							</button>
+						))}
+					</div>
+				</section>
+
+				<section className="flex flex-col gap-2">
+					<SectionLabel>
+						{t("launch.recording.capturePreset", "Capture quality")}
+					</SectionLabel>
+					<div className="flex flex-col gap-1">
+						{CAPTURE_PRESET_VALUES.map((preset) => (
+							<button
+								key={preset}
+								type="button"
+								onClick={() => {
+									setRecordingCapturePreset(preset);
+									void window.electronAPI.setRecordingPreferences({
+										capturePreset: preset,
+									});
+								}}
+								className={cn(
+									"flex items-center justify-between rounded-lg border px-3 py-2 text-left text-xs transition-all",
+									recordingCapturePreset === preset
+										? "border-[#2563EB] bg-[#2563EB]/10 text-foreground"
+										: "border-foreground/10 bg-foreground/5 text-muted-foreground hover:bg-foreground/10",
+								)}
+							>
+								{t(CAPTURE_PRESET_LABEL_KEYS[preset])}
+							</button>
+						))}
+					</div>
 				</section>
 
 				<section className="flex flex-col gap-1.5">

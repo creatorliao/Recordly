@@ -204,6 +204,16 @@
 		"dark": "深色",
 		"system": "跟随系统"
 	},
+	"startup": {
+		"title": "启动时打开",
+		"recordingToolbar": "录制工具栏",
+		"editor": "编辑器"
+	},
+	"closeWindow": {
+		"title": "关闭窗口时",
+		"exit": "退出应用",
+		"tray": "最小化到托盘"
+	},
 	"presets": {
 		"label": "预设",
 		"open": "打开预设",

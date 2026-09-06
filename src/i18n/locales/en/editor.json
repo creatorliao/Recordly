@@ -204,6 +204,16 @@
 		"dark": "Dark",
 		"system": "System"
 	},
+	"startup": {
+		"title": "Open at startup",
+		"recordingToolbar": "Recording toolbar",
+		"editor": "Editor"
+	},
+	"closeWindow": {
+		"title": "When closing window",
+		"exit": "Quit app",
+		"tray": "Minimize to tray"
+	},
 	"presets": {
 		"label": "Presets",
 		"open": "Open presets",

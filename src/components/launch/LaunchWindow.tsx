@@ -74,8 +74,6 @@ function LaunchWindowContent() {
 		setWebcamEnabled,
 		webcamDeviceId,
 		setWebcamDeviceId,
-		capturePreset,
-		setCapturePreset,
 		countdownDelay,
 		setCountdownDelay,
 		preparePermissions,
@@ -373,8 +371,6 @@ function LaunchWindowContent() {
 			</div>
 
 			<MorePopover
-				capturePreset={capturePreset}
-				onCapturePresetChange={setCapturePreset}
 				supportsHudCaptureProtection={hudCaptureProtectionSupported}
 				hideHudFromCapture={hideHudFromCapture}
 				onToggleHudCaptureProtection={() => {
