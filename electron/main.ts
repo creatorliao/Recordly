@@ -231,7 +231,8 @@ function isProjectFilePath(filePath: string): boolean {
 	return lower.endsWith(".recordly") || lower.endsWith(".openscreen");
 }
 
-// 解析资源管理器右键传入的 argv：--record / --hud / --open [--path p] 或裸路径。
+// 解析资源管理器右键传入的 argv：--record / --hud / --open（后接裸路径）或 --path p。
+// 只认显式动词，不把 dev 模式下的 app 入口（. / main.cjs）当成裸路径。
 function parseLaunchRequest(argv: string[]): LaunchRequest | null {
 	let verb: LaunchVerb | null = null;
 	let path: string | undefined;
@@ -240,18 +241,22 @@ function parseLaunchRequest(argv: string[]): LaunchRequest | null {
 		const arg = argv[index];
 		if (arg === "--record" || arg === "--hud" || arg === "--open") {
 			verb = arg.slice(2) as LaunchVerb;
+			// 注册表命令为 `--open "%1"`：裸路径紧跟 --open。
+			if (
+				arg === "--open" &&
+				index + 1 < argv.length &&
+				!argv[index + 1].startsWith("-")
+			) {
+				path = argv[index + 1];
+				index += 1;
+			}
 		} else if (arg === "--path" && index + 1 < argv.length) {
 			path = argv[index + 1];
 			index += 1;
-		} else if (!arg.startsWith("-") && arg.trim().length > 0 && path === undefined) {
-			path = arg;
 		}
 	}
 
-	if (!verb) {
-		if (path) verb = "open";
-		else return null;
-	}
+	if (!verb) return null;
 	return { verb, path };
 }
 
