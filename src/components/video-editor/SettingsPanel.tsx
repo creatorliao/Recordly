@@ -2812,19 +2812,6 @@ export function SettingsPanel({
 						)}
 					</div>
 				)}
-				{selectedZoomId && (
-					<Button
-						onClick={() => {
-							if (selectedZoomId && onZoomDelete) onZoomDelete(selectedZoomId);
-						}}
-						variant="destructive"
-						size="sm"
-						className="mt-1 h-8 w-full gap-2 border border-red-500/20 bg-red-500/10 text-xs text-red-400 transition-all hover:border-red-500/30 hover:bg-red-500/20"
-					>
-						<Trash2 className="h-3 w-3" />
-						{tSettings("zoom.deleteZoom")}
-					</Button>
-				)}
 			</section>
 		);
 

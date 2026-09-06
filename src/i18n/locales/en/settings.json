@@ -12,7 +12,8 @@
 		"modeAuto": "Auto",
 		"modeManual": "Manual",
 		"modeManualDescription": "Set a fixed focus point for this zoom",
-		"modeAutoDescription": "Camera recenters when the cursor nears the edge of the zoomed view"
+		"modeAutoDescription": "Camera recenters when the cursor nears the edge of the zoomed view",
+		"globalSettings": "Animation"
 	},
 	"trim": {
 		"deleteRegion": "Delete Trim Region"
@@ -72,6 +73,7 @@
 		"motionPresetsTitle": "Motion Presets",
 		"motionPresetsZoomHint": "Zoom motion presets are available in Settings.",
 		"animationPresets": "Animation Presets",
+		"classicZoom": "Classic Animation",
 		"cursorMotionPresets": "Cursor Motion Presets",
 		"motionPresets": {
 			"focused": {
