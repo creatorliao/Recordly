@@ -37,7 +37,8 @@ type Props = {
 	setIsPreviewReady: Dispatch<SetStateAction<boolean>>;
 	setCurrentTime: Dispatch<SetStateAction<number>>;
 	setIsPlaying: Dispatch<SetStateAction<boolean>>;
-	setError: Dispatch<SetStateAction<string | null>>;
+	/** 预览失败时写入页面错误；只接字符串，不接 React updater */
+	setError: (value: string | null) => void;
 	handlers: Handlers;
 };
 

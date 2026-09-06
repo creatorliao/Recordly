@@ -67,7 +67,8 @@ type Props = {
 	setIsPreviewReady: Dispatch<SetStateAction<boolean>>;
 	setCurrentTime: Dispatch<SetStateAction<number>>;
 	setIsPlaying: Dispatch<SetStateAction<boolean>>;
-	setError: Dispatch<SetStateAction<string | null>>;
+	/** 只接具体错误文案；与 useProjectState 包装后的 setError 对齐，不接 updater 函数 */
+	setError: (value: string | null) => void;
 };
 
 function formatTime(seconds: number) {
