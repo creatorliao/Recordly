@@ -2,6 +2,7 @@ import {
 	ArrowClockwiseIcon,
 	CaretUpIcon,
 	DotsThreeVerticalIcon,
+	GearSixIcon,
 	MagicWandIcon,
 	MicrophoneIcon,
 	MicrophoneSlashIcon,
@@ -9,7 +10,6 @@ import {
 	MonitorIcon,
 	SpeakerHighIcon,
 	SpeakerXIcon,
-	TimerIcon,
 	VideoCameraIcon,
 	VideoCameraSlashIcon,
 	XIcon,
@@ -232,9 +232,8 @@ function LaunchWindowContent() {
 						onOpen={beginInteractiveHudAction}
 						trigger={
 							<Button
-								variant="outline"
-								size="lg"
-								className={`${styles.electronNoDrag} group gap-2 px-3 min-w-0 max-w-[180px] rounded-[11px] font-medium text-[12px] shrink-0 border-[var(--launch-border)] bg-[var(--launch-surface)] text-[var(--launch-text)] hover:border-[var(--launch-border-strong)] hover:bg-[var(--launch-hover)] transition-all ${openId === "sources" ? "border-[var(--launch-border-strong)] bg-[var(--launch-hover)]" : ""}`}
+								variant="ghost"
+								className={`${styles.electronNoDrag} group h-8 gap-1.5 px-2 min-w-0 max-w-[160px] rounded-[8px] font-medium text-[12px] shrink-0 text-[var(--launch-text)] hover:bg-[var(--launch-hover)] transition-all ${openId === "sources" ? "bg-[var(--launch-hover)]" : ""}`}
 								title={selectedSource}
 							>
 								<MonitorIcon size={16} className="shrink-0" />
@@ -356,10 +355,11 @@ function LaunchWindowContent() {
 						variant="ghost"
 						size="icon"
 						iconSize="lg"
-						title={t("recording.countdownDelay")}
+						title={t("recording.deviceGear")}
+						aria-label={t("recording.deviceGear")}
 						className={countdownDelay > 0 ? styles.ibActive : ""}
 					>
-						<TimerIcon size={18} />
+						<GearSixIcon size={18} />
 					</Button>
 				}
 			/>

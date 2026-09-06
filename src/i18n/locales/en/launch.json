@@ -8,6 +8,7 @@
 		"disableWebcam": "Disable webcam overlay",
 		"enableWebcam": "Enable webcam overlay",
 		"countdownDelay": "Countdown delay",
+		"deviceGear": "Device & countdown",
 		"noDelay": "No delay",
 		"record": "Record",
 		"recordingFolder": "Recordings Path: {{path}}",
