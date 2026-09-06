@@ -1,26 +1,22 @@
-import {
-	MicrophoneIcon,
-	MicrophoneSlashIcon,
-	MinusIcon,
-	PauseIcon,
-	PlayIcon,
-	XIcon,
-} from "@phosphor-icons/react";
+import { MinusIcon, PauseIcon, PlayIcon, XIcon } from "@phosphor-icons/react";
 import { useMemo } from "react";
-import { useScopedT } from "@/contexts/I18nContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useScopedT } from "@/contexts/I18nContext";
+import { MicIcon, NotesIcon, RecordGlyph } from "./HudIcons";
 import styles from "./LaunchWindow.module.css";
 
 interface RecordingControlsProps {
 	paused: boolean;
 	microphoneEnabled: boolean;
 	elapsed: number;
+	vertical?: boolean;
 	onToggleMicrophone: () => void;
 	onPauseResume: () => void;
 	onStopRecording: () => void;
 	onHideHud: () => void;
 	onCancelRecording: () => void;
+	onOpenNotes?: () => void;
 	formatTime: (seconds: number) => string;
 }
 
@@ -28,42 +24,46 @@ export const RecordingControls = ({
 	paused,
 	microphoneEnabled,
 	elapsed,
+	vertical = false,
 	onToggleMicrophone,
 	onPauseResume,
 	onStopRecording,
 	onHideHud,
 	onCancelRecording,
+	onOpenNotes,
 	formatTime,
 }: RecordingControlsProps) => {
 	const t = useScopedT("launch");
 
 	const memoizedControls = useMemo(() => {
+		const sep = (
+			<Separator
+				orientation={vertical ? "horizontal" : "vertical"}
+				className={vertical ? "h-px w-6 mx-0 my-[3px]" : "mx-[5px] h-6"}
+			/>
+		);
+
 		return (
 			<>
-				<div className="flex items-center gap-[5px]">
-					<div
-						className={`w-[7px] h-[7px] rounded-full ${
-							paused ? "bg-[#fbbf24]" : `bg-[#f43f5e] ${styles.recDotBlink}`
-						}`}
+				<button
+					type="button"
+					onClick={onStopRecording}
+					data-tooltip={t("recording.stop")}
+					aria-label={t("recording.stop")}
+					className={`${styles.recBtn} ${styles.recBtnRecording} ${styles.electronNoDrag}`}
+				>
+					<RecordGlyph
+						recording
+						className={paused ? "text-[#fbbf24]" : "text-[#f43f5e]"}
 					/>
 					<span
-						className={`text-[10px] font-bold tracking-[0.06em] ${
-							paused ? "text-[#fbbf24]" : "text-[#f43f5e]"
-						}`}
+						className={`${paused ? "text-[#fbbf24]" : "text-[#f43f5e]"} inline-block min-w-[34px] text-left text-xs font-semibold tabular-nums`}
 					>
-						{paused ? t("recording.paused") : t("recording.rec")}
+						{formatTime(elapsed)}
 					</span>
-				</div>
+				</button>
 
-				<span
-					className={`font-mono text-xs font-semibold min-w-[52px] text-center tracking-[0.02em] ${
-						paused ? "text-[#fbbf24]" : "text-[var(--launch-text)]"
-					}`}
-				>
-					{formatTime(elapsed)}
-				</span>
-
-				<Separator orientation="vertical" className="mx-[5px] h-6" />
+				{sep}
 
 				<span data-tooltip={t("recording.micToggleDisabledTip")}>
 					<Button
@@ -75,15 +75,9 @@ export const RecordingControls = ({
 						disabled
 						onClick={onToggleMicrophone}
 					>
-						{microphoneEnabled ? (
-							<MicrophoneIcon size={18} />
-						) : (
-							<MicrophoneSlashIcon size={18} />
-						)}
+						<MicIcon muted={!microphoneEnabled} />
 					</Button>
 				</span>
-
-				<Separator orientation="vertical" className="mx-[5px] h-6" />
 
 				<Button
 					variant={paused ? "default" : "ghost"}
@@ -101,15 +95,19 @@ export const RecordingControls = ({
 					)}
 				</Button>
 
-				<button
-					type="button"
-					onClick={onStopRecording}
-					data-tooltip={t("recording.stop")}
-					aria-label={t("recording.stop")}
-					className={`${styles.recBtn} ${styles.electronNoDrag}`}
-				>
-					<span className={styles.stopSquare} />
-				</button>
+				{onOpenNotes && (
+					<Button
+						variant="ghost"
+						size="icon"
+						iconSize="lg"
+						onClick={onOpenNotes}
+						title={t("tooltips.openNotes")}
+						aria-label={t("tooltips.openNotes")}
+						data-tooltip={t("tooltips.openNotes")}
+					>
+						<NotesIcon />
+					</Button>
+				)}
 
 				<Button
 					variant="ghost"
@@ -138,11 +136,13 @@ export const RecordingControls = ({
 		paused,
 		microphoneEnabled,
 		elapsed,
+		vertical,
 		onToggleMicrophone,
 		onPauseResume,
 		onStopRecording,
 		onHideHud,
 		onCancelRecording,
+		onOpenNotes,
 		formatTime,
 		t,
 	]);

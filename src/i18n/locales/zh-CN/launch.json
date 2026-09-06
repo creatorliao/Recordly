@@ -54,6 +54,7 @@
 		"stop": "停止",
 		"cancel": "取消",
 		"more": "更多",
+		"openNotes": "打开笔记",
 		"update": {
 			"update": "更新",
 			"updated": "已是最新",
@@ -64,6 +65,29 @@
 			"upToDateTitle": "Recordly {{version}} 已是最新版本。",
 			"availableTitle": "Recordly {{version}} 可更新。",
 			"availableGenericTitle": "有可用更新。"
+		}
+	},
+	"tooltips": {
+		"useVerticalTray": "切换为竖条",
+		"useHorizontalTray": "切换为横条",
+		"openNotes": "打开笔记",
+		"notesToolbar": {
+			"bold": "加粗",
+			"italic": "斜体",
+			"strikethrough": "删除线",
+			"bulletList": "无序列表",
+			"numberedList": "有序列表",
+			"blockquote": "引用",
+			"codeBlock": "代码块",
+			"play": "开始自动滚动",
+			"pause": "暂停自动滚动",
+			"speed": "滚动速度",
+			"decreaseSpeed": "降低滚动速度",
+			"increaseSpeed": "提高滚动速度",
+			"fontSize": "字体大小",
+			"decreaseFontSize": "减小字体",
+			"increaseFontSize": "增大字体",
+			"mirror": "水平镜像"
 		}
 	},
 	"sourceSelector": {

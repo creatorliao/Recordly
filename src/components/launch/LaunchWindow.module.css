@@ -22,6 +22,16 @@
 	transform-origin: center bottom;
 }
 
+/* 竖条：默认仍横；点切换后沿底向上长，超出则条内滚动。 */
+.barVertical {
+	flex-direction: column;
+	align-items: center;
+	padding: 12px 7px;
+	max-height: calc(100vh - 48px);
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
 .barStateViewport {
 	position: relative;
 	display: flex;
@@ -32,6 +42,11 @@
 	padding-right: 2px;
 }
 
+.barVertical .barStateViewport {
+	min-width: 0;
+	padding-right: 0;
+}
+
 .barState {
 	display: flex;
 	align-items: center;
@@ -40,6 +55,12 @@
 	white-space: nowrap;
 	min-width: fit-content;
 	pointer-events: auto;
+}
+
+.barStateVertical {
+	flex-direction: column;
+	white-space: normal;
+	min-width: 0;
 }
 
 .sep {
@@ -214,22 +235,22 @@
 	position: relative;
 	width: 34px;
 	height: 34px;
-	border-radius: 50%;
+	border-radius: 17px;
 	border: none;
-	background: #f43f5e;
-	color: #fff;
+	background: transparent;
+	color: #f43f5e;
 	cursor: pointer;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	transition: all 0.2s ease;
 	flex-shrink: 0;
-	box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.3);
+	box-shadow: none;
 }
 
 .recBtn:hover {
-	background: #ff5a75;
-	box-shadow: 0 0 0 6px rgba(244, 63, 94, 0.15);
+	background: rgba(244, 63, 94, 0.16);
+	box-shadow: none;
 }
 
 .recBtn:disabled {
@@ -238,8 +259,16 @@
 }
 
 .recBtn:disabled:hover {
-	background: #f43f5e;
+	background: transparent;
 	box-shadow: none;
+}
+
+/* 录中：透明底展开，红点变方块并带 mm:ss，不再整颗实心红盘。 */
+.recBtnRecording {
+	width: auto;
+	min-width: 78px;
+	padding: 0 12px;
+	gap: 6px;
 }
 
 .recDot {

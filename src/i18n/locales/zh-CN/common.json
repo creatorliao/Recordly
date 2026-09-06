@@ -103,5 +103,9 @@
 	"aspect": {
 		"customWidth": "自定义宽",
 		"customHeight": "自定义高"
+	},
+	"units": {
+		"pixelsPerSecond": "{{value}} 像素/秒",
+		"pixels": "{{value}} 像素"
 	}
 }

@@ -103,5 +103,9 @@
 	"aspect": {
 		"customWidth": "Custom aspect width",
 		"customHeight": "Custom aspect height"
+	},
+	"units": {
+		"pixelsPerSecond": "{{value}} px/s",
+		"pixels": "{{value}} px"
 	}
 }

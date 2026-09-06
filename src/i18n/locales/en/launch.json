@@ -54,6 +54,7 @@
 		"stop": "Stop",
 		"cancel": "Cancel",
 		"more": "More",
+		"openNotes": "Open notes",
 		"update": {
 			"update": "Update",
 			"updated": "Updated",
@@ -64,6 +65,29 @@
 			"upToDateTitle": "Recordly {{version}} is up to date.",
 			"availableTitle": "Recordly {{version}} is available.",
 			"availableGenericTitle": "An update is available."
+		}
+	},
+	"tooltips": {
+		"useVerticalTray": "Use vertical bar",
+		"useHorizontalTray": "Use horizontal bar",
+		"openNotes": "Open notes",
+		"notesToolbar": {
+			"bold": "Bold",
+			"italic": "Italic",
+			"strikethrough": "Strikethrough",
+			"bulletList": "Bullet list",
+			"numberedList": "Numbered list",
+			"blockquote": "Quote",
+			"codeBlock": "Code block",
+			"play": "Start auto-scroll",
+			"pause": "Pause auto-scroll",
+			"speed": "Scroll speed",
+			"decreaseSpeed": "Decrease scroll speed",
+			"increaseSpeed": "Increase scroll speed",
+			"fontSize": "Font size",
+			"decreaseFontSize": "Decrease font size",
+			"increaseFontSize": "Increase font size",
+			"mirror": "Mirror horizontally"
 		}
 	},
 	"sourceSelector": {

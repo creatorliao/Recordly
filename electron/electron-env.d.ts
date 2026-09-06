@@ -195,6 +195,7 @@ interface Window {
 		switchToEditor: () => Promise<void>;
 		switchToRecording: () => Promise<void>;
 		openSourceSelector: () => Promise<void>;
+		openNotes: () => Promise<{ opened?: boolean }>;
 		selectSource: (source: ProcessedDesktopSource) => Promise<ProcessedDesktopSource>;
 		showSourceHighlight: (source: ProcessedDesktopSource) => Promise<{ success: boolean }>;
 		getSelectedSource: () => Promise<ProcessedDesktopSource | null>;

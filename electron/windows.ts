@@ -37,6 +37,7 @@ let hudOverlayMouseReassertTimer: NodeJS.Timeout | null = null;
 let hudOverlayRecordingActive = false;
 let hudOverlayWebcamPreviewVisible = false;
 let countdownWindow: BrowserWindow | null = null;
+let notesWindow: BrowserWindow | null = null;
 
 const HUD_OVERLAY_SETTINGS_FILE = path.join(USER_DATA_PATH, "hud-overlay-settings.json");
 
@@ -157,11 +158,13 @@ function applyHudOverlayCaptureProtectionToWindow(hud: BrowserWindow, enabled: b
 export function reassertHudOverlayCaptureProtection(): boolean {
 	const enabled = loadHudOverlayCaptureProtectionSetting();
 	const hud = getHudOverlayWindow();
-	if (!hud) {
-		return enabled;
+	if (hud) {
+		applyHudOverlayCaptureProtectionToWindow(hud, enabled);
 	}
-
-	applyHudOverlayCaptureProtectionToWindow(hud, enabled);
+	const notes = getNotesWindow();
+	if (notes) {
+		applyHudOverlayCaptureProtectionToWindow(notes, enabled);
+	}
 
 	return enabled;
 }
@@ -638,7 +641,6 @@ export function setHudOverlayRecordingActive(recording: boolean): void {
 	setHudOverlayMousePassthrough(true);
 }
 
-
 function loadPackagedEditorWindow(win: BrowserWindow) {
 	const query = getEditorWindowQuery();
 	const queryString = new URLSearchParams(query).toString();
@@ -932,6 +934,91 @@ export function createCountdownWindow(): BrowserWindow {
 
 	return win;
 }
+
+export function getNotesWindow(): BrowserWindow | null {
+	if (notesWindow && notesWindow.isDestroyed()) {
+		notesWindow = null;
+	}
+	return notesWindow;
+}
+
+/**
+ * 录制时旁开的讲稿/提词器窗。内容保护与 HUD 同一开关，避免烤进成片或系统截图。
+ */
+export function createNotesWindow(): BrowserWindow {
+	const existing = getNotesWindow();
+	if (existing) {
+		existing.focus();
+		return existing;
+	}
+
+	const win = new BrowserWindow({
+		width: 400,
+		height: 540,
+		minWidth: 360,
+		minHeight: 400,
+		maxWidth: 640,
+		maxHeight: 720,
+		title: "Recordly Notes",
+		backgroundColor: "#ffffff",
+		resizable: true,
+		alwaysOnTop: true,
+		skipTaskbar: false,
+		show: false,
+		...(process.platform !== "darwin" && {
+			icon: WINDOW_ICON_PATH,
+		}),
+		webPreferences: {
+			preload: path.join(electronWindowsDir, "preload.mjs"),
+			nodeIntegration: false,
+			contextIsolation: true,
+			backgroundThrottling: false,
+		},
+	});
+
+	if (process.platform !== "darwin") {
+		win.setAutoHideMenuBar(true);
+	}
+
+	notesWindow = win;
+	win.on("closed", () => {
+		if (notesWindow === win) {
+			notesWindow = null;
+		}
+	});
+
+	const applyNotesProtection = () => {
+		applyHudOverlayCaptureProtectionToWindow(win, loadHudOverlayCaptureProtectionSetting());
+	};
+
+	applyNotesProtection();
+	win.once("ready-to-show", () => {
+		applyNotesProtection();
+		if (!win.isDestroyed()) {
+			win.show();
+		}
+	});
+
+	if (VITE_DEV_SERVER_URL) {
+		win.loadURL(`${VITE_DEV_SERVER_URL}?showNotes=true`);
+	} else {
+		win.loadFile(path.join(RENDERER_DIST, "index.html"), {
+			query: { showNotes: "true" },
+		});
+	}
+
+	return win;
+}
+
+ipcMain.handle("open-notes", () => {
+	const existing = getNotesWindow();
+	if (existing) {
+		existing.focus();
+		return { opened: true };
+	}
+	createNotesWindow();
+	return { opened: true };
+});
 
 export function getCountdownWindow(): BrowserWindow | null {
 	return countdownWindow;

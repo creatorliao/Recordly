@@ -3,31 +3,34 @@ import {
 	CaretUpIcon,
 	DotsThreeVerticalIcon,
 	GearSixIcon,
-	MagicWandIcon,
-	MicrophoneIcon,
-	MicrophoneSlashIcon,
 	MinusIcon,
-	MonitorIcon,
-	SpeakerHighIcon,
-	SpeakerXIcon,
-	VideoCameraIcon,
-	VideoCameraSlashIcon,
 	XIcon,
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RxDragHandleDots2 } from "react-icons/rx";
-import { Separator } from "@/components/ui/separator";
 import { AudioLevelMeter } from "@/components/ui/audio-level-meter";
+import { Separator } from "@/components/ui/separator";
 import { useScopedT } from "../../contexts/I18nContext";
 import { useAudioLevelMeter } from "../../hooks/useAudioLevelMeter";
 import { useMicrophoneDevices } from "../../hooks/useMicrophoneDevices";
 import { useScreenRecorder } from "../../hooks/useScreenRecorder";
 import { useVideoDevices } from "../../hooks/useVideoDevices";
+import { loadAppSetting, saveAppSetting } from "../../lib/appSettings";
 import { supportsHudCaptureProtection } from "../../lib/hudCaptureProtection";
 import { Button } from "../ui/button";
 import { HudInteractionContext } from "./contexts/HudInteractionContext";
 import { canToggleFloatingWebcamPreview } from "./floatingWebcamPreview";
+import {
+	CameraIcon,
+	MicIcon,
+	NotesIcon,
+	OpenInEditorIcon,
+	OrientationIcon,
+	RecordGlyph,
+	SourceIcon,
+	VolumeIcon,
+} from "./HudIcons";
 import { useHudBarDrag } from "./hooks/useHudBarDrag";
 import { useLaunchHudInteractionState } from "./hooks/useLaunchHudInteractionState";
 import { useLaunchWindowActions } from "./hooks/useLaunchWindowActions";
@@ -94,6 +97,12 @@ function LaunchWindowContent() {
 		openVideoFile,
 		syncSelectedSource,
 	} = useLaunchWindowActions();
+	const [trayLayout, setTrayLayout] = useState<"horizontal" | "vertical">(() => {
+		const saved = loadAppSetting<string>("hudTrayLayout");
+		return saved === "vertical" ? "vertical" : "horizontal";
+	});
+	const isVertical = trayLayout === "vertical";
+	const recordAfterSourceSelectionRef = useRef(false);
 
 	const showWebcamControls = webcamEnabled && !recording;
 	const { devices, selectedDeviceId, setSelectedDeviceId } = useMicrophoneDevices(
@@ -205,6 +214,63 @@ function LaunchWindowContent() {
 		};
 	}, [syncSelectedSource]);
 
+	const toggleTrayLayout = useCallback(() => {
+		setTrayLayout((previous) => {
+			const nextLayout = previous === "horizontal" ? "vertical" : "horizontal";
+			saveAppSetting("hudTrayLayout", nextLayout);
+			return nextLayout;
+		});
+	}, []);
+
+	const handleSourceSelectAndMaybeRecord = useCallback(
+		async (source: Parameters<typeof handleSourceSelect>[0]) => {
+			await handleSourceSelect(source);
+			if (recordAfterSourceSelectionRef.current) {
+				recordAfterSourceSelectionRef.current = false;
+				toggleRecording();
+			}
+		},
+		[handleSourceSelect, toggleRecording],
+	);
+
+	useEffect(() => {
+		if (openId === "sources") {
+			return;
+		}
+		recordAfterSourceSelectionRef.current = false;
+	}, [openId]);
+
+	const handleRecordClick = useCallback(() => {
+		if (countdownActive) {
+			return;
+		}
+		if (hasSelectedSource || platform === "linux") {
+			toggleRecording();
+			return;
+		}
+		recordAfterSourceSelectionRef.current = true;
+		beginInteractiveHudAction();
+		requestOpen("sources");
+	}, [
+		beginInteractiveHudAction,
+		countdownActive,
+		hasSelectedSource,
+		platform,
+		requestOpen,
+		toggleRecording,
+	]);
+
+	const openNotes = useCallback(() => {
+		void window.electronAPI?.openNotes?.();
+	}, []);
+
+	const renderHudSep = () => (
+		<Separator
+			orientation={isVertical ? "horizontal" : "vertical"}
+			className={isVertical ? "h-px w-6 mx-0 my-[3px]" : "mx-[5px] h-6"}
+		/>
+	);
+
 	const hudStateTransition = {
 		duration: 0.24,
 		ease: [0.22, 1, 0.36, 1] as const,
@@ -215,11 +281,13 @@ function LaunchWindowContent() {
 			paused={paused}
 			microphoneEnabled={microphoneEnabled}
 			elapsed={elapsed}
+			vertical={isVertical}
 			onToggleMicrophone={() => setMicrophoneEnabled(!microphoneEnabled)}
 			onPauseResume={paused ? resumeRecording : pauseRecording}
 			onStopRecording={toggleRecording}
 			onHideHud={() => window.electronAPI?.hudOverlayHide?.()}
 			onCancelRecording={cancelRecording}
+			onOpenNotes={openNotes}
 			formatTime={formatTime}
 		/>
 	);
@@ -230,29 +298,34 @@ function LaunchWindowContent() {
 				<>
 					<SourcePopover
 						selectedSource={selectedSource}
-						onSourceSelect={handleSourceSelect}
+						onSourceSelect={handleSourceSelectAndMaybeRecord}
 						onOpen={beginInteractiveHudAction}
 						trigger={
 							<Button
 								variant="ghost"
-								className={`${styles.electronNoDrag} group h-8 gap-1.5 px-2 min-w-0 max-w-[160px] rounded-[8px] font-medium text-[12px] shrink-0 text-[var(--launch-text)] hover:bg-[var(--launch-hover)] transition-all ${openId === "sources" ? "bg-[var(--launch-hover)]" : ""}`}
+								className={`${styles.electronNoDrag} group h-8 gap-1.5 ${isVertical ? "w-[34px] justify-center px-0" : "px-2 min-w-0 max-w-[160px]"} rounded-[8px] font-medium text-[12px] shrink-0 text-[var(--launch-text)] hover:bg-[var(--launch-hover)] transition-all ${openId === "sources" ? "bg-[var(--launch-hover)]" : ""}`}
 								title={selectedSource}
+								aria-label={selectedSource}
 							>
-								<MonitorIcon size={16} className="shrink-0" />
-								<div className="flex-1 min-w-0 overflow-hidden">
-									<MarqueeText text={selectedSource} />
-								</div>
-								<CaretUpIcon
-									size={10}
-									className={`text-[#6b6b78] ml-0.5 shrink-0 transition-transform duration-200 ${
-										openId === "sources" ? "" : "rotate-180"
-									}`}
-								/>
+								<SourceIcon className="shrink-0" />
+								{!isVertical && (
+									<>
+										<div className="flex-1 min-w-0 overflow-hidden">
+											<MarqueeText text={selectedSource} />
+										</div>
+										<CaretUpIcon
+											size={10}
+											className={`text-[#6b6b78] ml-0.5 shrink-0 transition-transform duration-200 ${
+												openId === "sources" ? "" : "rotate-180"
+											}`}
+										/>
+									</>
+								)}
 							</Button>
 						}
 					/>
 
-					<Separator orientation="vertical" className="mx-[5px] h-6" />
+					{renderHudSep()}
 				</>
 			)}
 
@@ -280,11 +353,7 @@ function LaunchWindowContent() {
 						}
 						className={microphoneEnabled ? styles.ibActive : ""}
 					>
-						{microphoneEnabled ? (
-							<MicrophoneIcon size={18} />
-						) : (
-							<MicrophoneSlashIcon size={18} />
-						)}
+						<MicIcon muted={!microphoneEnabled} />
 					</Button>
 				}
 			/>
@@ -305,11 +374,7 @@ function LaunchWindowContent() {
 				onClick={() => setSystemAudioEnabled(!systemAudioEnabled)}
 				className={systemAudioEnabled ? styles.ibActive : ""}
 			>
-				{systemAudioEnabled ? (
-					<SpeakerHighIcon size={18} />
-				) : (
-					<SpeakerXIcon size={18} />
-				)}
+				<VolumeIcon muted={!systemAudioEnabled} />
 			</Button>
 
 			<WebcamPopover
@@ -343,11 +408,7 @@ function LaunchWindowContent() {
 						}
 						className={webcamEnabled ? styles.ibActive : ""}
 					>
-						{webcamEnabled ? (
-							<VideoCameraIcon size={18} />
-						) : (
-							<VideoCameraSlashIcon size={18} />
-						)}
+						<CameraIcon off={!webcamEnabled} />
 					</Button>
 				}
 			/>
@@ -372,18 +433,12 @@ function LaunchWindowContent() {
 			<button
 				type="button"
 				className={`${styles.recBtn} ${styles.electronNoDrag}`}
-				onClick={
-					hasSelectedSource || platform === "linux"
-						? toggleRecording
-						: () => {
-								beginInteractiveHudAction();
-								requestOpen("sources");
-							}
-				}
+				onClick={handleRecordClick}
 				disabled={countdownActive}
 				data-tooltip={t("recording.record")}
+				aria-label={t("recording.record")}
 			>
-				<div className={styles.recDot} />
+				<RecordGlyph recording={false} className="text-[#f43f5e]" />
 			</button>
 
 			<Button
@@ -394,11 +449,22 @@ function LaunchWindowContent() {
 				title={t("recording.openEditor")}
 				aria-label={t("recording.openEditor")}
 			>
-				<MagicWandIcon size={18} />
+				<OpenInEditorIcon />
 			</Button>
 
-			<Separator orientation="vertical" className="mx-[5px] h-6" />
+			<Button
+				variant="ghost"
+				size="icon"
+				iconSize="lg"
+				onClick={openNotes}
+				title={t("tooltips.openNotes")}
+				aria-label={t("tooltips.openNotes")}
+				data-tooltip={t("tooltips.openNotes")}
+			>
+				<NotesIcon />
+			</Button>
 
+			{/* 不要在打开编辑器和三点之间再放分隔线：浅色条上看起来就是一颗空白按钮。 */}
 			<MorePopover
 				supportsHudCaptureProtection={hudCaptureProtectionSupported}
 				hideHudFromCapture={hideHudFromCapture}
@@ -487,7 +553,8 @@ function LaunchWindowContent() {
 								ref={hudBarRef}
 								layout={shouldAnimateHudLayout}
 								transition={hudStateTransition}
-								className={`${styles.bar} launch-theme mb-2 pointer-events-auto`}
+								data-tray-layout={trayLayout}
+								className={`${styles.bar} ${isVertical ? styles.barVertical : ""} launch-theme mb-2 pointer-events-auto`}
 								onMouseEnter={handleHudMouseEnter}
 								onMouseLeave={handleHudMouseLeave}
 							>
@@ -495,7 +562,7 @@ function LaunchWindowContent() {
 									// Linux compositors and non-passthrough Windows fallback windows
 									// need native window dragging; the JS drag path only translates
 									// content inside the HUD window.
-									className={`flex items-center px-0.5 cursor-grab active:cursor-grabbing ${
+									className={`flex ${isVertical ? "h-6 w-8" : "items-center"} px-0.5 cursor-grab active:cursor-grabbing ${
 										useNativeHudBarDrag ? styles.electronDrag : ""
 									}`}
 									onPointerDown={handleHudBarPointerDown}
@@ -506,12 +573,40 @@ function LaunchWindowContent() {
 									<RxDragHandleDots2 size={14} className="text-[#6b6b78]" />
 								</div>
 
+								<Button
+									variant="ghost"
+									size="icon"
+									iconSize="lg"
+									type="button"
+									aria-pressed={isVertical}
+									aria-label={
+										isVertical
+											? t("tooltips.useHorizontalTray")
+											: t("tooltips.useVerticalTray")
+									}
+									title={
+										isVertical
+											? t("tooltips.useHorizontalTray")
+											: t("tooltips.useVerticalTray")
+									}
+									data-tooltip={
+										isVertical
+											? t("tooltips.useHorizontalTray")
+											: t("tooltips.useVerticalTray")
+									}
+									onClick={toggleTrayLayout}
+								>
+									<OrientationIcon vertical={isVertical} />
+								</Button>
+
+								{renderHudSep()}
+
 								<div className={styles.barStateViewport}>
 									<AnimatePresence initial={false} mode="wait">
 										<motion.div
 											key={hudMode}
 											layout={shouldAnimateHudLayout}
-											className={styles.barState}
+											className={`${styles.barState} ${isVertical ? styles.barStateVertical : ""}`}
 											initial={{
 												opacity: 0,
 												y: 10,
