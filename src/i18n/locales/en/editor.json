@@ -163,7 +163,10 @@
 		"import": "Import",
 		"noPreview": "No preview yet",
 		"current": "Current",
-		"emptyLibrary": "No saved projects yet"
+		"emptyLibrary": "No saved projects yet",
+		"lastOpened": "Last",
+		"emptyWorkspaceTitle": "No project open yet",
+		"emptyWorkspaceHint": "Pick a recent project on the left, import a video, or go back to record a new one."
 	},
 	"exportTips": {
 		"autoZooms": "Tip: Turn off auto-applied zooms in settings",

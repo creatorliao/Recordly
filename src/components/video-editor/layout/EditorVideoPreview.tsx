@@ -1,4 +1,5 @@
 import type { ComponentProps, Dispatch, RefObject, SetStateAction } from "react";
+import { useI18n } from "@/contexts/I18nContext";
 import type { AspectRatio } from "@/utils/aspectRatioUtils";
 import type { useVideoEditorAudio } from "../audio/useVideoEditorAudio";
 import type { useAppearanceState } from "../state/useAppearanceState";
@@ -65,6 +66,27 @@ export function EditorVideoPreview({
 	setError,
 	handlers,
 }: Props) {
+	const { t } = useI18n();
+	// 空 src 会让 <video> 触发 onError，把整页打回「没有可加载的视频」。
+	// 空项目只画占位，等用户从项目选项卡选课或导入。
+	if (!videoPath) {
+		return (
+			<div className="flex h-full w-full items-center justify-center rounded-lg bg-editor-surface">
+				<div className="max-w-sm px-6 text-center">
+					<p className="text-sm font-medium text-foreground">
+						{t("editor.project.emptyWorkspaceTitle", "No project open yet")}
+					</p>
+					<p className="mt-1.5 text-xs text-muted-foreground">
+						{t(
+							"editor.project.emptyWorkspaceHint",
+							"Pick a recent project on the left, import a video, or go back to record.",
+						)}
+					</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<VideoPlayback
 			key={`${videoPath || "no-video"}:${previewVersion}:inline`}

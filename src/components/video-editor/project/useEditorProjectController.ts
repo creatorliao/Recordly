@@ -78,6 +78,10 @@ type Input = {
 		typeof useProjectLibraryController
 	>["captureProjectThumbnail"];
 	remountPreview: () => void;
+	/** 没有当前课时切到项目选项卡并打开侧栏 */
+	onEmptyWorkspace?: () => void;
+	/** 从项目库或导入装上素材后回到场景，好看见画面 */
+	onSourceReady?: () => void;
 };
 
 export function useEditorProjectController(input: Input) {
@@ -152,6 +156,7 @@ export function useEditorProjectController(input: Input) {
 		applyLoadedProject: lifecycle.applyLoadedProject,
 		resetSourceScopedEditorState: lifecycle.resetSourceScopedEditorState,
 		applySessionPresentation: input.applySessionPresentation,
+		onEmptyWorkspace: input.onEmptyWorkspace,
 	});
 	useEditorPreferencesPersistence({
 		appearance: input.appearance,
@@ -218,6 +223,7 @@ export function useEditorProjectController(input: Input) {
 		handleSaveProject: saveActions.handleSaveProject,
 		handleSaveProjectAs: saveActions.handleSaveProjectAs,
 		isExporting: input.isExporting,
+		onSourceReady: input.onSourceReady,
 	});
 
 	return {

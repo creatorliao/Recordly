@@ -8,6 +8,7 @@ import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useProjectState } from "../state/useProjectState";
 import type { useTimelineState } from "../state/useTimelineState";
 import { DEFAULT_WEBCAM_TIME_OFFSET_MS } from "../types";
+import { shouldLoadEmptyEditorWorkspace } from "./editorEmptyWorkspace";
 
 type SessionPresentation = {
 	hideOverlayCursorByDefault?: boolean;
@@ -25,6 +26,8 @@ type Input = {
 	applyLoadedProject: (candidate: unknown, path?: string | null) => Promise<boolean>;
 	resetSourceScopedEditorState: () => void;
 	applySessionPresentation: (session: SessionPresentation | null | undefined) => void;
+	/** 没有当前课时切到项目选项卡，而不是整页报错 */
+	onEmptyWorkspace?: () => void;
 };
 
 export function useInitialEditorSource({
@@ -38,6 +41,7 @@ export function useInitialEditorSource({
 	applyLoadedProject,
 	resetSourceScopedEditorState,
 	applySessionPresentation,
+	onEmptyWorkspace,
 }: Input) {
 	const { t } = useI18n();
 	const initialLoadStartedRef = useRef(false);
@@ -186,11 +190,26 @@ export function useInitialEditorSource({
 				}
 
 				const currentVideo = await window.electronAPI.getCurrentVideoPath();
-				if (!currentVideo.success || !currentVideo.path) {
-					project.setError(t("editor.errors.noVideoToLoad"));
+				// 条上「打开编辑器」：没有当前课就进空项目 + 项目选项卡（剪映草稿箱习惯），
+				// 不要再整页红字拦住。真损坏仍走下面的 loadVideoFailed。
+				if (
+					shouldLoadEmptyEditorWorkspace({
+						hasLoadedProject: false,
+						hasSessionVideo: false,
+						hasCurrentVideo: Boolean(currentVideo.success && currentVideo.path),
+					})
+				) {
+					project.setError(null);
+					onEmptyWorkspace?.();
 					return;
 				}
-				const sourcePath = fromFileUrl(currentVideo.path);
+				const currentVideoPath = currentVideo.path;
+				if (!currentVideoPath) {
+					project.setError(null);
+					onEmptyWorkspace?.();
+					return;
+				}
+				const sourcePath = fromFileUrl(currentVideoPath);
 				project.setVideoSourcePath(sourcePath);
 				project.setVideoPath(await resolveVideoUrl(sourcePath));
 				project.setCurrentProjectPath(null);
@@ -217,6 +236,7 @@ export function useInitialEditorSource({
 		applyLoadedProject,
 		applySessionPresentation,
 		devConfig,
+		onEmptyWorkspace,
 		resetSourceScopedEditorState,
 		smokeConfig,
 		t,

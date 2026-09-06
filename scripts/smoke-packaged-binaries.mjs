@@ -217,9 +217,9 @@ function getExpectedNativeHelperFiles(archTag) {
 
 function verifyBundledWhisperModel(unpackedRoot) {
 	const modelPath = path.join(path.dirname(unpackedRoot), "whisper", "ggml-small.bin");
-	const isCurrentPortableUnpack = unpackedRoot.includes(
-		`${path.sep}release-portable${path.sep}win-unpacked${path.sep}`,
-	);
+	const isCurrentPortableUnpack =
+		unpackedRoot.includes(`${path.sep}release-portable${path.sep}`) ||
+		unpackedRoot.includes(`${path.sep}recordly-portable-`);
 	if (!existsSync(modelPath)) {
 		if (isCurrentPortableUnpack) {
 			fail(`bundled Whisper small model is missing at ${relativePath(modelPath)}`);
@@ -290,7 +290,7 @@ const unpackedRoots = [
 ];
 
 if (unpackedRoots.length === 0) {
-	fail("no packaged app.asar.unpacked directory found under release/ or release-portable/");
+	fail("no packaged app.asar.unpacked directory found under release/（或历史 release-portable/）");
 }
 
 console.log(

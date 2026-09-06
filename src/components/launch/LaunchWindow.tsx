@@ -43,7 +43,6 @@ import {
 } from "./popovers/LaunchPopoverCoordinator";
 import { MicPopover } from "./popovers/MicPopover";
 import { MorePopover } from "./popovers/MorePopover";
-import { ProjectPopover } from "./popovers/ProjectPopover";
 import { SourcePopover } from "./popovers/SourcePopover";
 import { WebcamPopover } from "./popovers/WebcamPopover";
 import { RecordingControls } from "./RecordingControls";
@@ -91,12 +90,9 @@ function LaunchWindowContent() {
 	const {
 		selectedSource,
 		hasSelectedSource,
-		projectLibraryEntries,
 		handleSourceSelect,
 		openVideoFile,
-		openProjectFromLibrary,
 		syncSelectedSource,
-		refreshProjectLibrary,
 	} = useLaunchWindowActions();
 
 	const showWebcamControls = webcamEnabled && !recording;
@@ -403,14 +399,6 @@ function LaunchWindowContent() {
 
 			<Separator orientation="vertical" className="mx-[5px] h-6" />
 
-			<div className="relative w-0 h-0">
-				<ProjectPopover
-					entries={projectLibraryEntries}
-					onOpenProject={openProjectFromLibrary}
-					trigger={<div className="absolute inset-0 pointer-events-none opacity-0" />}
-				/>
-			</div>
-
 			<MorePopover
 				supportsHudCaptureProtection={hudCaptureProtectionSupported}
 				hideHudFromCapture={hideHudFromCapture}
@@ -427,9 +415,9 @@ function LaunchWindowContent() {
 					void openVideoFile();
 				}}
 				onOpenProjectBrowser={() => {
-					refreshProjectLibrary().then(() => {
-						requestOpen("projects");
-					});
+					// 条上不再藏一层项目浮层（会在「打开编辑器」旁留空白）。
+					// 三点「打开项目」与魔杖钮同一条路：进完整编辑器，空态会落到项目选项卡。
+					void window.electronAPI?.switchToEditor?.();
 				}}
 				appVersion={appVersion}
 				trigger={

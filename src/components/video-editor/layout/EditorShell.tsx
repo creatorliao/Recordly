@@ -269,6 +269,8 @@ export function EditorShell(props: Props) {
 						projectLibraryEntries={project.projectLibraryEntries}
 						handleOpenProjectFromLibrary={openActions.handleOpenProjectFromLibrary}
 						handleImportMediaOrProject={openActions.handleImportMediaOrProject}
+						handleReturnToRecording={openActions.handleReturnToRecording}
+						isEmptyWorkspace={!project.videoPath}
 					/>
 					<EditorPreviewPanel
 						t={t}

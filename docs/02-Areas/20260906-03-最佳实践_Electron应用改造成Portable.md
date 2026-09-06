@@ -1,7 +1,7 @@
 # 最佳实践_Electron应用改造成Portable
 
-> 用途：把已经能 `electron-builder` 打 **NSIS 安装包** 的 Electron 应用，改成对内能 **解压即跑** 的 Windows 分发；并分清「安装包 / ZIP 目录包 / 单文件 portable」以及 **谁需要额外装软件**。  
-> 从 Recordly 2026-09-06 这一轮抽出来：内部软件拦安装器、上游有人把安装 exe 误当成 portable、壁纸打进 extraResources 后打包窗口 404、自动更新会把人带回安装包。  
+> 用途：把已经能 `electron-builder` 打 **NSIS 安装包** 的 Electron 应用，改成对内能 **打开文件夹即跑** 的 Windows 分发；并分清「安装包 / `dir` 目录包 / ZIP / 单文件 portable / asarUnpack」以及 **谁需要额外装软件**。  
+> 从 Recordly 2026-09-06 这一轮抽出来：内部软件拦安装器、上游有人把安装 exe 误当成 portable、壁纸打进 extraResources 后打包窗口 404、自动更新会把人带回安装包、本机自用还要再解压 zip。  
 > 以后改装别的 Electron 应用，先读这篇，再改那个仓库的 `electron-builder` 配置。
 
 ---
@@ -9,15 +9,15 @@
 ## 〇、先钉三件事，再改 builder
 
 1. **谁在用、在哪台机器上用**  
-   内网培训机、被 EDR / 软件管家拦截「未备案安装包」→ 优先 ZIP。  
+   内网培训机、被 EDR / 软件管家拦截「未备案安装包」→ 优先 **目录包（`dir`）**；只有需要网传时再压 zip。  
    可以走安装向导的机器 → NSIS 可以留作备胎。
 
 2. **成功长什么样**  
-   同事拿到一个压缩包 → 解压 → 双击目录里的 exe → 金路径能走完。  
-   **不要**再弹出安装向导、不要要求装 Node / CMake / VS。
+   打开名为 `应用-portable-<版本>` 的文件夹 → 双击里面的 exe → 金路径能走完。  
+   **不要**再弹出安装向导、不要要求装 Node / CMake / VS、本机自用不要先解压一遍。
 
 3. **失败长什么样**  
-   解压后没有可双击的 exe（只有一堆资源）；或双击后又去下安装包；或界面裂图 / helper 不工作。
+   文件夹里没有可双击的 exe（只有一堆资源）；或双击后又去下安装包；或界面裂图 / helper 不工作。
 
 没写这三句就开始改 `win.target`，最后会得到「一个叫 zip 的安装器」或「一个不能跑的资源包」。
 
@@ -33,22 +33,31 @@ electron-builder 在 Windows 上常见三种，名字容易混。
 | **目录包 / ZIP** | `--win zip` 或 `dir` 再自己打包 | 文件夹里有 `你的.exe`、`resources\`、dll | **最不像** | 默认仍是 AppData（见 §四） |
 | **builder 的 `portable`** | `win.target: portable` | **单个** exe，先自解压到临时目录再跑 | **仍很像** exe 安装器，EDR 常同一套启发式 | 临时目录，关了可能丢 |
 
+不要把下面三个词当成一回事：
+
+| 词 | 是什么 |
+|----|--------|
+| `win-unpacked` | builder `dir` 打出来的**已经能跑**的文件夹 |
+| `app.asar.unpacked` | `asarUnpack`：exe 必须摊在磁盘上，和免不安装无关 |
+| builder `portable` | 单文件自解压，很像安装器 |
+
 Recordly 对内策略（可复用）：
 
-- **主发：`electron-builder --win zip`**（目录结构打进 zip，里面有 exe）  
+- **本机主发：`electron-builder --win dir`**，再把 `win-unpacked` 改名为 `recordly-portable-<version>`  
+- **网传可选：** 再手工压这个文件夹  
 - **备胎：NSIS 继续能打**，不当日常分发  
 - **默认不做** builder 那种单文件 `portable`
 
-上游 Recordly 曾经把「Release 里的安装 exe」说成 portable（Issue #386）——**安装器 ≠ portable**。验收时打开 zip，必须能看到可执行文件，而不是只有 `latest.yml`。
+上游 Recordly 曾经把「Release 里的安装 exe」说成 portable（Issue #386）——**安装器 ≠ portable**。验收时打开目录，必须能看到可执行文件，而不是只有 `latest.yml`。
 
 本仓对照：
 
 | 脚本 | 实际命令 | 典型产物 |
 |------|----------|----------|
 | `npm run build:win` | `electron-builder --win`（配置里 target 仍是 nsis） | `release/Electron-windows-x64.exe` 安装向导 |
-| `npm run build:win:portable` | 同一套编译，最后 `electron-builder --win zip` | `release/Electron-windows-x64.zip`，解压后有 exe |
+| `npm run build:win:portable` | 同一套编译，最后 `electron-builder --win dir` | `release/recordly-portable-<version>/`，直接双击 exe |
 
-两条命令前面都要先编前端 + **先编好 native helper**。ZIP 不会在用户电脑上现编译。
+两条命令前面都要先编前端 + **先编好 native helper**。目录包不会在用户电脑上现编译。
 
 ---
 

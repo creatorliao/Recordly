@@ -34,6 +34,8 @@ type UseProjectOpenActionsInput = {
 	handleSaveProject: () => Promise<unknown>;
 	handleSaveProjectAs: () => Promise<unknown>;
 	isExporting: boolean;
+	/** 成功打开或导入后切回场景，避免人还停在项目格子上看不见预览 */
+	onSourceReady?: () => void;
 };
 
 export function useProjectOpenActions({
@@ -54,6 +56,7 @@ export function useProjectOpenActions({
 	handleSaveProject,
 	handleSaveProjectAs,
 	isExporting,
+	onSourceReady,
 }: UseProjectOpenActionsInput) {
 	const { t } = useI18n();
 	const confirmReplaceSourceWithUnsavedChanges = useCallback(
@@ -87,6 +90,7 @@ export function useProjectOpenActions({
 			}
 			project.setProjectBrowserOpen(false);
 			await refreshProjectLibrary();
+			onSourceReady?.();
 			toast.success(
 				t("common.toasts.projectLoadedFrom", undefined, { path: result.path ?? "" }),
 			);
@@ -94,6 +98,7 @@ export function useProjectOpenActions({
 		[
 			applyLoadedProject,
 			confirmReplaceSourceWithUnsavedChanges,
+			onSourceReady,
 			project,
 			refreshProjectLibrary,
 			t,
@@ -116,6 +121,7 @@ export function useProjectOpenActions({
 			}
 			project.setProjectBrowserOpen(false);
 			await refreshProjectLibrary();
+			onSourceReady?.();
 			toast.success(
 				result.path
 					? t("common.toasts.projectLoadedFrom", undefined, { path: result.path })
@@ -156,10 +162,12 @@ export function useProjectOpenActions({
 		applySessionPresentation(null);
 		project.setProjectBrowserOpen(false);
 		await refreshProjectLibrary();
+		onSourceReady?.();
 		toast.success(t("common.toasts.mediaImported"));
 	}, [
 		confirmReplaceSourceWithUnsavedChanges,
 		applyLoadedProject,
+		onSourceReady,
 		project,
 		appearance,
 		videoPlaybackRef,

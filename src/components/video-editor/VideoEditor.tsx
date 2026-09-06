@@ -68,6 +68,7 @@ export default function VideoEditor() {
 		setAspectRatio,
 		activeEffectSection,
 		setActiveEffectSection,
+		setSettingsPanelVisible,
 		setPreviewVersion,
 		isPreviewReady,
 		setIsPreviewReady,
@@ -241,6 +242,14 @@ export default function VideoEditor() {
 		refreshProjectLibrary,
 		captureProjectThumbnail,
 		remountPreview,
+		onEmptyWorkspace: () => {
+			// 空项目必须看见项目格子，侧栏若关着就先打开。
+			setActiveEffectSection("projects");
+			setSettingsPanelVisible(true);
+		},
+		onSourceReady: () => {
+			setActiveEffectSection("scene");
+		},
 	});
 	const {
 		snapshot: { currentSourcePath },

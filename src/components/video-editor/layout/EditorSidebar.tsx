@@ -26,6 +26,8 @@ type Props = {
 	projectLibraryEntries: ProjectLibraryEntry[];
 	handleOpenProjectFromLibrary: (projectPath: string) => void;
 	handleImportMediaOrProject: () => void;
+	handleReturnToRecording: () => void;
+	isEmptyWorkspace: boolean;
 };
 
 export function EditorSidebar({
@@ -37,6 +39,8 @@ export function EditorSidebar({
 	projectLibraryEntries,
 	handleOpenProjectFromLibrary,
 	handleImportMediaOrProject,
+	handleReturnToRecording,
+	isEmptyWorkspace,
 }: Props) {
 	const toolSections = useMemo(
 		() => [
@@ -127,6 +131,8 @@ export function EditorSidebar({
 						entries={projectLibraryEntries}
 						onOpenProject={handleOpenProjectFromLibrary}
 						onImportFile={handleImportMediaOrProject}
+						onNewRecording={() => void handleReturnToRecording()}
+						isEmptyWorkspace={isEmptyWorkspace}
 					/>
 				) : activeSection === "extensions" ? (
 					<ExtensionManager />

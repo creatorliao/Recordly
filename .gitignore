@@ -11,6 +11,8 @@ node_modules
 dist
 dist-electron
 dist-ssr
+# Vite/electron 漏写到仓库根的预加载产物（真源是 electron/preload.ts）
+/preload.mjs
 *.local
 
 # Editor directories and files

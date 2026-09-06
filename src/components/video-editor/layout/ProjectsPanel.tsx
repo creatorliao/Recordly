@@ -1,4 +1,4 @@
-import { FolderOpen } from "@phosphor-icons/react";
+import { FolderOpen, VideoCamera } from "@phosphor-icons/react";
 import { useMemo } from "react";
 import { useI18n } from "@/contexts/I18nContext";
 import type { ProjectLibraryEntry } from "../ProjectBrowserDialog";
@@ -8,9 +8,18 @@ type Props = {
 	entries: ProjectLibraryEntry[];
 	onOpenProject: (projectPath: string) => void;
 	onImportFile: () => void;
+	onNewRecording: () => void;
+	/** 空项目时第一格是「上次」，方便对上剪映草稿箱的最近一条 */
+	isEmptyWorkspace: boolean;
 };
 
-export function ProjectsPanel({ entries, onOpenProject, onImportFile }: Props) {
+export function ProjectsPanel({
+	entries,
+	onOpenProject,
+	onImportFile,
+	onNewRecording,
+	isEmptyWorkspace,
+}: Props) {
 	const { t } = useI18n();
 	const visibleEntries = useMemo(() => entries.slice(0, 24), [entries]);
 
@@ -20,19 +29,29 @@ export function ProjectsPanel({ entries, onOpenProject, onImportFile }: Props) {
 				<div className="text-sm font-medium tracking-tight text-foreground">
 					{t("editor.project.browserTitle", "Projects")}
 				</div>
-				<button
-					type="button"
-					onClick={onImportFile}
-					className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-foreground/70 transition hover:bg-foreground/10 hover:text-foreground"
-				>
-					<FolderOpen className="h-3.5 w-3.5" />
-					{t("editor.project.import", "Import")}
-				</button>
+				<div className="flex items-center gap-0.5">
+					<button
+						type="button"
+						onClick={onNewRecording}
+						className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-foreground/70 transition hover:bg-foreground/10 hover:text-foreground"
+					>
+						<VideoCamera className="h-3.5 w-3.5" />
+						{t("editor.project.newRecording", "New recording")}
+					</button>
+					<button
+						type="button"
+						onClick={onImportFile}
+						className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-foreground/70 transition hover:bg-foreground/10 hover:text-foreground"
+					>
+						<FolderOpen className="h-3.5 w-3.5" />
+						{t("editor.project.import", "Import")}
+					</button>
+				</div>
 			</div>
 			<div className="flex-1 overflow-y-auto px-2.5 py-2.5">
 				{visibleEntries.length > 0 ? (
 					<div className="grid grid-cols-2 gap-2">
-						{visibleEntries.map((entry) => {
+						{visibleEntries.map((entry, index) => {
 							const thumbnailSrc = entry.thumbnailPath
 								? toFileUrl(entry.thumbnailPath)
 								: null;
@@ -60,6 +79,12 @@ export function ProjectsPanel({ entries, onOpenProject, onImportFile }: Props) {
 											<div className="absolute right-1.5 top-1.5">
 												<span className="rounded-[5px] bg-[#2563EB] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.14em] text-white shadow-[0_8px_20px_rgba(37,99,235,0.28)]">
 													{t("editor.project.current", "Current")}
+												</span>
+											</div>
+										) : isEmptyWorkspace && index === 0 ? (
+											<div className="absolute right-1.5 top-1.5">
+												<span className="rounded-[5px] bg-foreground/80 px-1.5 py-0.5 text-[8px] font-semibold tracking-[0.08em] text-background shadow-[0_8px_20px_rgba(0,0,0,0.18)]">
+													{t("editor.project.lastOpened", "Last")}
 												</span>
 											</div>
 										) : null}

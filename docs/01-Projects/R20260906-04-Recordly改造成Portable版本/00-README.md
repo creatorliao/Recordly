@@ -18,6 +18,9 @@
 | [`09-问题_dev能出图打包裂图.md`](09-问题_dev能出图打包裂图.md) | 真因：Vite `/wallpapers` ≠ 打包 extraResources；网格改走 IPC data URL |
 | [`10-问题_本机Windows采集启动失败回退浏览器.md`](10-问题_本机Windows采集启动失败回退浏览器.md) | 真机：每次录制 toast 回退浏览器；根因是 Electron 身份下 `isPackaged=false`，spawn 进了 asar |
 | [`11-理解_本机采集与浏览器采集.md`](11-理解_本机采集与浏览器采集.md) | 讲清楚：不是权限；asar 看得见却跑不起来；主路径 vs 浏览器退路；和相邻问题怎么叠 |
+| [`12-调查_构建产物目录与preload.md`](12-调查_构建产物目录与preload.md) | 根目录 preload.mjs、两套 dist/release、unpack 与 portable 三组词 |
+| [`13-方案_产物目录收敛与目录包不分发zip.md`](13-方案_产物目录收敛与目录包不分发zip.md) | 不合并 dist；release 收成一处；portable 只出文件夹 |
+| [`09-执行留痕.md`](09-执行留痕.md) | 本夹构建规则改动的四要素 |
 
 同因漏网（导出 FFmpeg）：[`R20260906-13`](../R20260906-13-Lightning导出找不到FFmpeg/01-问题_Lightning导出ffmpeg在asar里ENOENT.md)。
 

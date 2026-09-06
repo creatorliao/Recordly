@@ -163,7 +163,10 @@
 		"import": "导入",
 		"noPreview": "暂无预览",
 		"current": "当前",
-		"emptyLibrary": "还没有已保存的项目"
+		"emptyLibrary": "还没有已保存的项目",
+		"lastOpened": "上次",
+		"emptyWorkspaceTitle": "还没有打开的课",
+		"emptyWorkspaceHint": "从左侧「项目」选择历史课或上次那一课，也可以导入视频，或返回录制新开一课。"
 	},
 	"exportTips": {
 		"autoZooms": "提示：可在设置中关闭自动应用的缩放",
