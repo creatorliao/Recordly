@@ -9,17 +9,22 @@ import { nativeHelperMigrationPromise, setNativeHelperMigrationPromise } from ".
 const execFileAsync = promisify(execFile);
 
 /**
+ * 路径里只要出现 app.asar 分段，就改成 app.asar.unpacked。
+ * Portable 主程序叫 electron.exe 时，Electron 43 会把 app.isPackaged 判成 false，
+ * 不能再用它当开关，否则 spawn 会打进 asar 虚拟路径（ENOENT）。
+ */
+export function rewriteAsarToUnpacked(resolved: string): string {
+	return resolved.replace(/\.asar([/\\])/, ".asar.unpacked$1");
+}
+
+/**
  * Resolve a path within the app bundle, handling asar unpacking in production.
  * Files listed in asarUnpack are extracted to app.asar.unpacked/ and must be
  * accessed via that path instead of the asar virtual filesystem.
  */
 export function resolveUnpackedAppPath(...segments: string[]): string {
-	const base = app.getAppPath();
-	const resolved = path.join(base, ...segments);
-	if (app.isPackaged) {
-		return resolved.replace(/\.asar([/\\])/, ".asar.unpacked$1");
-	}
-	return resolved;
+	const resolved = path.join(app.getAppPath(), ...segments);
+	return rewriteAsarToUnpacked(resolved);
 }
 
 export function getNativeCaptureHelperSourcePath(): string {
@@ -63,12 +68,6 @@ export function resolvePreferredWindowsNativeHelperPath(
 	);
 	const prebundledPath = getPrebundledNativeHelperPath(binaryName, getNativeArchTag("win32"));
 
-	if (app.isPackaged && existsSync(prebundledPath)) {
-		return prebundledPath;
-	}
-
-	// Source checkouts should run the helper staged in the branch instead of a
-	// stale local CMake build left over from an earlier test run.
 	if (existsSync(prebundledPath)) {
 		return prebundledPath;
 	}

@@ -63,6 +63,25 @@ describe("Windows native helper path resolution", () => {
 		expect(getWindowsCaptureExePath()).toBe(prebundledPath);
 	});
 
+	it("isPackaged 为假但路径在 app.asar 里时，仍改写到 asar.unpacked", async () => {
+		const asarAppPath = path.join(tempRoot, "resources", "app.asar");
+		vi.resetModules();
+		vi.doMock("electron", () => ({
+			app: {
+				isPackaged: false,
+				getAppPath: () => asarAppPath,
+			},
+		}));
+
+		const { getPrebundledNativeHelperPath, rewriteAsarToUnpacked } = await import("./binaries");
+		const resolved = getPrebundledNativeHelperPath("wgc-capture.exe");
+		expect(resolved).toContain(`${path.sep}app.asar.unpacked${path.sep}`);
+		expect(resolved.includes(`${path.sep}app.asar${path.sep}`)).toBe(false);
+		expect(rewriteAsarToUnpacked(path.join(asarAppPath, "electron", "x.exe"))).toContain(
+			"app.asar.unpacked",
+		);
+	});
+
 	it("falls back to the local CMake build when no staged helper exists", async () => {
 		const buildOutputPath = path.join(
 			appPath,
