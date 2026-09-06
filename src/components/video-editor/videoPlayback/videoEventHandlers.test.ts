@@ -77,6 +77,28 @@ describe("createVideoEventHandlers", () => {
 		expect(currentTimeRef.current).toBe(1250);
 	});
 
+	it("未开播放许可时 handlePlay 立刻 pause，进度不会往前走", () => {
+		const video = createMockVideo({ paused: false });
+		const onPlayStateChange = vi.fn();
+		const handlers = createVideoEventHandlers({
+			video,
+			isSeekingRef: createMutableRef(false),
+			isPlayingRef: createMutableRef(false),
+			allowPlaybackRef: createMutableRef(false),
+			currentTimeRef: createMutableRef(0),
+			timeUpdateAnimationRef: createMutableRef<number | null>(null),
+			onPlayStateChange,
+			onTimeUpdate: vi.fn(),
+			trimRegionsRef: createMutableRef([]),
+			speedRegionsRef: createMutableRef([]),
+		});
+
+		handlers.handlePlay();
+		expect(video.pause).toHaveBeenCalledTimes(1);
+		expect(onPlayStateChange).not.toHaveBeenCalled();
+		expect(requestAnimationFrameMock).not.toHaveBeenCalled();
+	});
+
 	it("skips removed footage when playback reaches a cut region", () => {
 		let animationFrameCallback: FrameRequestCallback | null = null;
 		requestAnimationFrameMock.mockImplementation((callback: FrameRequestCallback) => {

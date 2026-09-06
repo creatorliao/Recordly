@@ -99,6 +99,11 @@ import {
 } from "./videoPlayback/cursorRenderer";
 import { clampFocusToStage as clampFocusToStageUtil } from "./videoPlayback/focusUtils";
 import { layoutVideoContent as layoutVideoContentUtil } from "./videoPlayback/layoutUtils";
+import {
+	logPreviewPlayback,
+	schedulePreviewProgressChecks,
+	snapshotPreviewVideo,
+} from "./videoPlayback/previewPlaybackLog";
 import { clamp01 } from "./videoPlayback/mathUtils";
 import {
 	createSpringState,
@@ -458,11 +463,15 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 		const suspendRenderingRef = useRef(suspendRendering);
 		const isSeekingRef = useRef(false);
 		const allowPlaybackRef = useRef(false);
+		const onPlayStateChangeRef = useRef(onPlayStateChange);
+		const onTimeUpdateRef = useRef(onTimeUpdate);
+		const onErrorRef = useRef(onError);
 		const lockedVideoDimensionsRef = useRef<{
 			width: number;
 			height: number;
 		} | null>(null);
 		const layoutVideoContentRef = useRef<(() => void) | null>(null);
+		const previewProgressTokenRef = useRef(0);
 		const trimRegionsRef = useRef<TrimRegion[]>([]);
 		const speedRegionsRef = useRef<SpeedRegion[]>([]);
 		const lastWebcamSyncTimeRef = useRef<number | null>(null);
@@ -971,6 +980,11 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			videoEffectsContainer.filterArea = new Rectangle(0, 0, stageWidth, stageHeight);
 		}, []);
 
+		const initializePixiRendererRef = useRef(initializePixiRenderer);
+		const syncPreviewMotionBlurQualityRef = useRef(syncPreviewMotionBlurQuality);
+		initializePixiRendererRef.current = initializePixiRenderer;
+		syncPreviewMotionBlurQualityRef.current = syncPreviewMotionBlurQuality;
+
 		const layoutVideoContent = useCallback(() => {
 			const container = containerRef.current;
 			const app = appRef.current;
@@ -1081,6 +1095,18 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			layoutVideoContentRef.current = layoutVideoContent;
 		}, [layoutVideoContent]);
 
+		useEffect(() => {
+			onPlayStateChangeRef.current = onPlayStateChange;
+		}, [onPlayStateChange]);
+
+		useEffect(() => {
+			onTimeUpdateRef.current = onTimeUpdate;
+		}, [onTimeUpdate]);
+
+		useEffect(() => {
+			onErrorRef.current = onError;
+		}, [onError]);
+
 		// Always re-run geometric layout when layout props change, even if frame sprite isn't reloaded.
 		useEffect(() => {
 			layoutVideoContent();
@@ -1102,14 +1128,32 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				if (!vid) return;
 				try {
 					allowPlaybackRef.current = true;
+					logPreviewPlayback("preview.play-request", {
+						via: "imperative",
+						...snapshotPreviewVideo(vid),
+					});
 					await vid.play();
+					schedulePreviewProgressChecks(() => videoRef.current, previewProgressTokenRef);
 				} catch (error) {
 					allowPlaybackRef.current = false;
+					logPreviewPlayback(
+						"preview.play-failed",
+						{
+							via: "imperative",
+							message: error instanceof Error ? error.message : String(error),
+							...snapshotPreviewVideo(vid),
+						},
+						"error",
+					);
 					throw error;
 				}
 			},
 			pause: () => {
 				const video = videoRef.current;
+				logPreviewPlayback("preview.pause-request", {
+					via: "imperative",
+					...snapshotPreviewVideo(video),
+				});
 				allowPlaybackRef.current = false;
 				if (!video) {
 					return;
@@ -1258,6 +1302,11 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 
 		useEffect(() => {
 			suspendRenderingRef.current = suspendRendering;
+			logPreviewPlayback("preview.suspend", {
+				active: suspendRendering,
+				pixiReady,
+				...snapshotPreviewVideo(videoRef.current),
+			});
 			if (!pixiReady) return;
 			const app = appRef.current;
 			if (!app?.ticker) {
@@ -1578,7 +1627,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				sprite.scale.set(1);
 				sprite.position.set(0, 0);
 
-				layoutVideoContent();
+				layoutVideoContentRef.current?.();
 
 				applyZoomTransform({
 					cameraContainer: container,
@@ -1596,15 +1645,20 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 
 				requestAnimationFrame(() => {
 					const finalApp = appRef.current;
+					// 恢复播放必须先开许可，否则 handlePlay 会立刻再 pause。
 					if (wasPlaying && video) {
-						video.play().catch(() => undefined);
+						allowPlaybackRef.current = true;
+						video.play().catch(() => {
+							allowPlaybackRef.current = false;
+						});
 					}
 					if (tickerWasStarted && finalApp?.ticker) {
 						finalApp.ticker.start();
 					}
 				});
 			});
-		}, [pixiReady, videoReady, layoutVideoContent]);
+			// 只在 Pixi/视频就绪翻转时复位镜头。布局函数身份变化只做几何重排，不能走这条 pause/play。
+		}, [pixiReady, videoReady]);
 
 		useEffect(() => {
 			if (!pixiReady || !videoReady) return;
@@ -1767,6 +1821,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			overlayEl.style.pointerEvents = isPlaying ? "none" : "auto";
 		}, [selectedZoom, isPlaying]);
 
+		// biome-ignore lint/correctness/useExhaustiveDependencies: Pixi 只在预览挂载时建一次，回调走 ref，避免 onError 换身份拆画布。
 		useEffect(() => {
 			const container = containerRef.current;
 			if (!container) return;
@@ -1788,7 +1843,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				setPixiRendererError(null);
 				setPixiRendererBackend(null);
 
-				const result = await initializePixiRenderer(container);
+				const result = await initializePixiRendererRef.current(container);
 				app = result.app;
 				setPixiRendererBackend(result.backend);
 
@@ -1818,7 +1873,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 					zoomBlurFilterRef.current,
 				];
 				cameraContainer.addChild(videoEffectsContainer);
-				syncPreviewMotionBlurQuality();
+				syncPreviewMotionBlurQualityRef.current();
 
 				// Video container - holds the masked video sprite
 				const videoContainer = new Container();
@@ -1869,7 +1924,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 						: "Failed to initialize preview renderer";
 				console.error("Failed to initialize preview renderer:", error);
 				setPixiRendererError(errorMessage);
-				onError(
+				onErrorRef.current(
 					error instanceof Error
 						? error.message
 						: "Failed to initialize preview renderer",
@@ -1900,7 +1955,8 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				cursorContainerRef.current = null;
 				videoSpriteRef.current = null;
 			};
-		}, [initializePixiRenderer, onError, syncPreviewMotionBlurQuality]);
+			// 只在预览组件挂载时建一次 Pixi。onError 曾每次渲染换身份，会把画布拆掉重建。
+		}, []);
 
 		// biome-ignore lint/correctness/useExhaustiveDependencies: A new media path must reset the persistent video element.
 		useEffect(() => {
@@ -1965,8 +2021,17 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 
 			animationStateRef.current = createPlaybackAnimationState();
 
-			layoutVideoContent();
-			video.pause();
+			layoutVideoContentRef.current?.();
+			// 首次挂纹理时片子应停在第一帧。之后布局/回调身份变化不得再跑本 effect，
+			// 否则会拆精灵 + pause，画面闪、进度钉死、声音也起不来。
+			logPreviewPlayback("preview.texture-mount", {
+				allowPlayback: allowPlaybackRef.current,
+				videoReady,
+				...snapshotPreviewVideo(video),
+			});
+			if (!allowPlaybackRef.current) {
+				video.pause();
+			}
 
 			const { handlePlay, handlePause, handleSeeked, handleSeeking, dispose } =
 				createVideoEventHandlers({
@@ -1976,8 +2041,8 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 					allowPlaybackRef,
 					currentTimeRef,
 					timeUpdateAnimationRef,
-					onPlayStateChange,
-					onTimeUpdate,
+					onPlayStateChange: (playing) => onPlayStateChangeRef.current(playing),
+					onTimeUpdate: (time) => onTimeUpdateRef.current(time),
 					trimRegionsRef,
 					speedRegionsRef,
 				});
@@ -2005,7 +2070,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 
 				videoSpriteRef.current = null;
 			};
-		}, [layoutVideoContent, onPlayStateChange, onTimeUpdate, pixiReady, videoReady]);
+		}, [pixiReady, videoReady]);
 
 		useEffect(() => {
 			if (!pixiReady || !videoReady) return;
@@ -2273,10 +2338,20 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				currentTime,
 				Number.isFinite(video.duration) ? video.duration : null,
 			);
-			video.currentTime = targetTime;
-			video.pause();
-			allowPlaybackRef.current = false;
-			currentTimeRef.current = targetTime * 1000;
+			// 成片刚写完时 Chromium 可能再次抛 loadedmetadata。用户已点播放则只补时长，
+			// 不能 pause / 清播放许可，否则进度钉在 0:00、声画都没有。
+			const keepPlaying = allowPlaybackRef.current && !video.paused;
+			logPreviewPlayback("preview.loadedmetadata", {
+				keepPlaying,
+				allowPlayback: allowPlaybackRef.current,
+				...snapshotPreviewVideo(video),
+			});
+			if (!keepPlaying) {
+				video.currentTime = targetTime;
+				video.pause();
+				allowPlaybackRef.current = false;
+				currentTimeRef.current = targetTime * 1000;
+			}
 
 			if (videoReadyRafRef.current) {
 				cancelAnimationFrame(videoReadyRafRef.current);
@@ -2911,6 +2986,15 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 							detail,
 							"src:",
 							videoPath,
+						);
+						logPreviewPlayback(
+							"preview.media-error",
+							{
+								detail,
+								code: code ?? null,
+								...snapshotPreviewVideo(e.currentTarget),
+							},
+							"error",
 						);
 						onError(`Failed to load video (${detail})`);
 					}}

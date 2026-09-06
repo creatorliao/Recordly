@@ -1,6 +1,10 @@
 import { type RefObject, useCallback } from "react";
 import type { TimelineEditorHandle } from "../timeline/TimelineEditor";
 import type { VideoPlaybackRef } from "../VideoPlayback";
+import {
+	logPreviewPlayback,
+	snapshotPreviewVideo,
+} from "../videoPlayback/previewPlaybackLog";
 
 interface UseEditorPlaybackControlsParams {
 	videoPlaybackRef: RefObject<VideoPlaybackRef>;
@@ -26,7 +30,18 @@ export function useEditorPlaybackControls({
 		if (!playback?.video) return;
 
 		playSourceAudioPreview();
-		playback.play().catch((error) => console.error("Video play failed:", error));
+		playback.play().catch((error) => {
+			console.error("Video play failed:", error);
+			logPreviewPlayback(
+				"preview.play-failed",
+				{
+					via: "toolbar",
+					message: error instanceof Error ? error.message : String(error),
+					...snapshotPreviewVideo(playback.video),
+				},
+				"error",
+			);
+		});
 	}, [getActivePlayback, playSourceAudioPreview]);
 
 	const togglePlayPause = useCallback(() => {
@@ -34,9 +49,16 @@ export function useEditorPlaybackControls({
 		const video = playback?.video;
 		if (!playback || !video) return;
 
-		if (!video.paused && !video.ended) playback.pause();
+		const next = !video.paused && !video.ended ? "pause" : "play";
+		logPreviewPlayback("preview.toggle", {
+			next,
+			timelinePlayheadTime,
+			timelineDuration,
+			...snapshotPreviewVideo(video),
+		});
+		if (next === "pause") playback.pause();
 		else startPlayback();
-	}, [getActivePlayback, startPlayback]);
+	}, [getActivePlayback, startPlayback, timelineDuration, timelinePlayheadTime]);
 
 	const handleSeek = useCallback(
 		(time: number, options: { pause?: boolean } = {}) => {

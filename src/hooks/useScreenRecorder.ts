@@ -1718,6 +1718,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				countdownDelay,
 				systemAudioEnabled,
 				microphoneEnabled,
+				// 与编辑器回放对账：验 1 应是 standard/30/10Mbps，验 3 应是 high/60
+				...resolveCaptureProfile(capturePresetRef.current),
 			},
 		});
 

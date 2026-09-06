@@ -1709,7 +1709,7 @@ export function registerRecordingHandlers(
 					};
 				}
 			} finally {
-				// 成功或失败都离开 mux，避免预览让路开关粘住（即使 mux 不再 yield）。
+				// 成功或失败都离开 mux，会话相位只给日志用，不再驱动预览停转。
 				setSessionLogPhase("editor");
 			}
 		} finally {

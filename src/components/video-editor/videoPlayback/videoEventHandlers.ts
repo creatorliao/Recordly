@@ -1,6 +1,7 @@
 import type React from "react";
 import { enablePitchPreservingPlayback } from "@/lib/mediaTiming";
 import type { SpeedRegion, TrimRegion } from "../types";
+import { logPreviewPlayback, snapshotPreviewVideo } from "./previewPlaybackLog";
 
 interface VideoEventHandlersParams {
 	video: HTMLVideoElement;
@@ -108,6 +109,12 @@ export function createVideoEventHandlers(params: VideoEventHandlersParams) {
 
 	const handlePlay = () => {
 		if (!allowPlaybackRef.current) {
+			// 许可没开却收到 play：立刻再 pause。连续多条 preview.play-guard 就是闪屏/进度钉死的环。
+			logPreviewPlayback(
+				"preview.play-guard",
+				{ reason: "allowPlayback-false", ...snapshotPreviewVideo(video) },
+				"warn",
+			);
 			video.pause();
 			return;
 		}
@@ -119,6 +126,7 @@ export function createVideoEventHandlers(params: VideoEventHandlersParams) {
 	};
 
 	const handlePause = () => {
+		logPreviewPlayback("preview.media-pause", snapshotPreviewVideo(video) ?? {});
 		isPlayingRef.current = false;
 		onPlayStateChange(false);
 		cancelScheduledUpdate();

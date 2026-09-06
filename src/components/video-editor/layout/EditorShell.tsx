@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentProps } from "react";
+import { useEffect, type ComponentProps } from "react";
 import { EditorAnnouncementBanner } from "@/components/announcements/EditorAnnouncementBanner";
 import { Toaster } from "@/components/ui/sonner";
 import type { useI18n } from "@/contexts/I18nContext";
@@ -69,16 +69,6 @@ export function EditorShell(props: Props) {
 		effectiveShowCursor,
 		previewAspectRatioValue,
 	} = props;
-	// 只应在导出/字幕时为 true。录制与 mux 不再发 preview-yield，避免刚进编辑器就被按停。
-	const [recordingYield, setRecordingYield] = useState(false);
-	useEffect(() => {
-		const unsubscribe = window.electronAPI?.onPreviewYield?.((active) => {
-			setRecordingYield(active);
-		});
-		return () => {
-			unsubscribe?.();
-		};
-	}, []);
 	const {
 		snapshot,
 		history,
@@ -279,9 +269,7 @@ export function EditorShell(props: Props) {
 						isPlaying={ui.isPlaying}
 						previewVolume={ui.previewVolume}
 						setPreviewVolume={ui.setPreviewVolume}
-						suspendRendering={
-							exportStatus.shouldSuspendPreviewRendering || recordingYield
-						}
+						suspendRendering={exportStatus.shouldSuspendPreviewRendering}
 						appearance={appearance}
 						timeline={timeline}
 						audio={audio}

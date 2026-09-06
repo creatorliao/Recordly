@@ -8,7 +8,7 @@ import { createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { app, BrowserWindow } from "electron";
+import { app } from "electron";
 import {
 	formatSessionLogFileName,
 	formatSessionLogLine,
@@ -23,7 +23,6 @@ import {
 	type SessionLogInput,
 	type SessionLogLevel,
 	shouldWriteSessionLogLevel,
-	shouldYieldPreviewForPhase,
 	type SessionLogPhaseName,
 } from "./sessionLogFormat";
 
@@ -195,25 +194,6 @@ export function setSessionLogCaptureContext(
 	state.captureContext = capture;
 }
 
-function isEditorWindow(window: BrowserWindow) {
-	try {
-		const url = new URL(window.webContents.getURL());
-		return url.searchParams.get("windowType") === "editor";
-	} catch {
-		return false;
-	}
-}
-
-/** 仅导出/字幕时让编辑器预览停转，避免和重活抢 GPU。录制与 mux 不得停预览。 */
-function broadcastPreviewYield(active: boolean) {
-	for (const window of BrowserWindow.getAllWindows()) {
-		if (window.isDestroyed() || !isEditorWindow(window)) {
-			continue;
-		}
-		window.webContents.send("preview-yield", { active });
-	}
-}
-
 export function setSessionLogPhase(phase: SessionLogPhase) {
 	if (!state) {
 		return;
@@ -222,7 +202,6 @@ export function setSessionLogPhase(phase: SessionLogPhase) {
 		return;
 	}
 	state.phase = phase;
-	broadcastPreviewYield(shouldYieldPreviewForPhase(phase));
 	writeSessionLog({
 		level: "info",
 		scope: "resource",

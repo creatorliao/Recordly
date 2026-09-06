@@ -12,6 +12,9 @@ export type AppLogInput = {
 };
 
 export function appLog(input: AppLogInput) {
+	if (typeof window === "undefined") {
+		return;
+	}
 	const api = window.electronAPI;
 	if (typeof api?.writeSessionLog !== "function") {
 		return;
@@ -20,6 +23,9 @@ export function appLog(input: AppLogInput) {
 }
 
 export function setAppLogCorrelation(corr: { recordingId?: string; exportId?: string }) {
+	if (typeof window === "undefined") {
+		return;
+	}
 	const api = window.electronAPI;
 	if (typeof api?.setSessionLogCorrelation !== "function") {
 		return;
