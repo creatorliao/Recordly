@@ -31,7 +31,8 @@ import {
 	killWindowsCaptureProcess,
 	registerIpcHandlers,
 } from "./ipc/handlers";
-import { getAssetRootPath } from "./ipc/project/manager";
+import { getAssetRootPath, loadRecentProjectPaths } from "./ipc/project/manager";
+import { setCurrentProjectPath } from "./ipc/state";
 import { ensureMediaServer } from "./mediaServer";
 import { hardenWebContentsNavigation, shouldHardenWebContentsType } from "./navigationPolicy";
 import { shouldGrantDisplayCapture, shouldGrantMediaPermission } from "./permissionPolicy";
@@ -215,6 +216,20 @@ function closeEditorWindowToHud(window: BrowserWindow | null) {
 // 设置「关闭窗口时」：默认退出应用；可选最小化到托盘。
 function shouldMinimizeToTrayOnClose() {
 	return readAppSetting("closeWindowBehavior") === "tray";
+}
+
+// 冷启动进编辑器时打开最近一个项目（剪映开草稿的习惯）；没有则空态。
+async function openMostRecentProjectIfAvailable() {
+	const recentPaths = await loadRecentProjectPaths();
+	for (const recentPath of recentPaths) {
+		try {
+			await fs.access(recentPath);
+			setCurrentProjectPath(recentPath);
+			return;
+		} catch {
+			// 忽略已失效的最近路径，继续找下一条。
+		}
+	}
 }
 
 function hideWindowToTray(window: BrowserWindow | null) {
@@ -962,6 +977,19 @@ app.whenReady().then(async () => {
 				`[dev-open-recording] Starting editor for ${process.env.RECORDLY_DEV_OPEN_RECORDING_INPUT}`,
 			);
 		}
+		createEditorWindowWrapper();
+		return;
+	}
+
+	// 冷启动按「启动时打开」决定进哪一间：默认录制工具栏；拨到编辑器时开最近项目。
+	if (readAppSetting("startupScreen") === "editor") {
+		await openMostRecentProjectIfAvailable();
+		writeSessionLog({
+			level: "info",
+			scope: "window",
+			event: "editor.open-on-startup",
+			msg: "cold start opening editor per startupScreen setting",
+		});
 		createEditorWindowWrapper();
 		return;
 	}
