@@ -21,6 +21,13 @@ import { EditorPreviewPanel } from "./EditorPreviewPanel";
 import { EditorSidebar } from "./EditorSidebar";
 import { EditorTimelinePanel } from "./EditorTimelinePanel";
 
+function formatStatusTime(seconds: number): string {
+	const safe = Math.max(0, Math.floor(seconds));
+	const minutes = Math.floor(safe / 60);
+	const secs = safe % 60;
+	return `${minutes}:${String(secs).padStart(2, "0")}`;
+}
+
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
 	project: ReturnType<typeof useProjectState>;
@@ -259,6 +266,9 @@ export function EditorShell(props: Props) {
 						setActiveSection={ui.setActiveEffectSection}
 						settingsPanelVisible={ui.settingsPanelVisible}
 						settingsPanelProps={settingsPanelProps}
+						projectLibraryEntries={project.projectLibraryEntries}
+						handleOpenProjectFromLibrary={openActions.handleOpenProjectFromLibrary}
+						handleImportMediaOrProject={openActions.handleImportMediaOrProject}
 					/>
 					<EditorPreviewPanel
 						t={t}
@@ -316,6 +326,16 @@ export function EditorShell(props: Props) {
 					handleSelectAnnotation={handleSelectAnnotation}
 				/>
 			</div>
+			<footer className="flex h-[22px] shrink-0 items-center justify-between border-t border-foreground/10 px-3 text-[12px] leading-[22px] text-muted-foreground">
+				<span>
+					{hasUnsavedChanges
+						? t("editor.statusbar.unsaved", "Unsaved")
+						: t("editor.statusbar.saved", "Saved")}
+				</span>
+				<span className="font-mono tabular-nums">
+					{formatStatusTime(ui.currentTime)} / {formatStatusTime(ui.duration)}
+				</span>
+			</footer>
 			{editorDialogs}
 			<CropEditorDialog
 				open={ui.showCropModal}

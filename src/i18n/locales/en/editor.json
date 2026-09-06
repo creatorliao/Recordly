@@ -124,6 +124,10 @@
 	"layout": {
 		"toggleSideBar": "Toggle sidebar"
 	},
+	"statusbar": {
+		"unsaved": "Unsaved",
+		"saved": "Saved"
+	},
 	"project": {
 		"untitled": "Untitled",
 		"openRecent": "Open recent",

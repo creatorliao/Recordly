@@ -107,6 +107,7 @@ export function normalizeCursorClickEffectColor(
 }
 
 export type EditorEffectSection =
+	| "projects"
 	| "scene"
 	| "cursor"
 	| "captions"

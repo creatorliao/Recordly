@@ -4,6 +4,7 @@ import {
 	Cursor,
 	Gear,
 	PuzzlePiece,
+	SquaresFour,
 	Sparkle,
 } from "@phosphor-icons/react";
 import { motion } from "motion/react";
@@ -11,8 +12,10 @@ import type { ComponentProps, Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import type { useI18n } from "@/contexts/I18nContext";
 import ExtensionManager from "../ExtensionManager";
+import type { ProjectLibraryEntry } from "../ProjectBrowserDialog";
 import { SettingsPanel } from "../SettingsPanel";
 import type { EditorEffectSection } from "../types";
+import { ProjectsPanel } from "./ProjectsPanel";
 
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
@@ -20,6 +23,9 @@ type Props = {
 	setActiveSection: Dispatch<SetStateAction<EditorEffectSection>>;
 	settingsPanelVisible: boolean;
 	settingsPanelProps: ComponentProps<typeof SettingsPanel>;
+	projectLibraryEntries: ProjectLibraryEntry[];
+	handleOpenProjectFromLibrary: (projectPath: string) => void;
+	handleImportMediaOrProject: () => void;
 };
 
 export function EditorSidebar({
@@ -28,9 +34,13 @@ export function EditorSidebar({
 	setActiveSection,
 	settingsPanelVisible,
 	settingsPanelProps,
+	projectLibraryEntries,
+	handleOpenProjectFromLibrary,
+	handleImportMediaOrProject,
 }: Props) {
 	const toolSections = useMemo(
 		() => [
+			{ id: "projects" as const, label: t("editor.project.browserTitle", "Projects"), icon: SquaresFour },
 			{ id: "scene" as const, label: t("settings.sections.scene", "Scene"), icon: Sparkle },
 			{ id: "cursor" as const, label: t("settings.sections.cursor", "Cursor"), icon: Cursor },
 			{ id: "webcam" as const, label: t("settings.sections.webcam", "Webcam"), icon: Camera },
@@ -112,7 +122,13 @@ export function EditorSidebar({
 				{settingsButton}
 			</div>
 			{settingsPanelVisible ? (
-				activeSection === "extensions" ? (
+				activeSection === "projects" ? (
+					<ProjectsPanel
+						entries={projectLibraryEntries}
+						onOpenProject={handleOpenProjectFromLibrary}
+						onImportFile={handleImportMediaOrProject}
+					/>
+				) : activeSection === "extensions" ? (
 					<ExtensionManager />
 				) : (
 					<SettingsPanel {...settingsPanelProps} />

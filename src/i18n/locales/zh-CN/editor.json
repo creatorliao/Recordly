@@ -124,6 +124,10 @@
 	"layout": {
 		"toggleSideBar": "切换侧栏"
 	},
+	"statusbar": {
+		"unsaved": "未保存",
+		"saved": "已保存"
+	},
 	"project": {
 		"untitled": "未命名",
 		"openRecent": "最近打开",
