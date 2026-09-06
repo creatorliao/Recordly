@@ -1,5 +1,6 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { notifyError } from "@/lib/notifyError";
 import { resolveAutoCaptionSourcePath } from "../autoCaptionSource";
 import { type CaptionEditTarget, updateCaptionCuesForEditedTarget } from "../captionEditing";
 import { resolveVideoUrl } from "../projectPersistence";
@@ -35,6 +36,7 @@ interface UseAutoCaptionControllerParams {
 	setAutoCaptionSettings: Dispatch<SetStateAction<AutoCaptionSettings>>;
 	setAutoCaptions: Dispatch<SetStateAction<CaptionCue[]>>;
 	syncActiveVideoSource: (sourcePath: string, webcamPath?: string | null) => Promise<void>;
+	isExporting?: boolean;
 }
 
 export function useAutoCaptionController({
@@ -55,12 +57,13 @@ export function useAutoCaptionController({
 	setWhisperModelDownloadProgress,
 	isGeneratingCaptions,
 	setIsGeneratingCaptions,
-	autoCaptionSettings,
 	setAutoCaptionSettings,
 	setAutoCaptions,
 	syncActiveVideoSource,
+	isExporting = false,
 }: UseAutoCaptionControllerParams) {
 	const captionGenerationInFlightRef = useRef(false);
+	const [whisperModelIsBundled, setWhisperModelIsBundled] = useState(false);
 
 	useEffect(() => {
 		const unsubscribe = window.electronAPI.onWhisperSmallModelDownloadProgress((state) => {
@@ -71,8 +74,9 @@ export function useAutoCaptionController({
 				setWhisperModelPath((current) => current ?? state.path ?? null);
 			} else if (state.status === "idle") {
 				setDownloadedWhisperModelPath(null);
-			} else if (state.status === "error" && state.error) {
-				toast.error(state.error);
+				setWhisperModelIsBundled(false);
+			} 			else if (state.status === "error" && state.error) {
+				notifyError(state.error, { scope: "captions", event: "captions.generate-failed" });
 			}
 		});
 
@@ -81,10 +85,12 @@ export function useAutoCaptionController({
 			if (result.exists && result.path) {
 				setDownloadedWhisperModelPath(result.path);
 				setWhisperModelPath((current) => current ?? result.path ?? null);
+				setWhisperModelIsBundled(result.source === "bundled");
 				setWhisperModelDownloadStatus("downloaded");
 				setWhisperModelDownloadProgress(100);
 			} else {
 				setDownloadedWhisperModelPath(null);
+				setWhisperModelIsBundled(false);
 				setWhisperModelDownloadStatus("idle");
 				setWhisperModelDownloadProgress(0);
 			}
@@ -102,7 +108,7 @@ export function useAutoCaptionController({
 		const result = await window.electronAPI.openWhisperExecutablePicker();
 		if (!result.success || !result.path) return;
 		setWhisperExecutablePath(result.path);
-		toast.success("Whisper executable selected");
+		toast.success(t("common.toasts.whisperExeSelected"));
 	}, [setWhisperExecutablePath]);
 
 	const handleDownloadWhisperSmallModel = useCallback(async () => {
@@ -112,7 +118,10 @@ export function useAutoCaptionController({
 		const result = await window.electronAPI.downloadWhisperSmallModel();
 		if (!result.success) {
 			setWhisperModelDownloadStatus("error");
-			toast.error(result.error || "Failed to download Whisper small model");
+			notifyError(result.error || t("common.toasts.whisperDownloadFailed"), {
+				scope: "captions",
+				event: "captions.generate-failed",
+			});
 			return;
 		}
 		if (result.path) {
@@ -131,20 +140,34 @@ export function useAutoCaptionController({
 		const result = await window.electronAPI.openWhisperModelPicker();
 		if (!result.success || !result.path) return;
 		setWhisperModelPath(result.path);
-		toast.success("Whisper model selected");
+		toast.success(t("common.toasts.whisperModelSelected"));
 	}, [setWhisperModelPath]);
 
 	const handleDeleteWhisperSmallModel = useCallback(async () => {
 		const result = await window.electronAPI.deleteWhisperSmallModel();
 		if (!result.success) {
-			toast.error(result.error || "Failed to delete Whisper small model");
+			notifyError(result.error || t("common.toasts.whisperDeleteFailed"), {
+				scope: "captions",
+				event: "captions.generate-failed",
+			});
+			return;
+		}
+		const status = await window.electronAPI.getWhisperSmallModelStatus();
+		if (status.success && status.exists && status.path) {
+			setWhisperModelPath(status.path);
+			setDownloadedWhisperModelPath(status.path);
+			setWhisperModelIsBundled(status.source === "bundled");
+			setWhisperModelDownloadStatus("downloaded");
+			setWhisperModelDownloadProgress(100);
+			toast.success(t("common.toasts.whisperModelDeleted"));
 			return;
 		}
 		setWhisperModelPath((current) => (current === downloadedWhisperModelPath ? null : current));
 		setDownloadedWhisperModelPath(null);
+		setWhisperModelIsBundled(false);
 		setWhisperModelDownloadStatus("idle");
 		setWhisperModelDownloadProgress(0);
-		toast.success("Whisper small model deleted");
+		toast.success(t("common.toasts.whisperModelDeleted"));
 	}, [
 		downloadedWhisperModelPath,
 		setDownloadedWhisperModelPath,
@@ -154,6 +177,18 @@ export function useAutoCaptionController({
 	]);
 
 	const handleGenerateAutoCaptions = useCallback(async () => {
+		if (isExporting) {
+			notifyError(
+				t(
+					"common.toasts.captionsWaitForExport",
+					"导出完成后再生成字幕，避免整机卡住。",
+				),
+				{
+				scope: "captions",
+				event: "captions.generate-failed",
+			});
+			return;
+		}
 		if (captionGenerationInFlightRef.current || isGeneratingCaptions) return;
 		captionGenerationInFlightRef.current = true;
 		setIsGeneratingCaptions(true);
@@ -173,7 +208,10 @@ export function useAutoCaptionController({
 				});
 			}
 			if (!sourcePath) {
-				toast.error("No source video is loaded");
+				notifyError(t("common.toasts.noSourceVideo"), {
+					scope: "captions",
+					event: "captions.generate-failed",
+				});
 				return;
 			}
 			await syncActiveVideoSource(sourcePath, webcamSourcePath);
@@ -181,35 +219,51 @@ export function useAutoCaptionController({
 				setVideoSourcePath(sourcePath);
 				setVideoPath(await resolveVideoUrl(sourcePath));
 			}
-			if (!whisperModelPath) {
-				toast.error("Select a Whisper model or download the small model first");
-				return;
+			let modelPath = whisperModelPath;
+			if (!modelPath) {
+				const status = await window.electronAPI.getWhisperSmallModelStatus();
+				if (status.success && status.path) {
+					modelPath = status.path;
+					setWhisperModelPath(status.path);
+					setWhisperModelIsBundled(status.source === "bundled");
+				}
 			}
-
+			// 不选手选路径；主进程会落到捆绑 / userData 默认模型
 			const result = await window.electronAPI.generateAutoCaptions({
 				videoPath: sourcePath,
 				whisperExecutablePath: whisperExecutablePath ?? undefined,
-				whisperModelPath,
-				language: autoCaptionSettings.language,
+				whisperModelPath: modelPath ?? undefined,
+				language: "zh",
 			});
 			if (!result.success || !result.cues) {
 				const errorMessage = result.error ? getErrorMessage(result.error) : result.message;
-				toast.error(errorMessage || "Failed to generate captions");
+				notifyError(errorMessage || t("common.toasts.generateCaptionsFailed"), {
+					scope: "captions",
+					event: "captions.generate-failed",
+				});
 				return;
 			}
 			setAutoCaptions(result.cues);
 			if (result.cues.length > 0) {
 				setAutoCaptionSettings((current) => ({ ...current, enabled: true }));
 			}
-			toast.success(result.message || `Generated ${result.cues.length} captions`);
+			toast.success(
+				result.message ||
+					t("common.toasts.generatedCaptions", undefined, {
+						count: result.cues.length,
+					}),
+			);
 		} catch (error) {
-			toast.error(getErrorMessage(error));
+			notifyError(getErrorMessage(error), {
+				scope: "captions",
+				event: "captions.generate-failed",
+			});
 		} finally {
 			captionGenerationInFlightRef.current = false;
 			setIsGeneratingCaptions(false);
 		}
 	}, [
-		autoCaptionSettings.language,
+		isExporting,
 		isGeneratingCaptions,
 		setAutoCaptionSettings,
 		setAutoCaptions,
@@ -233,6 +287,7 @@ export function useAutoCaptionController({
 	);
 
 	return {
+		whisperModelIsBundled,
 		handlePickWhisperExecutable,
 		handleDownloadWhisperSmallModel,
 		handlePickWhisperModel,

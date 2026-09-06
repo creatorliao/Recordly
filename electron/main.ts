@@ -15,6 +15,12 @@ import {
 	Tray,
 } from "electron";
 import { RECORDINGS_DIR } from "./appPaths";
+import {
+	attachWebContentsConsoleLogging,
+	endSessionLog,
+	startSessionLog,
+	writeSessionLog,
+} from "./sessionLog";
 import { showCursor } from "./cursorHider";
 import { getGpuSwitches } from "./gpuSwitches";
 import {
@@ -24,10 +30,10 @@ import {
 	killWindowsCaptureProcess,
 	registerIpcHandlers,
 } from "./ipc/handlers";
+import { getAssetRootPath } from "./ipc/project/manager";
 import { ensureMediaServer } from "./mediaServer";
 import { hardenWebContentsNavigation, shouldHardenWebContentsType } from "./navigationPolicy";
 import { shouldGrantDisplayCapture, shouldGrantMediaPermission } from "./permissionPolicy";
-import { getAssetRootPath } from "./ipc/project/manager";
 import { ensurePackagedRendererServer, getPackagedRendererBaseUrl } from "./rendererServer";
 import {
 	createEditorWindow,
@@ -60,6 +66,7 @@ app.commandLine.appendSwitch("enable-unsafe-webgpu");
 app.commandLine.appendSwitch("enable-gpu-rasterization");
 
 app.on("web-contents-created", (_event, contents) => {
+	attachWebContentsConsoleLogging(contents);
 	if (!shouldHardenWebContentsType(contents.getType())) {
 		return;
 	}
@@ -102,6 +109,12 @@ async function ensureRecordingsDir() {
 		console.log("User Data Path:", app.getPath("userData"));
 	} catch (error) {
 		console.error("Failed to create recordings directory:", error);
+		writeSessionLog({
+			level: "error",
+			scope: "app",
+			event: "app.recordings-dir-failed",
+			msg: String(error),
+		});
 	}
 }
 
@@ -716,6 +729,7 @@ app.on("before-quit", () => {
 	showCursor();
 	cleanupNativeVideoExportSessions();
 	void cleanupAllExportStreams();
+	endSessionLog("before-quit");
 });
 
 app.on("window-all-closed", () => {
@@ -736,6 +750,12 @@ app.on("second-instance", () => {
 
 // Register all IPC handlers when app is ready
 app.whenReady().then(async () => {
+	try {
+		await startSessionLog();
+	} catch (error) {
+		console.error("Failed to start session log:", error);
+	}
+
 	if (process.platform === "win32") {
 		app.setAppUserModelId("dev.recordly.app");
 	}
@@ -830,9 +850,9 @@ app.whenReady().then(async () => {
 	await Promise.all([
 		ensureRecordingsDir(),
 		!VITE_DEV_SERVER_URL
-			? ensurePackagedRendererServer(RENDERER_DIST, {
+			? ensurePackagedRendererServer(RENDERER_DIST, () => ({
 					wallpapers: path.join(getAssetRootPath(), "wallpapers"),
-				}).catch((error) => {
+				})).catch((error) => {
 					console.warn(
 						"[renderer-server] Failed to start packaged renderer server:",
 						error,

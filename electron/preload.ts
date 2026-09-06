@@ -206,6 +206,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	generateWallpaperThumbnail: (filePath: string) => {
 		return ipcRenderer.invoke("generate-wallpaper-thumbnail", filePath);
 	},
+	readBundledAssetDataUrl: (filePath: string) => {
+		return ipcRenderer.invoke("read-bundled-asset-data-url", filePath);
+	},
+	resolveBundledAssetPath: (filePath: string) => {
+		return ipcRenderer.invoke("resolve-bundled-asset-path", filePath);
+	},
 	probeNativeVideoMetadata: (filePath: string) => {
 		return ipcRenderer.invoke("probe-native-video-metadata", filePath) as Promise<{
 			success: boolean;
@@ -721,7 +727,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	generateAutoCaptions: (options: {
 		videoPath: string;
 		whisperExecutablePath?: string;
-		whisperModelPath: string;
+		whisperModelPath?: string;
 		language?: string;
 	}) => {
 		return ipcRenderer.invoke("generate-auto-captions", options);
@@ -844,6 +850,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	openRecordingsFolder: () => {
 		return ipcRenderer.invoke("open-recordings-folder");
 	},
+	writeSessionLog: (entry: {
+		level: "info" | "warn" | "error";
+		scope: string;
+		event: string;
+		msg?: string;
+		data?: unknown;
+		corr?: { recordingId?: string; exportId?: string };
+	}) => ipcRenderer.invoke("session-log-write", entry),
+	setSessionLogCorrelation: (corr: { recordingId?: string; exportId?: string }) =>
+		ipcRenderer.invoke("session-log-set-corr", corr),
+	openLogsFolder: () => ipcRenderer.invoke("open-logs-folder"),
 	getRecordingsDirectory: () => {
 		return ipcRenderer.invoke("get-recordings-directory");
 	},
@@ -900,7 +917,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
 		systemAudioEnabled?: boolean;
 		webcamEnabled?: boolean;
 		webcamDeviceId?: string;
+		capturePreset?: "economy" | "standard" | "high";
 	}) => ipcRenderer.invoke("set-recording-preferences", prefs),
+	onPreviewYield: (callback: (active: boolean) => void) => {
+		const listener = (_event: Electron.IpcRendererEvent, payload: { active?: boolean }) =>
+			callback(payload?.active === true);
+		ipcRenderer.on("preview-yield", listener);
+		return () => ipcRenderer.removeListener("preview-yield", listener);
+	},
 	getCountdownDelay: () => ipcRenderer.invoke("get-countdown-delay"),
 	setCountdownDelay: (delay: number) => ipcRenderer.invoke("set-countdown-delay", delay),
 	startCountdown: (seconds: number) => ipcRenderer.invoke("start-countdown", seconds),

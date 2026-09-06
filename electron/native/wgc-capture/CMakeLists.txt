@@ -13,6 +13,8 @@ add_executable(wgc-capture
 )
 
 target_compile_options(wgc-capture PRIVATE /EHsc /W3 /utf-8)
+# MSVC 14.51+ 默认拒绝 WinRT 仍引用的 experimental/coroutine
+target_compile_definitions(wgc-capture PRIVATE _SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
 
 target_link_libraries(wgc-capture PRIVATE
   windowsapp

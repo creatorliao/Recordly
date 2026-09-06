@@ -106,8 +106,8 @@ describe("editorPreferences", () => {
 		});
 	});
 
-	it("defaults MP4 exports to source quality", () => {
-		expect(DEFAULT_EDITOR_PREFERENCES.exportQuality).toBe("source");
+	it("defaults MP4 exports to good quality", () => {
+		expect(DEFAULT_EDITOR_PREFERENCES.exportQuality).toBe("good");
 	});
 
 	it("defaults cursor preferences to Tahoe at 2.5x with gentler sway", () => {

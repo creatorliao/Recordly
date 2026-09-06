@@ -5,6 +5,7 @@ import path from "node:path";
 import type { Readable, Writable } from "node:stream";
 import type { SaveDialogOptions } from "electron";
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { uiDialog } from "../../uiLocale";
 import {
 	parseCaptionSidecarPayload,
 	type CaptionSidecarPayload,
@@ -848,11 +849,11 @@ export function registerExportHandlers() {
 				// Determine file type from extension
 				const isGif = fileName.toLowerCase().endsWith(".gif");
 				const filters = isGif
-					? [{ name: "GIF Image", extensions: ["gif"] }]
-					: [{ name: "MP4 Video", extensions: ["mp4"] }];
+					? [{ name: uiDialog("filterGif"), extensions: ["gif"] }]
+					: [{ name: uiDialog("filterMp4"), extensions: ["mp4"] }];
 				const parentWindow = BrowserWindow.fromWebContents(event.sender);
 				const saveDialogOptions: SaveDialogOptions = {
-					title: isGif ? "Save Exported GIF" : "Save Exported Video",
+					title: isGif ? uiDialog("saveExportedGif") : uiDialog("saveExportedVideo"),
 					defaultPath: path.join(app.getPath("downloads"), fileName),
 					filters,
 					properties: ["createDirectory", "showOverwriteConfirmation"],
@@ -1003,11 +1004,11 @@ export function registerExportHandlers() {
 
 				const isGif = fileName.toLowerCase().endsWith(".gif");
 				const filters = isGif
-					? [{ name: "GIF Image", extensions: ["gif"] }]
-					: [{ name: "MP4 Video", extensions: ["mp4"] }];
+					? [{ name: uiDialog("filterGif"), extensions: ["gif"] }]
+					: [{ name: uiDialog("filterMp4"), extensions: ["mp4"] }];
 				const parentWindow = BrowserWindow.fromWebContents(event.sender);
 				const saveDialogOptions: SaveDialogOptions = {
-					title: isGif ? "Save Exported GIF" : "Save Exported Video",
+					title: isGif ? uiDialog("saveExportedGif") : uiDialog("saveExportedVideo"),
 					defaultPath: path.join(app.getPath("downloads"), fileName),
 					filters,
 					properties: ["createDirectory", "showOverwriteConfirmation"],

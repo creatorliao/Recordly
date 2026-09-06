@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { app, BrowserWindow, desktopCapturer, ipcMain, systemPreferences } from "electron";
+import { setSessionLogPhase, writeSessionLog } from "../../sessionLog";
 import { reassertHudOverlayMousePassthrough } from "../../windows";
 import { ALLOW_RECORDLY_WINDOW_CAPTURE } from "../constants";
 import {
@@ -386,6 +387,16 @@ export function registerSourceHandlers({
 			await bringSelectedWindowForward(source);
 		}
 		setSelectedSource(source);
+		writeSessionLog({
+			level: "info",
+			scope: "source",
+			event: "source.select",
+			msg: source.name,
+			data: {
+				sourceType: source.sourceType ?? (source.id?.startsWith("window:") ? "window" : "screen"),
+				idPrefix: typeof source.id === "string" ? source.id.slice(0, 24) : null,
+			},
+		});
 		broadcastSelectedSourceChange();
 		stopWindowBoundsCapture();
 		const sourceSelectorWin = getSourceSelectorWindow();
@@ -591,6 +602,13 @@ body{background:transparent;overflow:hidden;width:100vw;height:100vh}
 	});
 	ipcMain.handle("switch-to-editor", () => {
 		console.log("[switch-to-editor] Opening editor window");
+		setSessionLogPhase("editor");
+		writeSessionLog({
+			level: "info",
+			scope: "editor",
+			event: "editor.open",
+			msg: "opening editor window",
+		});
 		const sourceSelectorWin = getSourceSelectorWindow();
 		if (sourceSelectorWin && !sourceSelectorWin.isDestroyed()) {
 			sourceSelectorWin.close();

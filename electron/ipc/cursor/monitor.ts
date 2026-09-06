@@ -13,6 +13,11 @@ import {
 	setNativeCursorMonitorProcess,
 } from "../state";
 import type { CursorVisualType } from "../types";
+import {
+	registerSessionLogChildProcess,
+	unregisterSessionLogChildProcess,
+	writeSessionLog,
+} from "../../sessionLog";
 import { recordCursorMouseDown, recordCursorMouseUp } from "./interaction";
 
 export function emitCursorStateChanged(cursorType: CursorVisualType) {
@@ -90,7 +95,7 @@ export async function startNativeCursorMonitor() {
 
 	if (process.platform !== "darwin" && process.platform !== "win32") {
 		setCurrentCursorVisualType("arrow");
-		return;
+		return false;
 	}
 
 	try {
@@ -102,8 +107,15 @@ export async function startNativeCursorMonitor() {
 				await fs.access(helperPath, fsConstants.F_OK);
 			} catch {
 				console.warn("Windows cursor monitor helper missing:", helperPath);
+				writeSessionLog({
+					level: "error",
+					scope: "cursor",
+					event: "cursor.monitor-failed",
+					msg: "Windows cursor monitor helper missing",
+					data: { helperPath },
+				});
 				setCurrentCursorVisualType("arrow");
-				return;
+				return false;
 			}
 		} else {
 			helperPath = await ensureNativeCursorMonitorBinary();
@@ -121,21 +133,45 @@ export async function startNativeCursorMonitor() {
 			});
 		} catch (spawnError) {
 			console.warn("Failed to spawn cursor monitor:", spawnError);
+			writeSessionLog({
+				level: "error",
+				scope: "cursor",
+				event: "cursor.monitor-failed",
+				msg: "Failed to spawn cursor monitor",
+				data: { error: String(spawnError) },
+			});
 			setNativeCursorMonitorProcess(null);
 			setCurrentCursorVisualType("arrow");
-			return;
+			return false;
 		}
 
 		setNativeCursorMonitorProcess(proc as Parameters<typeof setNativeCursorMonitorProcess>[0]);
 		const spawned = proc;
+		registerSessionLogChildProcess("cursor-monitor", spawned?.pid);
+		spawned?.once("exit", () => unregisterSessionLogChildProcess(spawned.pid));
 		if (!spawned) {
 			setNativeCursorMonitorProcess(null);
 			setCurrentCursorVisualType("arrow");
-			return;
+			return false;
 		}
+
+		writeSessionLog({
+			level: "info",
+			scope: "cursor",
+			event: "cursor.monitor-start",
+			msg: "native cursor monitor started",
+			data: { helperPath, pid: spawned.pid ?? null },
+		});
 
 		spawned.once("error", (error) => {
 			console.warn("Native cursor monitor process error:", error);
+			writeSessionLog({
+				level: "error",
+				scope: "cursor",
+				event: "cursor.monitor-failed",
+				msg: "Native cursor monitor process error",
+				data: { error: String(error) },
+			});
 			if (nativeCursorMonitorProcess === spawned) {
 				setNativeCursorMonitorProcess(null);
 				setNativeCursorMonitorOutputBuffer("");
@@ -157,10 +193,19 @@ export async function startNativeCursorMonitor() {
 				setCurrentCursorVisualType("arrow");
 			}
 		});
+		return true;
 	} catch (error) {
 		console.warn("Failed to start native cursor monitor:", error);
+		writeSessionLog({
+			level: "error",
+			scope: "cursor",
+			event: "cursor.monitor-failed",
+			msg: "Failed to start native cursor monitor",
+			data: { error: String(error) },
+		});
 		setNativeCursorMonitorProcess(null);
 		setNativeCursorMonitorOutputBuffer("");
 		setCurrentCursorVisualType("arrow");
+		return false;
 	}
 }

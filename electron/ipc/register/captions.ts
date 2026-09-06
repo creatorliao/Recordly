@@ -1,5 +1,12 @@
 import path from "node:path";
 import { dialog, ipcMain } from "electron";
+import {
+	getSessionLogPhase,
+	sessionLogErrorFields,
+	setSessionLogPhase,
+	writeSessionLog,
+} from "../../sessionLog";
+import { uiDialog } from "../../uiLocale";
 import { generateAutoCaptionsFromVideo } from "../captions/generate";
 import {
 	deleteWhisperSmallModel,
@@ -25,13 +32,15 @@ export function registerCaptionHandlers() {
 			const includeProjects = Boolean(options?.includeProjects);
 			const recordingsDir = await getRecordingsDir();
 			const result = await dialog.showOpenDialog({
-				title: includeProjects ? "Import Media or Recordly Project" : "Select Video File",
+				title: includeProjects
+					? uiDialog("importMediaOrProject")
+					: uiDialog("selectVideo"),
 				defaultPath: recordingsDir,
 				filters: [
 					...(includeProjects
 						? [
 								{
-									name: "Media or Recordly Projects",
+									name: uiDialog("filterMediaOrProject"),
 									extensions: [
 										...VIDEO_FILE_EXTENSIONS,
 										...PROJECT_FILE_EXTENSIONS,
@@ -39,11 +48,16 @@ export function registerCaptionHandlers() {
 								},
 							]
 						: []),
-					{ name: "Video Files", extensions: VIDEO_FILE_EXTENSIONS },
+					{ name: uiDialog("filterVideo"), extensions: VIDEO_FILE_EXTENSIONS },
 					...(includeProjects
-						? [{ name: "Recordly Projects", extensions: PROJECT_FILE_EXTENSIONS }]
+						? [
+								{
+									name: uiDialog("filterRecordlyProject"),
+									extensions: PROJECT_FILE_EXTENSIONS,
+								},
+							]
 						: []),
-					{ name: "All Files", extensions: ["*"] },
+					{ name: uiDialog("filterAll"), extensions: ["*"] },
 				],
 				properties: ["openFile"],
 			});
@@ -82,13 +96,13 @@ export function registerCaptionHandlers() {
 	ipcMain.handle("open-audio-file-picker", async () => {
 		try {
 			const result = await dialog.showOpenDialog({
-				title: "Select Audio File",
+				title: uiDialog("selectAudio"),
 				filters: [
 					{
-						name: "Audio Files",
+						name: uiDialog("filterAudio"),
 						extensions: ["mp3", "wav", "aac", "m4a", "flac", "ogg"],
 					},
-					{ name: "All Files", extensions: ["*"] },
+					{ name: uiDialog("filterAll"), extensions: ["*"] },
 				],
 				properties: ["openFile"],
 			});
@@ -115,13 +129,13 @@ export function registerCaptionHandlers() {
 	ipcMain.handle("open-whisper-executable-picker", async () => {
 		try {
 			const result = await dialog.showOpenDialog({
-				title: "Select Whisper Executable",
+				title: uiDialog("selectWhisperExe"),
 				filters: [
 					{
-						name: "Executables",
+						name: uiDialog("filterExecutable"),
 						extensions: process.platform === "win32" ? ["exe", "cmd", "bat"] : ["*"],
 					},
-					{ name: "All Files", extensions: ["*"] },
+					{ name: uiDialog("filterAll"), extensions: ["*"] },
 				],
 				properties: ["openFile"],
 			});
@@ -141,10 +155,10 @@ export function registerCaptionHandlers() {
 	ipcMain.handle("open-whisper-model-picker", async () => {
 		try {
 			const result = await dialog.showOpenDialog({
-				title: "Select Whisper Model",
+				title: uiDialog("selectWhisperModel"),
 				filters: [
-					{ name: "Whisper Models", extensions: ["bin"] },
-					{ name: "All Files", extensions: ["*"] },
+					{ name: uiDialog("filterWhisperModel"), extensions: ["bin"] },
+					{ name: uiDialog("filterAll"), extensions: ["*"] },
 				],
 				properties: ["openFile"],
 			});
@@ -192,6 +206,15 @@ export function registerCaptionHandlers() {
 	ipcMain.handle("delete-whisper-small-model", async (event) => {
 		try {
 			await deleteWhisperSmallModel();
+			const status = await getWhisperSmallModelStatus();
+			if (status.exists && status.path) {
+				sendWhisperModelDownloadProgress(event.sender, {
+					status: "downloaded",
+					progress: 100,
+					path: status.path,
+				});
+				return { success: true, path: status.path, source: status.source };
+			}
 			sendWhisperModelDownloadProgress(event.sender, {
 				status: "idle",
 				progress: 0,
@@ -200,10 +223,8 @@ export function registerCaptionHandlers() {
 			return { success: true };
 		} catch (error) {
 			console.error("Failed to delete Whisper small model:", error);
-			// Verify whether the file was actually removed despite the error
 			const status = await getWhisperSmallModelStatus();
 			if (!status.exists) {
-				// File is gone — treat as success
 				sendWhisperModelDownloadProgress(event.sender, {
 					status: "idle",
 					progress: 0,
@@ -227,13 +248,34 @@ export function registerCaptionHandlers() {
 			_,
 			options: {
 				videoPath: string;
-				whisperExecutablePath: string;
-				whisperModelPath: string;
+				whisperExecutablePath?: string;
+				whisperModelPath?: string;
 				language?: string;
 			},
 		) => {
 			try {
+				if (getSessionLogPhase() === "export") {
+					return {
+						success: false,
+						error: "Export is in progress. Generate captions after export finishes.",
+						message: "Export is in progress. Generate captions after export finishes.",
+					};
+				}
+				setSessionLogPhase("captions");
+				writeSessionLog({
+					level: "info",
+					scope: "captions",
+					event: "captions.generate-start",
+					msg: options.videoPath,
+				});
 				const result = await generateAutoCaptionsFromVideo(options);
+				writeSessionLog({
+					level: "info",
+					scope: "captions",
+					event: "captions.generate-complete",
+					data: { cueCount: result.cues.length },
+				});
+				setSessionLogPhase("editor");
 				return {
 					success: true,
 					cues: result.cues,
@@ -244,6 +286,14 @@ export function registerCaptionHandlers() {
 				};
 			} catch (error) {
 				console.error("Failed to generate auto captions:", error);
+				writeSessionLog({
+					level: "error",
+					scope: "captions",
+					event: "captions.generate-failed",
+					msg: String(error),
+					data: sessionLogErrorFields(error),
+				});
+				setSessionLogPhase("editor");
 				return {
 					success: false,
 					error: String(error),

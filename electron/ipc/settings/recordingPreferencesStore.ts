@@ -7,6 +7,8 @@ export interface RecordingPreferencesPatch {
 	systemAudioEnabled?: boolean;
 	webcamEnabled?: boolean;
 	webcamDeviceId?: string;
+	/** 采集档：省电 / 标准 / 高清，见 src/lib/capturePreset.ts */
+	capturePreset?: "economy" | "standard" | "high";
 }
 
 export function createRecordingPreferencesStore(filePath: string) {

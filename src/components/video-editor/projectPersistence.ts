@@ -779,7 +779,8 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 				: DEFAULT_AUTO_CAPTION_SETTINGS.timelineQuickAdd,
 		language:
 			typeof rawAutoCaptionSettings.language === "string" &&
-			rawAutoCaptionSettings.language.trim()
+			rawAutoCaptionSettings.language.trim() &&
+			rawAutoCaptionSettings.language.trim() !== "auto"
 				? rawAutoCaptionSettings.language.trim()
 				: DEFAULT_AUTO_CAPTION_SETTINGS.language,
 		fontFamily: getDefaultCaptionFontFamily(),
@@ -1116,7 +1117,7 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 			editor.exportQuality === "high" ||
 			editor.exportQuality === "source"
 				? editor.exportQuality
-				: "source",
+				: "good",
 		mp4FrameRate: normalizeExportMp4FrameRate(editor.mp4FrameRate),
 		exportFormat: editor.exportFormat === "gif" ? "gif" : "mp4",
 		gifFrameRate:

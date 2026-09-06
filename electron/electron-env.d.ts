@@ -208,6 +208,7 @@ interface Window {
 				capturesMicrophone?: boolean;
 				microphoneDeviceId?: string;
 				microphoneLabel?: string;
+				recordingId?: string;
 			},
 		) => Promise<{
 			success: boolean;
@@ -216,6 +217,7 @@ interface Window {
 			error?: string;
 			userNotified?: boolean;
 			microphoneFallbackRequired?: boolean;
+			recordingId?: string;
 		}>;
 		stopNativeScreenRecording: () => Promise<{
 			success: boolean;
@@ -311,7 +313,13 @@ interface Window {
 		) => Promise<{ success: boolean; data?: Uint8Array; error?: string }>;
 		generateWallpaperThumbnail: (
 			filePath: string,
-		) => Promise<{ success: boolean; data?: Uint8Array; error?: string }>;
+		) => Promise<{ success: boolean; dataUrl?: string; data?: Uint8Array; error?: string }>;
+		readBundledAssetDataUrl: (
+			filePath: string,
+		) => Promise<{ success: boolean; dataUrl?: string; error?: string }>;
+		resolveBundledAssetPath: (
+			filePath: string,
+		) => Promise<{ success: boolean; path?: string; error?: string }>;
 		probeNativeVideoMetadata: (filePath: string) => Promise<{
 			success: boolean;
 			metadata?: RendererNativeVideoMetadataProbe;
@@ -655,6 +663,7 @@ interface Window {
 			success: boolean;
 			exists: boolean;
 			path?: string | null;
+			source?: "user" | "bundled" | null;
 			error?: string;
 		}>;
 		downloadWhisperSmallModel: () => Promise<{
@@ -675,7 +684,7 @@ interface Window {
 		generateAutoCaptions: (options: {
 			videoPath: string;
 			whisperExecutablePath?: string;
-			whisperModelPath: string;
+			whisperModelPath?: string;
 			language?: string;
 		}) => Promise<{
 			success: boolean;
@@ -797,6 +806,24 @@ interface Window {
 			filePath: string,
 		) => Promise<{ success: boolean; error?: string; message?: string }>;
 		openRecordingsFolder: () => Promise<{ success: boolean; error?: string; message?: string }>;
+		writeSessionLog: (entry: {
+			level: "info" | "warn" | "error";
+			scope: string;
+			event: string;
+			msg?: string;
+			data?: unknown;
+			corr?: { recordingId?: string; exportId?: string };
+		}) => Promise<{ success: boolean }>;
+		setSessionLogCorrelation: (corr: {
+			recordingId?: string;
+			exportId?: string;
+		}) => Promise<{ success: boolean }>;
+		openLogsFolder: () => Promise<{
+			success: boolean;
+			path?: string;
+			error?: string;
+			message?: string;
+		}>;
 		getRecordingsDirectory: () => Promise<{
 			success: boolean;
 			path: string;
@@ -838,6 +865,7 @@ interface Window {
 			systemAudioEnabled: boolean;
 			webcamEnabled: boolean;
 			webcamDeviceId?: string;
+			capturePreset?: "economy" | "standard" | "high";
 		}>;
 		getRecordingAudioLabConfig: () => Promise<{
 			browserMicrophoneProfile: string;
@@ -849,7 +877,9 @@ interface Window {
 			systemAudioEnabled?: boolean;
 			webcamEnabled?: boolean;
 			webcamDeviceId?: string;
+			capturePreset?: "economy" | "standard" | "high";
 		}) => Promise<{ success: boolean; error?: string }>;
+		onPreviewYield: (callback: (active: boolean) => void) => () => void;
 		/** Countdown timer before recording */
 		getCountdownDelay: () => Promise<{ success: boolean; delay: number }>;
 		setCountdownDelay: (delay: number) => Promise<{ success: boolean; error?: string }>;

@@ -59,8 +59,7 @@ export function resolveExportStatusModel({
 		exportFormat === "mp4" &&
 		exportPipelineModel === "modern" &&
 		(isExporting || exportProgress !== null);
-	const shouldSuspendPreviewRendering =
-		isExporting && exportFormat === "mp4" && exportPipelineModel === "modern";
+	const shouldSuspendPreviewRendering = isExporting;
 	const isLegacyExportInProgress =
 		exportFormat === "mp4" &&
 		exportPipelineModel === "legacy" &&

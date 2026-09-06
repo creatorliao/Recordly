@@ -74,6 +74,8 @@ function LaunchWindowContent() {
 		setWebcamEnabled,
 		webcamDeviceId,
 		setWebcamDeviceId,
+		capturePreset,
+		setCapturePreset,
 		countdownDelay,
 		setCountdownDelay,
 		preparePermissions,
@@ -371,6 +373,8 @@ function LaunchWindowContent() {
 			</div>
 
 			<MorePopover
+				capturePreset={capturePreset}
+				onCapturePresetChange={setCapturePreset}
 				supportsHudCaptureProtection={hudCaptureProtectionSupported}
 				hideHudFromCapture={hideHudFromCapture}
 				onToggleHudCaptureProtection={() => {
@@ -378,6 +382,9 @@ function LaunchWindowContent() {
 				}}
 				onChooseRecordingsDirectory={() => {
 					void chooseRecordingsDirectory();
+				}}
+				onOpenLogsFolder={() => {
+					void window.electronAPI?.openLogsFolder?.();
 				}}
 				onOpenVideoFile={() => {
 					void openVideoFile();

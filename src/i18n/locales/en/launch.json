@@ -12,6 +12,7 @@
 		"record": "Record",
 		"recordingFolder": "Recordings Path: {{path}}",
 		"chooseRecordingsFolder": "Choose recordings path",
+		"openLogsFolder": "Open logs folder",
 		"folderPath": "Path: /{{name}}/",
 		"openVideoFile": "Open video file",
 		"openProject": "Open project",
@@ -39,6 +40,10 @@
 		"preparing": "Preparing recording",
 		"preparingSubtitle": "Opening the editor in a moment",
 		"language": "Language",
+		"capturePreset": "Capture quality",
+		"capturePresetEconomy": "Economy (720p / 24fps)",
+		"capturePresetStandard": "Standard (1080p / 30fps, default)",
+		"capturePresetHigh": "High (up to 4K / 60fps)",
 		"paused": "PAUSED",
 		"rec": "REC",
 		"resume": "Resume",
@@ -78,7 +83,10 @@
 		"systemAudioUnavailable": "System audio is not available for this source. Recording will continue without system audio.",
 		"microphoneDenied": "Microphone access was denied. Recording will continue without microphone audio.",
 		"failedToStart": "Failed to start recording: {{error}}",
-		"failedToStartGeneric": "Failed to start recording"
+		"failedToStartGeneric": "Failed to start recording",
+		"finishRecordingFailed": "Failed to finish the recording, so the editor was not opened.",
+		"storeRecordingFailed": "Failed to store the recording.",
+		"finalizeRecordingFailed": "Failed to finalize the recording. {{error}}"
 	},
 	"updateToast": {
 		"availableTitle": "Update available",

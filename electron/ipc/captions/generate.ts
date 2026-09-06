@@ -19,6 +19,8 @@ import {
 	SILENCE_NOISE_DB,
 	type SilenceInterval,
 } from "./silence";
+import { isUsableWhisperModelFile, resolveDefaultWhisperModelPath } from "./whisper";
+import { resolveWhisperThreadLimit } from "./whisperThreads";
 
 const execFileAsync = promisify(execFile);
 
@@ -213,7 +215,7 @@ export async function detectSilenceIntervals(options: {
 export async function generateAutoCaptionsFromVideo(options: {
 	videoPath: string;
 	whisperExecutablePath?: string;
-	whisperModelPath: string;
+	whisperModelPath?: string;
 	language?: string;
 }) {
 	const ffmpegPath = getFfmpegBinaryPath();
@@ -223,7 +225,20 @@ export async function generateAutoCaptionsFromVideo(options: {
 	}
 
 	const whisperExecutablePath = await resolveWhisperExecutablePath(options.whisperExecutablePath);
-	const whisperModelPath = path.resolve(options.whisperModelPath);
+	const preferredModel = options.whisperModelPath?.trim();
+	let resolvedModelPath: string | null = null;
+	if (preferredModel && (await isUsableWhisperModelFile(path.resolve(preferredModel)))) {
+		resolvedModelPath = path.resolve(preferredModel);
+	}
+	if (!resolvedModelPath) {
+		resolvedModelPath = await resolveDefaultWhisperModelPath();
+	}
+	if (!resolvedModelPath) {
+		throw new Error(
+			"找不到随包识别模型（resources/whisper/ggml-small.bin）。请完整解压 Portable，不要只拷贝 exe，也不要从压缩包窗口直接运行。",
+		);
+	}
+	const whisperModelPath = resolvedModelPath;
 	await ensureReadableFile(whisperExecutablePath, { executable: true });
 	await ensureReadableFile(whisperModelPath);
 
@@ -244,7 +259,9 @@ export async function generateAutoCaptionsFromVideo(options: {
 		});
 
 		const language =
-			options.language && options.language.trim() ? options.language.trim() : "auto";
+			options.language && options.language.trim() && options.language.trim() !== "auto"
+				? options.language.trim()
+				: "zh";
 		const whisperBaseArgs = [
 			"-m",
 			whisperModelPath,
@@ -256,6 +273,8 @@ export async function generateAutoCaptionsFromVideo(options: {
 			"-l",
 			language,
 			"-np",
+			"-t",
+			String(resolveWhisperThreadLimit()),
 		];
 
 		let jsonEnabled = true;

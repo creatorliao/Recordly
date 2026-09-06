@@ -19,10 +19,24 @@ import {
 	setCountdownTimer,
 } from "../state";
 import { parseJsonWithByteOrderMark } from "../utils";
+import {
+	normalizeCapturePreset,
+	resolveCaptureProfile,
+	type CaptureProfile,
+} from "../../../src/lib/capturePreset";
 
 const BROWSER_MICROPHONE_PROFILE_ENV = "RECORDLY_BROWSER_MIC_PROFILE";
 const DEFAULT_BROWSER_MICROPHONE_PROFILE = "processed";
 const recordingPreferencesStore = createRecordingPreferencesStore(RECORDINGS_SETTINGS_FILE);
+
+export async function getResolvedCaptureProfile(): Promise<CaptureProfile> {
+	try {
+		const parsed = await recordingPreferencesStore.read();
+		return resolveCaptureProfile(parsed.capturePreset);
+	} catch {
+		return resolveCaptureProfile(undefined);
+	}
+}
 const BROWSER_MICROPHONE_PROFILES = new Set([
 	"processed",
 	"no-agc",
@@ -123,6 +137,7 @@ export function registerSettingsHandlers() {
 	ipcMain.handle("get-recording-preferences", async () => {
 		try {
 			const parsed = await recordingPreferencesStore.read();
+			const capturePreset = normalizeCapturePreset(parsed.capturePreset);
 			return {
 				success: true,
 				microphoneEnabled: parsed.microphoneEnabled === true,
@@ -134,6 +149,7 @@ export function registerSettingsHandlers() {
 				webcamEnabled: parsed.webcamEnabled === true,
 				webcamDeviceId:
 					typeof parsed.webcamDeviceId === "string" ? parsed.webcamDeviceId : undefined,
+				capturePreset,
 			};
 		} catch {
 			return {
@@ -143,6 +159,7 @@ export function registerSettingsHandlers() {
 				systemAudioEnabled: false,
 				webcamEnabled: false,
 				webcamDeviceId: undefined,
+				capturePreset: normalizeCapturePreset(undefined),
 			};
 		}
 	});

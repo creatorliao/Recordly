@@ -1,6 +1,15 @@
 import { fixWebmDuration } from "@fix-webm-duration/fix";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
+import { appLog, setAppLogCorrelation } from "@/lib/appLog";
+import {
+	DEFAULT_CAPTURE_PRESET,
+	type CapturePreset,
+	resolveBrowserCaptureBitrate,
+	resolveCaptureProfile,
+} from "@/lib/capturePreset";
+import { notifyAlert, notifyError, notifyWarn } from "@/lib/notifyError";
 import { getEffectiveRecordingDurationMs } from "@/lib/mediaTiming";
 import {
 	getVideoExtensionForMimeType,
@@ -9,24 +18,11 @@ import {
 	selectWebcamRecordingMimeType,
 } from "./recordingMimeType";
 
-const TARGET_FRAME_RATE = 60;
-const TARGET_WIDTH = 3840;
-const TARGET_HEIGHT = 2160;
-const FOUR_K_PIXELS = TARGET_WIDTH * TARGET_HEIGHT;
-const QHD_WIDTH = 2560;
-const QHD_HEIGHT = 1440;
-const QHD_PIXELS = QHD_WIDTH * QHD_HEIGHT;
-const BITRATE_4K = 45_000_000;
-const BITRATE_QHD = 28_000_000;
-const BITRATE_BASE = 18_000_000;
-const HIGH_FRAME_RATE_THRESHOLD = 60;
-const HIGH_FRAME_RATE_BOOST = 1.7;
 const DEFAULT_WIDTH = 1920;
 const DEFAULT_HEIGHT = 1080;
 const CODEC_ALIGNMENT = 2;
 const RECORDER_TIMESLICE_MS = 250;
 const BITS_PER_MEGABIT = 1_000_000;
-const MIN_FRAME_RATE = 30;
 const CHROME_MEDIA_SOURCE = "desktop";
 const RECORDING_FILE_PREFIX = "recording-";
 const AUDIO_BITRATE_VOICE = 128_000;
@@ -147,6 +143,8 @@ type UseScreenRecorderReturn = {
 	setWebcamEnabled: (enabled: boolean) => void;
 	webcamDeviceId: string | undefined;
 	setWebcamDeviceId: (deviceId: string | undefined) => void;
+	capturePreset: CapturePreset;
+	setCapturePreset: (preset: CapturePreset) => void;
 	countdownDelay: number;
 	setCountdownDelay: (delay: number) => void;
 };
@@ -374,6 +372,7 @@ async function createAudioInputDeviceSnapshot(): Promise<
 }
 
 export function useScreenRecorder(): UseScreenRecorderReturn {
+	const { t } = useI18n();
 	const [recording, setRecording] = useState(false);
 	const [paused, setPaused] = useState(false);
 	const [starting, setStarting] = useState(false);
@@ -385,6 +384,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
 	const [webcamEnabled, setWebcamEnabled] = useState(false);
 	const [webcamDeviceId, setWebcamDeviceId] = useState<string | undefined>(undefined);
+	const [capturePreset, setCapturePreset] = useState<CapturePreset>(DEFAULT_CAPTURE_PRESET);
+	const capturePresetRef = useRef(capturePreset);
+	capturePresetRef.current = capturePreset;
 	const [countdownDelay, setCountdownDelayState] = useState(3);
 	const mediaRecorder = useRef<MediaRecorder | null>(null);
 	const webcamRecorder = useRef<MediaRecorder | null>(null);
@@ -436,7 +438,11 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 	const notifyRecordingFinalizationFailure = useCallback(async (message: string) => {
 		setFinalizing(false);
-		toast.error(message, { duration: 10000 });
+		notifyError(message, {
+			duration: 10000,
+			scope: "recording",
+			event: "recording.finalize-failed",
+		});
 	}, []);
 
 	const logNativeCaptureDiagnostics = useCallback(async (context: string) => {
@@ -555,10 +561,11 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		const screenPermission = await window.electronAPI.getScreenRecordingPermissionStatus();
 		if (!screenPermission.success || screenPermission.status !== "granted") {
 			await window.electronAPI.openScreenRecordingPreferences();
-			alert(
+			notifyAlert(
 				options.startup
-					? "Recordly needs Screen Recording permission before you start. System Settings has been opened. After enabling it, quit and reopen Recordly."
-					: "Screen Recording permission is still missing. System Settings has been opened again. Enable it, then quit and reopen Recordly before recording.",
+					? t("launch.permissions.screenRecordingNeeded")
+					: t("launch.permissions.screenRecordingMissing"),
+				{ scope: "recording", event: "recording.start-failed" },
 			);
 			return false;
 		}
@@ -578,14 +585,15 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		}
 
 		await window.electronAPI.openAccessibilityPreferences();
-		alert(
+		notifyAlert(
 			options.startup
-				? "Recordly also needs Accessibility permission for cursor tracking. System Settings has been opened. After enabling it, quit and reopen Recordly."
-				: "Accessibility permission is still missing. System Settings has been opened again. Enable it, then quit and reopen Recordly before recording.",
+				? t("launch.permissions.accessibilityNeeded")
+				: t("launch.permissions.accessibilityMissing"),
+			{ scope: "recording", event: "recording.start-failed" },
 		);
 
 		return false;
-	}, []);
+	}, [t]);
 
 	const selectMimeType = useCallback(() => {
 		return selectRecordingMimeType();
@@ -596,19 +604,23 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	}, []);
 
 	const computeBitrate = (width: number, height: number) => {
-		const pixels = width * height;
-		const highFrameRateBoost =
-			TARGET_FRAME_RATE >= HIGH_FRAME_RATE_THRESHOLD ? HIGH_FRAME_RATE_BOOST : 1;
+		return resolveBrowserCaptureBitrate(
+			resolveCaptureProfile(capturePresetRef.current),
+			width,
+			height,
+		);
+	};
 
-		if (pixels >= FOUR_K_PIXELS) {
-			return Math.round(BITRATE_4K * highFrameRateBoost);
-		}
-
-		if (pixels >= QHD_PIXELS) {
-			return Math.round(BITRATE_QHD * highFrameRateBoost);
-		}
-
-		return Math.round(BITRATE_BASE * highFrameRateBoost);
+	const browserCaptureLimits = () => {
+		const profile = resolveCaptureProfile(capturePresetRef.current);
+		const width = profile.maxLongEdge;
+		const height = width >= 3840 ? 2160 : width >= 1920 ? 1080 : 720;
+		return {
+			width,
+			height,
+			fps: profile.fps,
+			minFps: Math.min(15, profile.fps),
+		};
 	};
 
 	const cleanupCapturedMedia = useCallback(() => {
@@ -919,14 +931,16 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 						result.error || "Failed to save the fallback microphone audio track";
 					console.warn("Failed to store microphone sidecar:", errorMessage);
 					toast.error(
-						`${errorMessage}. Recording was saved without the fallback microphone track.`,
+						t("common.toasts.micSidecarFailed", undefined, { error: errorMessage }),
 						{ id: MICROPHONE_SIDECAR_ERROR_TOAST_ID, duration: 10000 },
 					);
 				}
 			} catch (error) {
 				console.warn("Failed to store microphone sidecar:", error);
 				toast.error(
-					`${getErrorMessage(error)}. Recording was saved without the fallback microphone track.`,
+					t("common.toasts.micSidecarFailed", undefined, {
+						error: getErrorMessage(error),
+					}),
 					{ id: MICROPHONE_SIDECAR_ERROR_TOAST_ID, duration: 10000 },
 				);
 			} finally {
@@ -1132,7 +1146,10 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		const selectedSource =
 			existingSource ?? (platform === "linux" ? LINUX_PORTAL_SOURCE : null);
 		if (!selectedSource) {
-			alert("Please select a source to record");
+			notifyAlert(t("launch.permissions.selectSource"), {
+				scope: "recording",
+				event: "recording.start-failed",
+			});
 			return null;
 		}
 
@@ -1172,17 +1189,13 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				if (!useNativeWindowsCapture && !hasShownNativeWindowsFallbackToast.current) {
 					void logNativeCaptureDiagnostics("is-native-windows-capture-available");
 					hasShownNativeWindowsFallbackToast.current = true;
-					toast.info(
-						"Native Windows capture is unavailable. Falling back to browser capture.",
-					);
+					toast.info(t("common.toasts.nativeWindowsUnavailable"));
 				}
 			} catch {
 				useNativeWindowsCapture = false;
 				if (!hasShownNativeWindowsFallbackToast.current) {
 					hasShownNativeWindowsFallbackToast.current = true;
-					toast.info(
-						"Unable to check native Windows capture. Falling back to browser capture.",
-					);
+					toast.info(t("common.toasts.nativeWindowsCheckFailed"));
 				}
 			}
 		}
@@ -1214,6 +1227,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		preparePermissions,
 		prepareWebcamRecorder,
 		resetRecordingClock,
+		t,
 	]);
 
 	const discardActiveNativeCapture = useCallback(async () => {
@@ -1347,9 +1361,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 					const failureMessage = await buildNativeCaptureFailureMessage(
 						"stop-native-screen-recording",
-						isMacOS
-							? "Failed to finish the macOS recording, so the editor was not opened."
-							: "Failed to finish the recording, so the editor was not opened.",
+						t("launch.permissions.finishRecordingFailed"),
 					);
 					await notifyRecordingFinalizationFailure(failureMessage);
 					return;
@@ -1537,6 +1549,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 				if (result.webcamDeviceId) {
 					setWebcamDeviceId(result.webcamDeviceId);
 				}
+				if (result.capturePreset) {
+					setCapturePreset(result.capturePreset);
+				}
 			}
 		})();
 	}, []);
@@ -1564,6 +1579,11 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const persistWebcamDeviceId = useCallback((deviceId: string | undefined) => {
 		setWebcamDeviceId(deviceId);
 		void window.electronAPI.setRecordingPreferences({ webcamDeviceId: deviceId });
+	}, []);
+
+	const persistCapturePreset = useCallback((preset: CapturePreset) => {
+		setCapturePreset(preset);
+		void window.electronAPI.setRecordingPreferences({ capturePreset: preset });
 	}, []);
 
 	useEffect(() => {
@@ -1608,11 +1628,16 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 					if (state.reason === "window-unavailable" && !hasPromptedForReselect.current) {
 						hasPromptedForReselect.current = true;
-						alert(state.message);
+						// 主进程 reason 文案可能是英文，界面只展示已翻译提示。
+						console.warn(state.message);
+						notifyAlert(t("launch.permissions.selectSource"), {
+							scope: "recording",
+							event: "recording.start-failed",
+						});
 						await window.electronAPI.openSourceSelector();
 					} else {
 						console.error(state.message);
-						toast.error(state.message);
+						toast.error(t("launch.permissions.failedToStartGeneric"));
 					}
 				})();
 			},
@@ -1679,6 +1704,22 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		hasPromptedForReselect.current = false;
 		startInFlight.current = true;
 		setStarting(true);
+		const recordingId =
+			typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+				? crypto.randomUUID()
+				: `rec-${Date.now()}`;
+		setAppLogCorrelation({ recordingId });
+		appLog({
+			level: "info",
+			scope: "recording",
+			event: "recording.start-attempt",
+			corr: { recordingId },
+			data: {
+				countdownDelay,
+				systemAudioEnabled,
+				microphoneEnabled,
+			},
+		});
 
 		try {
 			const preparedStart = await prepareRecordingStart();
@@ -1718,6 +1759,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 						capturesMicrophone: microphoneEnabled,
 						microphoneDeviceId,
 						microphoneLabel: micLabel,
+						recordingId,
 					},
 				);
 				if (nativeResult.success && startWasCancelled()) {
@@ -1736,12 +1778,22 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 							"Native Windows capture failed, falling back to browser capture:",
 							nativeResult.error ?? nativeResult.message,
 						);
+						appLog({
+							level: "warn",
+							scope: "capture",
+							event: "capture.fallback-browser",
+							msg: nativeResult.error ?? nativeResult.message,
+							data: {
+								userMessage: t("common.toasts.nativeWindowsStartFailed"),
+							},
+						});
 						void logNativeCaptureDiagnostics("start-native-screen-recording");
 						if (!hasShownNativeWindowsFallbackToast.current) {
 							hasShownNativeWindowsFallbackToast.current = true;
-							toast.warning(
-								"Native Windows capture failed to start. Falling back to browser capture.",
-							);
+							notifyWarn(t("common.toasts.nativeWindowsStartFailed"), {
+								scope: "capture",
+								event: "capture.fallback-browser",
+							});
 						}
 					} else if (!nativeResult.userNotified) {
 						throw new Error(
@@ -1876,11 +1928,18 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 								micError instanceof DOMException &&
 								(micError.name === "NotAllowedError" ||
 									micError.name === "SecurityError");
-							toast.error(
+							notifyError(
 								permissionDenied
-									? "Microphone permission denied. Recording will continue without microphone audio."
-									: `${getErrorMessage(micError)}. Recording will continue without microphone audio.`,
-								{ id: MICROPHONE_FALLBACK_ERROR_TOAST_ID, duration: 10000 },
+									? t("common.toasts.micPermissionDeniedContinue")
+									: t("common.toasts.micFallbackContinue", undefined, {
+											error: getErrorMessage(micError),
+										}),
+								{
+									id: MICROPHONE_FALLBACK_ERROR_TOAST_ID,
+									duration: 10000,
+									scope: "recording",
+									event: "mic.fallback-failed",
+								},
 							);
 						}
 					}
@@ -1957,14 +2016,15 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			let systemAudioIncluded = false;
 			const mediaDevices = navigator.mediaDevices as DesktopCaptureMediaDevices;
 			const useLinuxPortal = selectedSource.id === "screen:linux-portal";
+			const captureLimits = browserCaptureLimits();
 			const browserScreenVideoConstraints = {
 				mandatory: {
 					chromeMediaSource: CHROME_MEDIA_SOURCE,
 					chromeMediaSourceId: browserCaptureSource.id,
-					maxWidth: TARGET_WIDTH,
-					maxHeight: TARGET_HEIGHT,
-					maxFrameRate: TARGET_FRAME_RATE,
-					minFrameRate: MIN_FRAME_RATE,
+					maxWidth: captureLimits.width,
+					maxHeight: captureLimits.height,
+					maxFrameRate: captureLimits.fps,
+					minFrameRate: captureLimits.minFps,
 					googCaptureCursor: browserCursorPolicy.streamCursor === "always",
 				},
 				cursor: browserCursorPolicy.streamCursor,
@@ -1977,9 +2037,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 						audio: withAudio,
 						video: {
 							displaySurface: "monitor",
-							width: { ideal: TARGET_WIDTH, max: TARGET_WIDTH },
-							height: { ideal: TARGET_HEIGHT, max: TARGET_HEIGHT },
-							frameRate: { ideal: TARGET_FRAME_RATE, max: TARGET_FRAME_RATE },
+							width: { ideal: captureLimits.width, max: captureLimits.width },
+							height: { ideal: captureLimits.height, max: captureLimits.height },
+							frameRate: { ideal: captureLimits.fps, max: captureLimits.fps },
 							cursor: browserCursorPolicy.streamCursor,
 						},
 						selfBrowserSurface: "exclude",
@@ -2004,9 +2064,10 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 							"System audio capture failed, falling back to video-only:",
 							audioError,
 						);
-						alert(
-							"System audio is not available for this source. Recording will continue without system audio.",
-						);
+						notifyAlert(t("launch.permissions.systemAudioUnavailable"), {
+							scope: "recording",
+							event: "audio.system-unavailable",
+						});
 						screenMediaStream = useLinuxPortal
 							? await acquireLinuxPortalStream(false)
 							: await mediaDevices.getUserMedia({
@@ -2043,9 +2104,10 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 						);
 					} catch (audioError) {
 						console.warn("Failed to get microphone access:", audioError);
-						alert(
-							"Microphone access was denied. Recording will continue without microphone audio.",
-						);
+						notifyAlert(t("launch.permissions.microphoneDenied"), {
+							scope: "recording",
+							event: "audio.mic-denied",
+						});
 						setMicrophoneEnabled(false);
 					}
 				}
@@ -2088,9 +2150,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 								displaySurface: selectedSource.id?.startsWith("window:")
 									? "window"
 									: "monitor",
-								width: { ideal: TARGET_WIDTH, max: TARGET_WIDTH },
-								height: { ideal: TARGET_HEIGHT, max: TARGET_HEIGHT },
-								frameRate: { ideal: TARGET_FRAME_RATE, max: TARGET_FRAME_RATE },
+								width: { ideal: captureLimits.width, max: captureLimits.width },
+								height: { ideal: captureLimits.height, max: captureLimits.height },
+								frameRate: { ideal: captureLimits.fps, max: captureLimits.fps },
 								cursor: browserCursorPolicy.streamCursor,
 							},
 							selfBrowserSurface: "exclude",
@@ -2111,13 +2173,13 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 
 			try {
 				await videoTrack.applyConstraints({
-					frameRate: { ideal: TARGET_FRAME_RATE, max: TARGET_FRAME_RATE },
-					width: { ideal: TARGET_WIDTH, max: TARGET_WIDTH },
-					height: { ideal: TARGET_HEIGHT, max: TARGET_HEIGHT },
+					frameRate: { ideal: captureLimits.fps, max: captureLimits.fps },
+					width: { ideal: captureLimits.width, max: captureLimits.width },
+					height: { ideal: captureLimits.height, max: captureLimits.height },
 				} as MediaTrackConstraints);
 			} catch (error) {
 				console.warn(
-					"Unable to lock 4K/60fps constraints, using best available track settings.",
+					"Unable to lock capture constraints, using best available track settings.",
 					error,
 				);
 			}
@@ -2125,7 +2187,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			let {
 				width = DEFAULT_WIDTH,
 				height = DEFAULT_HEIGHT,
-				frameRate = TARGET_FRAME_RATE,
+				frameRate = captureLimits.fps,
 			} = videoTrack.getSettings();
 
 			width = Math.floor(width / CODEC_ALIGNMENT) * CODEC_ALIGNMENT;
@@ -2135,7 +2197,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			const mimeType = selectMimeType();
 
 			console.log(
-				`Recording at ${width}x${height} @ ${frameRate ?? TARGET_FRAME_RATE}fps using ${mimeType ?? "browser default"} / ${Math.round(
+				`Recording at ${width}x${height} @ ${frameRate ?? captureLimits.fps}fps using ${mimeType ?? "browser default"} / ${Math.round(
 					videoBitsPerSecond / BITS_PER_MEGABIT,
 				)} Mbps`,
 			);
@@ -2190,7 +2252,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 					if (!videoResult.success) {
 						console.error("Failed to store video:", videoResult.message);
 						await notifyRecordingFinalizationFailure(
-							videoResult.message || "Failed to store the recording.",
+							t("launch.permissions.storeRecordingFailed"),
 						);
 						return;
 					}
@@ -2228,13 +2290,15 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 							}
 						})();
 					} else {
-						await notifyRecordingFinalizationFailure("Failed to save the recording.");
+						await notifyRecordingFinalizationFailure(
+							t("launch.permissions.storeRecordingFailed"),
+						);
 					}
 				} catch (error) {
 					console.error("Error saving recording:", error);
 					const message = error instanceof Error ? error.message : String(error);
 					await notifyRecordingFinalizationFailure(
-						`Failed to finalize the recording. ${message}`,
+						t("launch.permissions.finalizeRecordingFailed", undefined, { error: message }),
 					);
 				}
 			};
@@ -2255,10 +2319,11 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			}
 		} catch (error) {
 			console.error("Failed to start recording:", error);
-			alert(
+			notifyAlert(
 				error instanceof Error
-					? `Failed to start recording: ${error.message}`
-					: "Failed to start recording",
+					? t("launch.permissions.failedToStart", undefined, { error: error.message })
+					: t("launch.permissions.failedToStartGeneric"),
+				{ scope: "recording", event: "recording.start-failed" },
 			);
 			setRecording(false);
 			if (nativeScreenRecording.current) {
@@ -2444,6 +2509,8 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		setWebcamEnabled: persistWebcamEnabled,
 		webcamDeviceId,
 		setWebcamDeviceId: persistWebcamDeviceId,
+		capturePreset,
+		setCapturePreset: persistCapturePreset,
 		countdownDelay,
 		setCountdownDelay,
 	};

@@ -6,6 +6,7 @@ import { registerExportHandlers } from "./register/export";
 import { registerPermissionHandlers } from "./register/permissions";
 import { registerProjectHandlers } from "./register/project";
 import { registerRecordingHandlers } from "./register/recording";
+import { registerSessionLogHandlers } from "./register/sessionLog";
 import { registerSettingsHandlers } from "./register/settings";
 import { registerSourceHandlers } from "./register/sources";
 import {
@@ -71,4 +72,5 @@ export function registerIpcHandlers(
 	registerCaptionHandlers();
 	registerProjectHandlers();
 	registerSettingsHandlers();
+	registerSessionLogHandlers();
 }

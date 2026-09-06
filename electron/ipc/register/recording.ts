@@ -15,6 +15,16 @@ import {
 import { getHudCaptureExcludedProcessIds } from "../../../src/lib/hudCaptureProtection";
 import { showCursor } from "../../cursorHider";
 import {
+	registerSessionLogChildProcess,
+	sessionLogErrorFields,
+	setSessionLogCaptureContext,
+	setSessionLogCorrelation,
+	setSessionLogPhase,
+	unregisterSessionLogChildProcess,
+	writeSessionLog,
+} from "../../sessionLog";
+import { getResolvedCaptureProfile } from "./settings";
+import {
 	getHudOverlayCaptureProtectionEnabled,
 	reassertHudOverlayCaptureProtection,
 } from "../../windows";
@@ -440,8 +450,18 @@ export function registerRecordingHandlers(
 
 			// Windows native capture path
 			if (process.platform === "win32") {
+				const recordingId = options?.recordingId;
+				if (recordingId) {
+					setSessionLogCorrelation({ recordingId });
+				}
 				const windowsCaptureAvailable = await isNativeWindowsCaptureAvailable();
 				if (!windowsCaptureAvailable) {
+					writeSessionLog({
+						level: "error",
+						scope: "capture",
+						event: "capture.unavailable",
+						msg: "Native Windows capture is not available on this system.",
+					});
 					return {
 						success: false,
 						message: "Native Windows capture is not available on this system.",
@@ -460,6 +480,12 @@ export function registerRecordingHandlers(
 				}
 
 				if (windowsCaptureProcess) {
+					writeSessionLog({
+						level: "error",
+						scope: "capture",
+						event: "capture.already-active",
+						msg: "A native Windows screen recording is already active.",
+					});
 					return {
 						success: false,
 						message: "A native Windows screen recording is already active.",
@@ -496,12 +522,23 @@ export function registerRecordingHandlers(
 						captureTarget.kind === "display" ? captureTarget.bounds : null;
 					setWindowsOrphanedMicAudioPath(null);
 
+					const captureProfile = await getResolvedCaptureProfile();
 					const config: Record<string, unknown> = {
 						outputPath: tempVideoPath,
-						fps: 60,
+						fps: captureProfile.fps,
 					};
+					if (captureProfile.bitrateBps != null) {
+						config.bitrateBps = captureProfile.bitrateBps;
+					}
 
 					if (captureTarget.kind === "invalid-window") {
+						writeSessionLog({
+							level: "error",
+							scope: "source",
+							event: "source.select-invalid",
+							msg: "Selected window is no longer available.",
+							data: { userMessage: "Selected window is no longer available. Please choose the window again." },
+						});
 						return {
 							success: false,
 							message:
@@ -594,6 +631,14 @@ export function registerRecordingHandlers(
 						stdio: ["pipe", "pipe", "pipe"],
 						env: process.env,
 					});
+					registerSessionLogChildProcess("wgc-capture", wcProc.pid);
+					wcProc.once("exit", () => unregisterSessionLogChildProcess(wcProc?.pid));
+					setSessionLogCaptureContext({
+						backend: "windows-wgc",
+						preset: captureProfile.preset,
+						fps: captureProfile.fps,
+						bitrateBps: captureProfile.bitrateBps,
+					});
 					setWindowsCaptureProcess(wcProc);
 					attachWindowsCaptureLifecycle(wcProc);
 
@@ -635,7 +680,27 @@ export function registerRecordingHandlers(
 						microphonePath,
 						processOutput: captureOutput.trim() || undefined,
 					});
-					return { success: true, microphoneFallbackRequired };
+					setSessionLogPhase("recording");
+					writeSessionLog({
+						level: "info",
+						scope: "capture",
+						event: "capture.start",
+						msg: "native windows capture started",
+						data: {
+							backend: "windows-wgc",
+							sourceType: source?.sourceType ?? "unknown",
+							sourceKind: captureTarget.kind,
+							helperPath: exePath,
+							outputPath,
+							fps: captureProfile.fps,
+							preset: captureProfile.preset,
+							bitrateBps: captureProfile.bitrateBps,
+							capturesSystemAudio: Boolean(options?.capturesSystemAudio),
+							capturesMicrophone: Boolean(options?.capturesMicrophone),
+							microphoneFallbackRequired,
+						},
+					});
+					return { success: true, microphoneFallbackRequired, recordingId };
 				} catch (error) {
 					recordNativeCaptureDiagnostics({
 						backend: "windows-wgc",
@@ -650,6 +715,13 @@ export function registerRecordingHandlers(
 						error: String(error),
 					});
 					console.error("Failed to start native Windows capture:", error);
+					writeSessionLog({
+						level: "error",
+						scope: "capture",
+						event: "capture.start-failed",
+						msg: String(error),
+						data: sessionLogErrorFields(error),
+					});
 					try {
 						if (wcProc) wcProc.kill();
 					} catch {
@@ -756,8 +828,9 @@ export function registerRecordingHandlers(
 				const microphoneOutputPath = capturesMicrophone
 					? path.join(recordingsDir, `recording-${timestamp}.mic.m4a`)
 					: null;
+				const captureProfile = await getResolvedCaptureProfile();
 				const config: Record<string, unknown> = {
-					fps: 60,
+					fps: captureProfile.fps,
 					outputPath,
 					capturesSystemAudio,
 					capturesMicrophone,
@@ -815,6 +888,8 @@ export function registerRecordingHandlers(
 					cwd: recordingsDir,
 					stdio: ["pipe", "pipe", "pipe"],
 				});
+				registerSessionLogChildProcess("native-capture", captProc.pid);
+				captProc.once("exit", () => unregisterSessionLogChildProcess(captProc?.pid));
 				setNativeCaptureProcess(captProc);
 				attachNativeCaptureLifecycle(captProc);
 
@@ -1064,9 +1139,23 @@ export function registerRecordingHandlers(
 						);
 					}
 
+					writeSessionLog({
+						level: "info",
+						scope: "recording",
+						event: "recording.stop",
+						msg: "native windows capture stopped",
+						data: { path: finalVideoPath },
+					});
 					return { success: true, path: finalVideoPath };
 				} catch (error) {
 					console.error("Failed to stop native Windows capture:", error);
+					writeSessionLog({
+						level: "error",
+						scope: "recording",
+						event: "recording.stop-failed",
+						msg: String(error),
+						data: sessionLogErrorFields(error),
+					});
 					const fallbackPath = await resolveExistingPath(
 						windowsCaptureTargetPath,
 						stagedTempVideoPath,
@@ -1491,10 +1580,28 @@ export function registerRecordingHandlers(
 			setWindowsOrphanedMicAudioPath(null);
 
 			if (!videoPath) {
+				writeSessionLog({
+					level: "error",
+					scope: "mux",
+					event: "mux.no-pending-video",
+					msg: "No native Windows video pending for mux",
+				});
 				return { success: false, message: "No native Windows video pending for mux" };
 			}
 
 			try {
+				setSessionLogPhase("mux");
+				writeSessionLog({
+					level: "info",
+					scope: "mux",
+					event: "mux.start",
+					msg: "windows mux started",
+					data: {
+						expectedDurationMs,
+						hasSystemAudio: Boolean(diagnosticsSystemAudioPath),
+						hasMicrophone: Boolean(diagnosticsMicAudioPath),
+					},
+				});
 				await writeWindowsRecordingDiagnostics(videoPath, {
 					phase: "mux-start",
 					expectedDurationMs,
@@ -1538,9 +1645,24 @@ export function registerRecordingHandlers(
 					},
 				});
 				await cleanupWindowsOrphanedMicAudioPath(orphanedMicAudioPath);
+				writeSessionLog({
+					level: "info",
+					scope: "mux",
+					event: "mux.complete",
+					msg: "windows mux complete",
+					data: { outputPath: videoPath },
+				});
+				setSessionLogPhase("editor");
 				return await finalizeStoredVideo(videoPath);
 			} catch (error) {
 				console.error("Failed to mux native Windows recording:", error);
+				writeSessionLog({
+					level: "error",
+					scope: "mux",
+					event: "mux.error",
+					msg: String(error),
+					data: sessionLogErrorFields(error),
+				});
 				recordNativeCaptureDiagnostics({
 					backend: "windows-wgc",
 					phase: "mux",
@@ -1619,11 +1741,32 @@ export function registerRecordingHandlers(
 				setFfmpegCaptureOutputBuffer(ffmpegCaptureOutputBuffer + chunk.toString());
 			});
 
+			writeSessionLog({
+				level: "info",
+				scope: "capture",
+				event: "capture.backend",
+				msg: "ffmpeg",
+				data: { backend: "ffmpeg", outputPath },
+			});
 			await waitForFfmpegCaptureStart(ffProc);
 			setFfmpegScreenRecordingActive(true);
+			writeSessionLog({
+				level: "info",
+				scope: "capture",
+				event: "capture.start",
+				msg: "ffmpeg capture started",
+				data: { backend: "ffmpeg", outputPath },
+			});
 			return { success: true };
 		} catch (error) {
 			console.error("Failed to start FFmpeg recording:", error);
+			writeSessionLog({
+				level: "error",
+				scope: "capture",
+				event: "capture.ffmpeg-start-failed",
+				msg: String(error),
+				data: sessionLogErrorFields(error),
+			});
 			setFfmpegScreenRecordingActive(false);
 			setFfmpegCaptureProcess(null);
 			setFfmpegCaptureTargetPath(null);

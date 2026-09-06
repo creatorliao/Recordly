@@ -3,6 +3,7 @@ import {
 	EyeSlashIcon,
 	FolderOpenIcon,
 	TranslateIcon,
+	NoteIcon,
 	VideoCameraIcon,
 	SunIcon,
 	MoonIcon,
@@ -12,6 +13,8 @@ import type { ReactElement } from "react";
 import { useI18n } from "@/contexts/I18nContext";
 import { useScopedT } from "@/contexts/I18nContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import type { CapturePreset } from "@/lib/capturePreset";
+import { CAPTURE_PRESET_VALUES } from "@/lib/capturePreset";
 import type { AppLocale } from "@/i18n/config";
 import { SUPPORTED_LOCALES } from "@/i18n/config";
 import styles from "../LaunchWindow.module.css";
@@ -25,21 +28,33 @@ const LOCALE_LABELS: Record<string, string> = {
 	en: "English",
 };
 
+const CAPTURE_PRESET_LABEL_KEYS: Record<CapturePreset, string> = {
+	economy: "recording.capturePresetEconomy",
+	standard: "recording.capturePresetStandard",
+	high: "recording.capturePresetHigh",
+};
+
 export function MorePopover({
 	trigger,
+	capturePreset,
+	onCapturePresetChange,
 	supportsHudCaptureProtection,
 	hideHudFromCapture,
 	onToggleHudCaptureProtection,
 	onChooseRecordingsDirectory,
+	onOpenLogsFolder,
 	onOpenVideoFile,
 	onOpenProjectBrowser,
 	appVersion,
 }: {
 	trigger: ReactElement;
+	capturePreset: CapturePreset;
+	onCapturePresetChange: (preset: CapturePreset) => void;
 	supportsHudCaptureProtection: boolean;
 	hideHudFromCapture: boolean;
 	onToggleHudCaptureProtection: () => void;
 	onChooseRecordingsDirectory: () => void;
+	onOpenLogsFolder: () => void;
 	onOpenVideoFile: () => void;
 	onOpenProjectBrowser: () => void;
 	appVersion: string | null;
@@ -82,6 +97,15 @@ export function MorePopover({
 				}}
 			>
 				{t("recording.recordingsFolder")}
+			</DropdownItem>
+			<DropdownItem
+				icon={<NoteIcon size={16} />}
+				onClick={() => {
+					requestClose(POPOVER_ID);
+					onOpenLogsFolder();
+				}}
+			>
+				{t("recording.openLogsFolder")}
 			</DropdownItem>
 			<DropdownItem
 				icon={<VideoCameraIcon size={16} />}
@@ -134,6 +158,22 @@ export function MorePopover({
 			>
 				{tGlobal("editor.theme.system")}
 			</DropdownItem>
+			<div className={styles.ddLabel} style={{ marginTop: 4 }}>
+				{t("recording.capturePreset")}
+			</div>
+			{CAPTURE_PRESET_VALUES.map((preset) => (
+				<DropdownItem
+					key={preset}
+					icon={<VideoCameraIcon size={16} />}
+					selected={capturePreset === preset}
+					onClick={() => {
+						onCapturePresetChange(preset);
+						requestClose(POPOVER_ID);
+					}}
+				>
+					{t(CAPTURE_PRESET_LABEL_KEYS[preset])}
+				</DropdownItem>
+			))}
 			<div className={styles.ddLabel} style={{ marginTop: 4 }}>
 				{t("recording.language")}
 			</div>

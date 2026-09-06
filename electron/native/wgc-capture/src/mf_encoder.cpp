@@ -39,7 +39,8 @@ MFEncoder::~MFEncoder() {
 }
 
 bool MFEncoder::initialize(const std::wstring& outputPath, int width, int height, int fps,
-                           ID3D11Device* device, ID3D11DeviceContext* context) {
+                           ID3D11Device* device, ID3D11DeviceContext* context,
+                           UINT32 bitrateBps) {
     std::lock_guard<std::mutex> lock(mutex_);
 
     if (initialized_) return false;
@@ -73,7 +74,9 @@ bool MFEncoder::initialize(const std::wstring& outputPath, int width, int height
 
     outputType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
     outputType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_H264);
-    const UINT32 videoBitrate = calculateScreenRecordingBitrate(width_, height_, fps_);
+    // 调用方传入档位码率时优先生效（标准档约 10Mbps），否则按分辨率估算。
+    const UINT32 videoBitrate =
+        bitrateBps > 0 ? bitrateBps : calculateScreenRecordingBitrate(width_, height_, fps_);
     outputType->SetUINT32(MF_MT_AVG_BITRATE, videoBitrate);
     MFSetAttributeSize(outputType.Get(), MF_MT_FRAME_SIZE, width_, height_);
     MFSetAttributeRatio(outputType.Get(), MF_MT_FRAME_RATE, fps_, 1);

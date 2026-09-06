@@ -182,6 +182,7 @@ export function useEditorProjectController(input: Input) {
 		setAutoCaptionSettings: input.timeline.setAutoCaptionSettings,
 		setAutoCaptions: input.timeline.setAutoCaptions,
 		syncActiveVideoSource: lifecycle.syncActiveVideoSource,
+		isExporting: input.isExporting,
 	});
 	const saveActions = useProjectSaveActions({
 		project: input.project,

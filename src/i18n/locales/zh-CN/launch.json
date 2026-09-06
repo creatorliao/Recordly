@@ -12,6 +12,7 @@
 		"record": "录制",
 		"recordingFolder": "录制文件夹：{{path}}",
 		"chooseRecordingsFolder": "选择录制文件夹",
+		"openLogsFolder": "打开日志文件夹",
 		"folderPath": "路径：/{{name}}/",
 		"openVideoFile": "打开视频文件",
 		"openProject": "打开项目",
@@ -39,6 +40,10 @@
 		"preparing": "正在准备录制",
 		"preparingSubtitle": "即将打开编辑器",
 		"language": "语言",
+		"capturePreset": "采集画质",
+		"capturePresetEconomy": "省电（720p / 24fps）",
+		"capturePresetStandard": "标准（1080p / 30fps，默认）",
+		"capturePresetHigh": "高清（最高 4K / 60fps）",
 		"paused": "已暂停",
 		"rec": "录制中",
 		"resume": "恢复",
@@ -78,7 +83,10 @@
 		"systemAudioUnavailable": "此源不支持系统音频。将继续录制但不包含系统音频。",
 		"microphoneDenied": "麦克风访问被拒绝。将继续录制但不包含麦克风音频。",
 		"failedToStart": "录制启动失败：{{error}}",
-		"failedToStartGeneric": "录制启动失败"
+		"failedToStartGeneric": "录制启动失败",
+		"finishRecordingFailed": "无法完成录制，因此没有打开编辑器。",
+		"storeRecordingFailed": "无法保存本次录制。",
+		"finalizeRecordingFailed": "无法完成录制保存：{{error}}"
 	},
 	"updateToast": {
 		"availableTitle": "有可用更新",
