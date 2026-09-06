@@ -15,6 +15,7 @@ import {
 	Tray,
 } from "electron";
 import { RECORDINGS_DIR } from "./appPaths";
+import { readAppSetting, writeAppSetting } from "./appSettingsStore";
 import {
 	attachWebContentsConsoleLogging,
 	endSessionLog,
@@ -209,6 +210,31 @@ function closeEditorWindowToHud(window: BrowserWindow | null) {
 	}
 	createWindow();
 	closeEditorWindowBypassingUnsavedPrompt(window);
+}
+
+// 设置「关闭窗口时」：默认退出应用；可选最小化到托盘。
+function shouldMinimizeToTrayOnClose() {
+	return readAppSetting("closeWindowBehavior") === "tray";
+}
+
+function hideWindowToTray(window: BrowserWindow | null) {
+	if (!window || window.isDestroyed()) {
+		return;
+	}
+
+	window.hide();
+	// 首次缩到托盘给气泡说明，只提醒一次。
+	if (!readAppSetting("hasShownTrayHint") && tray && process.platform === "win32") {
+		try {
+			tray.displayBalloon({
+				title: "Recordly",
+				content: "已放到托盘。要退出请点托盘图标 → 退出。",
+			});
+		} catch {
+			// displayBalloon 在部分 Windows 版本不可用，忽略即可。
+		}
+		writeAppSetting("hasShownTrayHint", true);
+	}
 }
 
 function restoreWindowSafely(window: BrowserWindow | null) {
@@ -530,9 +556,9 @@ function createTray() {
 }
 
 function shouldUseTray() {
-	// macOS and Windows expose Recordly through their Dock/taskbar. Keep the
-	// tray entry only on Linux, where it remains the primary app entry point.
-	return process.platform === "linux";
+	// Windows 打开 Tray 能力（可选「最小化到托盘」）；Linux 仍以托盘为主入口。
+	// macOS 走 Dock，不建托盘。
+	return process.platform === "linux" || process.platform === "win32";
 }
 
 function getPublicAssetPath(filename: string) {
@@ -569,7 +595,7 @@ function updateTrayMenu(recording: boolean = false) {
 	const menuTemplate = recording
 		? [
 				{
-					label: "Show Controls",
+					label: "显示控制条",
 					click: () => {
 						if (!showHudOverlayFromTray()) {
 							focusOrCreateMainWindow();
@@ -577,17 +603,23 @@ function updateTrayMenu(recording: boolean = false) {
 					},
 				},
 				{
-					label: "Stop Recording",
+					label: "停止录制",
 					click: () => {
 						if (mainWindow && !mainWindow.isDestroyed()) {
 							mainWindow.webContents.send("stop-recording-from-tray");
 						}
 					},
 				},
+				{
+					label: "退出",
+					click: () => {
+						app.quit();
+					},
+				},
 			]
 		: [
 				{
-					label: "Open",
+					label: "打开录制工具栏",
 					click: () => {
 						if (!showHudOverlayFromTray()) {
 							focusOrCreateMainWindow();
@@ -595,7 +627,13 @@ function updateTrayMenu(recording: boolean = false) {
 					},
 				},
 				{
-					label: "Quit",
+					label: "打开编辑器",
+					click: () => {
+						createEditorWindowWrapper();
+					},
+				},
+				{
+					label: "退出",
 					click: () => {
 						app.quit();
 					},
@@ -665,28 +703,45 @@ function createEditorWindowWrapper() {
 	});
 
 	editorWindow.on("close", (event) => {
-		if (isForceClosing || !editorHasUnsavedChanges) {
-			if (process.platform === "win32" && !isForceClosing && !isAppQuitting) {
-				event.preventDefault();
-				closeEditorWindowToHud(editorWindow);
+		// 真正退出 / 强制关闭（app.quit、before-quit 已置位）时放行。
+		if (isForceClosing || isAppQuitting) {
+			return;
+		}
+
+		event.preventDefault();
+
+		const proceedClose = () => {
+			const minimizeToTray = shouldMinimizeToTrayOnClose();
+			writeSessionLog({
+				level: "info",
+				scope: "window",
+				event: minimizeToTray ? "editor.close-to-tray" : "editor.close-quit",
+				msg: minimizeToTray
+					? "closing editor window to tray"
+					: "closing editor window, quitting app",
+			});
+			if (minimizeToTray) {
+				// 可选：X 缩到托盘，不重建 HUD；Tray 仍能进任一面或退出。
+				hideWindowToTray(editorWindow);
+			} else {
+				// 默认：X 退出整个应用（剪映/OBS 同类），不复活 HUD。
+				app.quit();
 			}
+		};
+
+		if (!editorHasUnsavedChanges) {
+			proceedClose();
 			return;
 		}
 
 		// 不弹系统原生框：交给渲染进程用和「返回录制」同一套未保存对话框。
-		event.preventDefault();
 		editorWindow.webContents.send("request-save-before-close");
 		ipcMain.once("save-before-close-done", (_event, proceed: boolean) => {
 			if (!proceed) {
 				isAppQuitting = false;
 				return;
 			}
-
-			if (process.platform === "win32" && !isAppQuitting) {
-				closeEditorWindowToHud(editorWindow);
-			} else {
-				closeEditorWindowBypassingUnsavedPrompt(editorWindow);
-			}
+			proceedClose();
 		});
 	});
 
@@ -823,10 +878,19 @@ app.whenReady().then(async () => {
 
 	ipcMain.on("hud-overlay-close", () => {
 		const hud = getHudOverlayWindow();
-		if (hud) {
-			console.log("[main] Closing HUD window via hud-overlay-close");
-			hud.close();
+		if (!hud) {
+			return;
 		}
+
+		// 可选「最小化到托盘」：HUD 的 X 缩到托盘，不退出。
+		if (shouldMinimizeToTrayOnClose()) {
+			console.log("[main] Hiding HUD window to tray via hud-overlay-close");
+			hideWindowToTray(hud);
+			return;
+		}
+
+		console.log("[main] Closing HUD window via hud-overlay-close");
+		hud.close();
 
 		// If this was the last window (or we are in a state where we should quit), do it.
 		// We use a small delay to allow window.close() to propagate.
