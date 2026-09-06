@@ -129,7 +129,7 @@ export function EditorExportMenu(props: Props) {
 								) : null}
 								{isLegacyExportInProgress ? (
 									<p className="mt-1 text-[11px] text-muted-foreground/70">
-										Export too slow? Cancel and try Lightning export!
+										{t("editor.exportStatus.legacySlowHint")}
 									</p>
 								) : null}
 							</div>

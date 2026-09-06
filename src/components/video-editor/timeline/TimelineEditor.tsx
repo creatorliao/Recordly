@@ -5,7 +5,7 @@ import type {
 	SourceAudioTrackMeta,
 	SourceAudioTrackSettings,
 } from "@/components/video-editor/audio/audioTypes";
-import { useScopedT } from "@/contexts/I18nContext";
+import { useI18n, useScopedT } from "@/contexts/I18nContext";
 import { useShortcuts } from "@/contexts/ShortcutsContext";
 import { fromFileUrl } from "../projectPersistence";
 import type {
@@ -173,6 +173,7 @@ const TimelineEditor = forwardRef<TimelineEditorHandle, TimelineEditorProps>(
 		ref,
 	) {
 		const t = useScopedT("settings");
+		const { t: tRoot } = useI18n();
 		const totalMs = useMemo(
 			() => Math.max(0, Math.round(videoDuration * 1000)),
 			[videoDuration],
@@ -409,9 +410,11 @@ const TimelineEditor = forwardRef<TimelineEditorHandle, TimelineEditorProps>(
 						<Plus className="w-6 h-6 text-muted-foreground" />
 					</div>
 					<div className="text-center">
-						<p className="text-sm font-medium text-muted-foreground">No Video Loaded</p>
+						<p className="text-sm font-medium text-muted-foreground">
+							{tRoot("editor.timeline.noVideoLoaded")}
+						</p>
 						<p className="text-xs text-muted-foreground/70 mt-1">
-							Drag and drop a video to start editing
+							{tRoot("editor.timeline.dropToStart")}
 						</p>
 					</div>
 				</div>

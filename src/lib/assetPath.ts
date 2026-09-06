@@ -1,4 +1,8 @@
-import { resolveAvailableWallpaperPath } from "./wallpapers";
+import {
+	DEFAULT_WALLPAPER_PATH,
+	isVideoWallpaperSource,
+	resolveAvailableWallpaperPath,
+} from "./wallpapers";
 
 function encodeRelativeAssetPath(relativePath: string): string {
 	return relativePath
@@ -137,6 +141,23 @@ export async function getRenderableAssetUrl(asset: string): Promise<string> {
 	}
 
 	const availableAsset = await resolveAvailableWallpaperPath(asset);
+	const bundledRelative = getBundledWallpaperRelativePath(availableAsset);
+	if (
+		bundledRelative &&
+		typeof window !== "undefined" &&
+		window.electronAPI?.readBundledAssetDataUrl &&
+		!(await shouldUseRootRelativeAssetImg())
+	) {
+		try {
+			const bundled = await window.electronAPI.readBundledAssetDataUrl(bundledRelative);
+			if (isUsableImageDataUrl(bundled.dataUrl)) {
+				return bundled.dataUrl;
+			}
+		} catch {
+			// 再走下面的 HTTP / file 回退
+		}
+	}
+
 	const resolvedAsset =
 		isAbsoluteLocalAssetPath(availableAsset) && !isBundledAssetPath(availableAsset)
 			? toFileUrl(availableAsset)
@@ -185,7 +206,80 @@ async function resolveLocalMediaUrl(filePath: string): Promise<string> {
 }
 
 function isBundledAssetPath(asset: string): boolean {
+	return Boolean(getBundledWallpaperRelativePath(asset)) || asset.startsWith("/app-icons/");
+}
+
+/** 从任意引用抽出 wallpapers/文件名。打包 HTTP、file://、根路径都能认。 */
+export function getBundledWallpaperRelativePath(asset: string): string | null {
+	if (!asset) {
+		return null;
+	}
+	const posix = asset.replace(/\\/g, "/").split(/[?#]/)[0] ?? asset;
+	const match = posix.match(/(?:^|\/)wallpapers\/([^/]+)$/i);
+	if (!match?.[1]) {
+		return null;
+	}
+	try {
+		return `wallpapers/${decodeURIComponent(match[1])}`;
+	} catch {
+		return `wallpapers/${match[1]}`;
+	}
+}
+
+/** 根相对 /wallpapers/… 只有 Vite 开发服能出图；打包 asar 里没有这些文件。 */
+export function isRootRelativeBundledAssetUrl(asset: string): boolean {
 	return asset.startsWith("/wallpapers/") || asset.startsWith("/app-icons/");
+}
+
+/**
+ * 未打包（pnpm dev）可以继续用 /wallpapers 当 img src。
+ * 打包后 getAssetBasePath 有值，必须改走 IPC data URL。
+ */
+export async function shouldUseRootRelativeAssetImg(): Promise<boolean> {
+	// file:// 是打包窗 HTTP 失败后的回退；根相对 /wallpapers 会变成盘符根路径。
+	if (typeof window !== "undefined" && window.location?.protocol === "file:") {
+		return false;
+	}
+	if (typeof window === "undefined" || !window.electronAPI?.getAssetBasePath) {
+		return true;
+	}
+	const base = await window.electronAPI.getAssetBasePath();
+	return !base;
+}
+
+/** 打包态展示用：绝不把 /wallpapers 当 img/css src。失败返回空串，由 UI 留空，不裂图。 */
+export async function resolveEditorWallpaperDisplayUrl(asset: string): Promise<string> {
+	const source = asset || DEFAULT_WALLPAPER_PATH;
+	if (isVideoWallpaperSource(source)) {
+		return getRenderableVideoUrl(source);
+	}
+	const url = await getRenderableAssetUrl(source);
+	if (!(await shouldUseRootRelativeAssetImg()) && isRootRelativeBundledAssetUrl(url)) {
+		return "";
+	}
+	return url;
+}
+
+function isUsableImageDataUrl(value: string | undefined): value is string {
+	return Boolean(
+		value?.startsWith("data:image/") && value.includes(";base64,") && value.length > 32,
+	);
+}
+
+function toUint8ArraySafe(data: unknown): Uint8Array | null {
+	if (data instanceof Uint8Array) {
+		return data.byteLength > 0 ? data : null;
+	}
+	if (data instanceof ArrayBuffer) {
+		return data.byteLength > 0 ? new Uint8Array(data) : null;
+	}
+	if (Array.isArray(data) && data.length > 0) {
+		return new Uint8Array(data);
+	}
+	if (data && typeof data === "object" && "data" in data && Array.isArray(data.data)) {
+		return data.data.length > 0 ? new Uint8Array(data.data) : null;
+	}
+	return null;
 }
 
 export async function getRenderableVideoUrl(asset: string): Promise<string> {
@@ -197,6 +291,23 @@ export async function getRenderableVideoUrl(asset: string): Promise<string> {
 		asset.startsWith("http")
 	) {
 		return asset;
+	}
+
+	const bundledRelative = getBundledWallpaperRelativePath(asset);
+	if (
+		bundledRelative &&
+		typeof window !== "undefined" &&
+		window.electronAPI?.resolveBundledAssetPath &&
+		!(await shouldUseRootRelativeAssetImg())
+	) {
+		try {
+			const bundled = await window.electronAPI.resolveBundledAssetPath(bundledRelative);
+			if (bundled.success && bundled.path) {
+				return resolveLocalMediaUrl(bundled.path);
+			}
+		} catch {
+			// 再走下面的 HTTP 回退
+		}
 	}
 
 	if (isAbsoluteLocalAssetPath(asset) && !isBundledAssetPath(asset)) {
@@ -265,7 +376,6 @@ export async function getWallpaperThumbnailUrl(asset: string): Promise<string> {
 	if (
 		!asset ||
 		asset.startsWith("data:") ||
-		asset.startsWith("http") ||
 		asset.startsWith("#") ||
 		asset.startsWith("linear-gradient") ||
 		asset.startsWith("radial-gradient")
@@ -276,39 +386,51 @@ export async function getWallpaperThumbnailUrl(asset: string): Promise<string> {
 	const cached = thumbnailCache.get(asset);
 	if (cached) return cached;
 
-	const bundledRelative = asset.replace(/^\/+/, "");
+	const bundledRelative = getBundledWallpaperRelativePath(asset);
 	const thumbnailSource =
-		bundledRelative.startsWith("wallpapers/")
-			? bundledRelative
-			: toLocalFilePath(
-					asset.startsWith("/") && !asset.startsWith("//")
-						? await getAssetPath(bundledRelative)
-						: asset,
-				);
+		bundledRelative ??
+		toLocalFilePath(
+			asset.startsWith("/") && !asset.startsWith("//")
+				? await getAssetPath(asset.replace(/^\/+/, ""))
+				: asset,
+		);
 
 	if (
 		!thumbnailSource ||
 		typeof window === "undefined" ||
 		!window.electronAPI?.generateWallpaperThumbnail
 	) {
-		return getRenderableAssetUrl(asset);
+		return rejectRootRelativeInPackaged(await getRenderableAssetUrl(asset));
 	}
 
 	await acquireThumbSlot();
 	try {
 		const result = await window.electronAPI.generateWallpaperThumbnail(thumbnailSource);
-		if (!result.success || !result.data) {
-			return getRenderableAssetUrl(asset);
+		if (isUsableImageDataUrl(result.dataUrl)) {
+			thumbnailCache.set(asset, result.dataUrl);
+			return result.dataUrl;
 		}
-		const bytes = result.data instanceof Uint8Array ? result.data : new Uint8Array(result.data);
-		const dataUrl = `data:image/jpeg;base64,${toBase64(bytes)}`;
-		thumbnailCache.set(asset, dataUrl);
-		return dataUrl;
+		const bytes = toUint8ArraySafe(result.data);
+		if (bytes) {
+			const dataUrl = `data:image/jpeg;base64,${toBase64(bytes)}`;
+			if (isUsableImageDataUrl(dataUrl)) {
+				thumbnailCache.set(asset, dataUrl);
+				return dataUrl;
+			}
+		}
+		return rejectRootRelativeInPackaged(await getRenderableAssetUrl(asset));
 	} catch {
-		return getRenderableAssetUrl(asset);
+		return rejectRootRelativeInPackaged(await getRenderableAssetUrl(asset));
 	} finally {
 		releaseThumbSlot();
 	}
+}
+
+async function rejectRootRelativeInPackaged(url: string): Promise<string> {
+	if (!(await shouldUseRootRelativeAssetImg()) && isRootRelativeBundledAssetUrl(url)) {
+		return "";
+	}
+	return url;
 }
 
 export default getAssetPath;

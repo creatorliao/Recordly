@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 import { SOURCE_AUDIO_FALLBACK_TOAST_ID } from "@/components/video-editor/audio/audioTypes";
 
 // A microphone sidecar is converted after capture stops, so the editor can open
@@ -19,6 +20,7 @@ export function useSourceAudioFallback({
 	refreshKey = 0,
 	summarizeErrorMessage,
 }: UseSourceAudioFallbackParams) {
+	const { t } = useI18n();
 	const [sourceAudioFallbackPaths, setSourceAudioFallbackPaths] = useState<string[]>([]);
 	const [sourceAudioFallbackStartDelayMsByPath, setSourceAudioFallbackStartDelayMsByPath] =
 		useState<Record<string, number>>({});
@@ -59,8 +61,10 @@ export function useSourceAudioFallback({
 					}
 					toast.warning(
 						result.error
-							? `Could not load companion audio sources: ${summarizeErrorMessage(result.error)}`
-							: "Could not load companion audio sources. Playback and export may miss microphone audio.",
+							? t("common.toasts.companionAudioFailedDetail", undefined, {
+									error: summarizeErrorMessage(result.error),
+								})
+							: t("common.toasts.companionAudioFailed"),
 						{ id: SOURCE_AUDIO_FALLBACK_TOAST_ID, duration: 10000 },
 					);
 					return;
@@ -82,7 +86,9 @@ export function useSourceAudioFallback({
 						setSourceAudioFallbackStartDelayMsByPath({});
 					}
 					toast.warning(
-						`Could not load companion audio sources: ${summarizeErrorMessage(String(error))}`,
+						t("common.toasts.companionAudioFailedDetail", undefined, {
+							error: summarizeErrorMessage(String(error)),
+						}),
 						{ id: SOURCE_AUDIO_FALLBACK_TOAST_ID, duration: 10000 },
 					);
 				}

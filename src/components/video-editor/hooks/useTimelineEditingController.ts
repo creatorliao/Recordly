@@ -61,10 +61,12 @@ export function useTimelineEditingController(input: Input) {
 	const { timeline } = input;
 	const handleSourceFallbackLoadError = useCallback((error: unknown) => {
 		toast.warning(
-			`Could not load companion audio source: ${summarizeErrorMessage(getErrorMessage(error))}`,
+			input.t("common.toasts.companionAudioSourceFailed", undefined, {
+				error: summarizeErrorMessage(getErrorMessage(error)),
+			}),
 			{ duration: 10000 },
 		);
-	}, []);
+	}, [input.t]);
 	const cursor = useCursorTelemetry({
 		videoPath: input.videoPath,
 		videoSourcePath: input.videoSourcePath,

@@ -89,16 +89,13 @@ export function useTimelineZoomActions({
 
 			const startPos = Math.max(0, Math.min(startMs, totalMs));
 			if (!canPlaceZoomAtMs(startPos)) {
-				timelineNotifications.error(
-					"Cannot place zoom here",
-					"Zoom already exists here or there is not enough room before the next zoom or clip end.",
-				);
+				timelineNotifications.error(t("zoom.cannotPlace"), t("zoom.existsOrNoSpace"));
 				return;
 			}
 
 			onZoomAdded({ start: startPos, end: startPos + defaultDuration });
 		},
-		[videoDuration, totalMs, defaultRegionDurationMs, canPlaceZoomAtMs, onZoomAdded],
+		[videoDuration, totalMs, defaultRegionDurationMs, canPlaceZoomAtMs, onZoomAdded, t],
 	);
 
 	const handleAddZoom = useCallback(() => {

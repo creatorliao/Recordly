@@ -4,6 +4,7 @@ import path from "node:path";
 
 const projectRoot = process.cwd();
 const releaseRoot = path.join(projectRoot, "release");
+const portableReleaseRoot = path.join(projectRoot, "release-portable");
 const packageJson = JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
 const productName = packageJson.productName ?? packageJson.name ?? "Recordly";
 const packageName = packageJson.name ?? "recordly";
@@ -214,6 +215,27 @@ function getExpectedNativeHelperFiles(archTag) {
 	return [];
 }
 
+function verifyBundledWhisperModel(unpackedRoot) {
+	const modelPath = path.join(path.dirname(unpackedRoot), "whisper", "ggml-small.bin");
+	const isCurrentPortableUnpack = unpackedRoot.includes(
+		`${path.sep}release-portable${path.sep}win-unpacked${path.sep}`,
+	);
+	if (!existsSync(modelPath)) {
+		if (isCurrentPortableUnpack) {
+			fail(`bundled Whisper small model is missing at ${relativePath(modelPath)}`);
+		}
+		console.log(
+			`[packaged-smoke] skip Whisper model (older unpack without extraResources): ${relativePath(unpackedRoot)}`,
+		);
+		return;
+	}
+	assertFile(modelPath, "bundled Whisper small model");
+	const size = statSync(modelPath).size;
+	if (size < 400 * 1024 * 1024) {
+		fail(`bundled Whisper model is too small (${size} bytes) at ${relativePath(modelPath)}`);
+	}
+}
+
 function verifyFfmpeg(unpackedRoot) {
 	const binaryName = process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg";
 	const ffmpegPath = path.join(unpackedRoot, "node_modules", "ffmpeg-static", binaryName);
@@ -262,10 +284,13 @@ function verifyNativeHelpers(unpackedRoot) {
 	}
 }
 
-const unpackedRoots = findDirectoriesByName(releaseRoot, "app.asar.unpacked");
+const unpackedRoots = [
+	...findDirectoriesByName(releaseRoot, "app.asar.unpacked"),
+	...findDirectoriesByName(portableReleaseRoot, "app.asar.unpacked"),
+];
 
 if (unpackedRoots.length === 0) {
-	fail("no packaged app.asar.unpacked directory found under release/");
+	fail("no packaged app.asar.unpacked directory found under release/ or release-portable/");
 }
 
 console.log(
@@ -277,6 +302,7 @@ for (const unpackedRoot of unpackedRoots) {
 	assertPackagedAppExecutable(unpackedRoot);
 	verifyFfmpeg(unpackedRoot);
 	verifyNativeHelpers(unpackedRoot);
+	verifyBundledWhisperModel(unpackedRoot);
 }
 
 console.log("[packaged-smoke] packaged binary path smoke passed");

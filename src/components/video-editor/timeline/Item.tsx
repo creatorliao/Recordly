@@ -12,6 +12,7 @@ import type { Span } from "dnd-timeline";
 import { useItem } from "dnd-timeline";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/contexts/I18nContext";
 import { cn } from "@/lib/utils";
 import { formatClipSpeedLabel } from "../clipSpeedChange";
 import AudioWaveform from "./components/waveform/AudioWaveform";
@@ -81,6 +82,7 @@ export default function Item({
 	loadingLabel,
 	children,
 }: ItemProps) {
+	const { t } = useI18n();
 	const { setNodeRef, attributes, listeners, itemStyle, itemContentStyle } = useItem({
 		id,
 		span,
@@ -112,7 +114,7 @@ export default function Item({
 				<Skeleton
 					variant="clip"
 					animation="shimmer-premium"
-					label={loadingLabel || "Loading..."}
+					label={loadingLabel || t("editor.timeline.loading")}
 					className="w-full"
 					style={{ height: "85%", minHeight: 22 }}
 				/>
@@ -193,12 +195,12 @@ export default function Item({
 					<div
 						className={cn(glassStyles.zoomEndCap, glassStyles.left)}
 						style={{ cursor: "col-resize", pointerEvents: "auto" }}
-						title="Resize left"
+						title={t("timeline.resizeLeft")}
 					/>
 					<div
 						className={cn(glassStyles.zoomEndCap, glassStyles.right)}
 						style={{ cursor: "col-resize", pointerEvents: "auto" }}
-						title="Resize right"
+						title={t("timeline.resizeRight")}
 					/>
 					{showAudioWaveform && waveformPeaks && (
 						<AudioWaveform

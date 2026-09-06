@@ -21,7 +21,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getAssetPath, getRenderableVideoUrl, getWallpaperThumbnailUrl } from "@/lib/assetPath";
+import {
+	getAssetPath,
+	getRenderableVideoUrl,
+	getWallpaperThumbnailUrl,
+	isRootRelativeBundledAssetUrl,
+	shouldUseRootRelativeAssetImg,
+} from "@/lib/assetPath";
 import { cn } from "@/lib/utils";
 import type { BuiltInWallpaper } from "@/lib/wallpapers";
 import {
@@ -134,11 +140,11 @@ const GRADIENTS = [
 	"linear-gradient(to right, #0acffe 0%, #495aff 100%)",
 ];
 
-const CAPTION_ANIMATION_OPTIONS: Array<{ value: AutoCaptionAnimation; label: string }> = [
-	{ value: "none", label: "Off" },
-	{ value: "fade", label: "Fade" },
-	{ value: "rise", label: "Rise" },
-	{ value: "pop", label: "Pop" },
+const CAPTION_ANIMATION_OPTIONS: Array<{ value: AutoCaptionAnimation; labelKey: string }> = [
+	{ value: "none", labelKey: "captions.animationOff" },
+	{ value: "fade", labelKey: "captions.animationFade" },
+	{ value: "rise", labelKey: "captions.animationRise" },
+	{ value: "pop", labelKey: "captions.animationPop" },
 ];
 
 const CLICK_EFFECT_COLOR_OPTIONS = [
@@ -628,18 +634,10 @@ interface SettingsPanelProps {
 	onAnnotationDelete?: (id: string) => void;
 	autoCaptions?: CaptionCue[];
 	autoCaptionSettings?: AutoCaptionSettings;
-	whisperExecutablePath?: string | null;
-	whisperModelPath?: string | null;
-	whisperModelDownloadStatus?: "idle" | "downloading" | "downloaded" | "error";
-	whisperModelDownloadProgress?: number;
 	isGeneratingCaptions?: boolean;
 	onAutoCaptionSettingsChange?: (settings: AutoCaptionSettings) => void;
-	onPickWhisperExecutable?: () => void;
-	onPickWhisperModel?: () => void;
 	onGenerateAutoCaptions?: () => void;
 	onClearAutoCaptions?: () => void;
-	onDownloadWhisperSmallModel?: () => void;
-	onDeleteWhisperSmallModel?: () => void;
 	captionCurrentTimeMs?: number;
 	selectedCaptionId?: string | null;
 	onBeginCaptionEdit?: (id: string) => void;
@@ -693,12 +691,6 @@ const BUILTIN_CURSOR_STYLE_OPTIONS: CursorStyleOption[] = [
 	{ value: "dot", label: "Dot" },
 	{ value: "figma", label: "Minimal" },
 ];
-
-const CAPTION_LANGUAGE_OPTIONS = [
-	{ value: "auto", label: "自动检测" },
-	{ value: "zh", label: "简体中文" },
-	{ value: "en", label: "English" },
-] as const;
 
 const APP_LANGUAGE_LABELS: Record<AppLocale, string> = {
 	"zh-CN": "简体中文",
@@ -1061,16 +1053,10 @@ export function SettingsPanel({
 	onAnnotationDelete,
 	autoCaptions = [],
 	autoCaptionSettings = DEFAULT_AUTO_CAPTION_SETTINGS,
-	whisperModelPath,
-	whisperModelDownloadStatus = "idle",
-	whisperModelDownloadProgress = 0,
 	isGeneratingCaptions = false,
 	onAutoCaptionSettingsChange,
-	onPickWhisperModel,
 	onGenerateAutoCaptions,
 	onClearAutoCaptions,
-	onDownloadWhisperSmallModel,
-	onDeleteWhisperSmallModel,
 	captionCurrentTimeMs = 0,
 	selectedCaptionId = null,
 	onBeginCaptionEdit,
@@ -1089,7 +1075,10 @@ export function SettingsPanel({
 	const initialEditorPreferences = useMemo(() => loadEditorPreferences(), []);
 	const [builtInWallpapers, setBuiltInWallpapers] =
 		useState<BuiltInWallpaper[]>(BUILT_IN_WALLPAPERS);
-	const [wallpaperPreviewPaths, setWallpaperPreviewPaths] = useState<string[]>([]);
+	const [wallpaperPreviewByPath, setWallpaperPreviewByPath] = useState<Record<string, string>>(
+		{},
+	);
+	const [useRootRelativeWallpaperPreview, setUseRootRelativeWallpaperPreview] = useState(false);
 	const [customImages, setCustomImages] = useState<string[]>(
 		initialEditorPreferences.customWallpapers,
 	);
@@ -1113,6 +1102,10 @@ export function SettingsPanel({
 	};
 
 	useEffect(() => {
+		void shouldUseRootRelativeAssetImg().then(setUseRootRelativeWallpaperPreview);
+	}, []);
+
+	useEffect(() => {
 		if (
 			!isBackgroundPanel &&
 			activeEffectSection !== "scene" &&
@@ -1125,44 +1118,42 @@ export function SettingsPanel({
 		}
 
 		let mounted = true;
+		const resolvePreview = async (wallpaper: BuiltInWallpaper) => {
+			const assetUrl = await getAssetPath(wallpaper.relativePath);
+			if (isVideoWallpaperSource(wallpaper.publicPath)) {
+				return getRenderableVideoUrl(assetUrl);
+			}
+			return getWallpaperThumbnailUrl(wallpaper.relativePath);
+		};
 		(async () => {
 			try {
 				const availableWallpapers = await getAvailableWallpapers();
-				const resolved = await Promise.all(
+				const resolvedEntries = await Promise.all(
 					availableWallpapers.map(async (wallpaper) => {
-						const assetUrl = await getAssetPath(wallpaper.relativePath);
-						// Use tiny thumbnails for the grid; full-res loads on selection
-						if (isVideoWallpaperSource(wallpaper.publicPath)) {
-							return getRenderableVideoUrl(assetUrl);
-						}
-						return getWallpaperThumbnailUrl(assetUrl);
+						const preview = await resolvePreview(wallpaper);
+						return [wallpaper.publicPath, preview] as const;
 					}),
 				);
 				if (mounted) {
 					setBuiltInWallpapers(availableWallpapers);
-					setWallpaperPreviewPaths(resolved);
+					setWallpaperPreviewByPath(Object.fromEntries(resolvedEntries));
 				}
 			} catch {
 				if (!mounted) {
 					return;
 				}
 				setBuiltInWallpapers(BUILT_IN_WALLPAPERS);
-				// 打包窗口 /wallpapers 会 404；失败时仍走 extraResources 解析，不用裸路径当 img src。
-				const fallbackPreviews = await Promise.all(
+				const fallbackEntries = await Promise.all(
 					BUILT_IN_WALLPAPERS.map(async (wallpaper) => {
 						try {
-							const assetUrl = await getAssetPath(wallpaper.relativePath);
-							if (isVideoWallpaperSource(wallpaper.publicPath)) {
-								return getRenderableVideoUrl(assetUrl);
-							}
-							return getWallpaperThumbnailUrl(assetUrl);
+							return [wallpaper.publicPath, await resolvePreview(wallpaper)] as const;
 						} catch {
-							return wallpaper.publicPath;
+							return [wallpaper.publicPath, ""] as const;
 						}
 					}),
 				);
 				if (mounted) {
-					setWallpaperPreviewPaths(fallbackPreviews);
+					setWallpaperPreviewByPath(Object.fromEntries(fallbackEntries));
 				}
 			}
 		})();
@@ -1271,46 +1262,47 @@ export function SettingsPanel({
 		}
 
 		const isKnownWallpaper =
-			builtInWallpaperPaths.includes(selected) || wallpaperPreviewPaths.includes(selected);
+			builtInWallpaperPaths.includes(selected) ||
+			Object.values(wallpaperPreviewByPath).includes(selected);
 
 		if (!isKnownWallpaper && isVideoWallpaperSource(selected)) {
 			setCustomImages((prev) => (prev.includes(selected) ? prev : [selected, ...prev]));
 		}
-	}, [builtInWallpaperPaths, selected, wallpaperPreviewPaths]);
+	}, [builtInWallpaperPaths, selected, wallpaperPreviewByPath]);
 
 	const imageWallpaperTiles = useMemo<WallpaperTile[]>(() => {
-		const imageWallpapers = builtInWallpapers.filter(
-			(wallpaper) => !isVideoWallpaperSource(wallpaper.publicPath),
-		);
-		const builtInTiles = (
-			wallpaperPreviewPaths.length > 0 ? wallpaperPreviewPaths : builtInWallpaperPaths
-		)
-			.filter((path) => !isVideoWallpaperSource(path))
-			.map((previewPath, index) => {
-				const wallpaper = imageWallpapers[index];
+		return builtInWallpapers
+			.filter((wallpaper) => !isVideoWallpaperSource(wallpaper.publicPath))
+			.map((wallpaper) => {
+				const resolvedPreview = wallpaperPreviewByPath[wallpaper.publicPath];
+				const fallbackPreview = useRootRelativeWallpaperPreview ? wallpaper.publicPath : "";
+				const previewUrl =
+					resolvedPreview &&
+					!(
+						!useRootRelativeWallpaperPreview &&
+						isRootRelativeBundledAssetUrl(resolvedPreview)
+					)
+						? resolvedPreview
+						: fallbackPreview;
 				return {
-					key: wallpaper ? `builtin/${wallpaper.id}` : previewPath,
-					label: wallpaper?.label ?? `Wallpaper ${index + 1}`,
-					value: wallpaper?.publicPath ?? previewPath,
-					previewUrl: previewPath,
+					key: `builtin/${wallpaper.id}`,
+					label: wallpaper.label,
+					value: wallpaper.publicPath,
+					previewUrl,
 				};
 			});
-
-		return builtInTiles;
-	}, [builtInWallpaperPaths, builtInWallpapers, wallpaperPreviewPaths]);
+	}, [builtInWallpapers, useRootRelativeWallpaperPreview, wallpaperPreviewByPath]);
 
 	const videoWallpaperTiles = useMemo<WallpaperTile[]>(() => {
-		const builtInTiles = builtInWallpapers
+		return builtInWallpapers
 			.filter((wallpaper) => isVideoWallpaperSource(wallpaper.publicPath))
 			.map((wallpaper) => ({
 				key: `builtin/${wallpaper.id}`,
 				label: wallpaper.label,
 				value: wallpaper.publicPath,
-				previewUrl: wallpaper.publicPath,
+				previewUrl: wallpaperPreviewByPath[wallpaper.publicPath] || "",
 			}));
-
-		return builtInTiles;
-	}, [builtInWallpapers]);
+	}, [builtInWallpapers, wallpaperPreviewByPath]);
 
 	useEffect(() => {
 		saveEditorPreferences({ customWallpapers: customImages });
@@ -1434,7 +1426,7 @@ export function SettingsPanel({
 			<div className="absolute inset-[1px] overflow-hidden rounded-[8px] bg-editor-dialog">
 				{isVideoWallpaperSource(wallpaperUrl) ? (
 					<WallpaperVideoPreview src={wallpaperUrl} />
-				) : (
+				) : wallpaperUrl ? (
 					<img
 						src={wallpaperUrl}
 						alt={
@@ -1445,7 +1437,7 @@ export function SettingsPanel({
 						className="h-full w-full select-none object-cover [transform:translateZ(0)]"
 						draggable={false}
 					/>
-				)}
+				) : null}
 			</div>
 			{props?.children}
 		</div>
@@ -1668,16 +1660,16 @@ export function SettingsPanel({
 			if (!result?.success || !result.path) return;
 			const filePath = result.path;
 			if (!isVideoWallpaperSource(filePath)) {
-				toast.error("Unsupported format", {
-					description: "Please select a video file (mp4, webm, mov, etc.)",
+				toast.error(tSettings("background.unsupportedFormat"), {
+					description: tSettings("background.unsupportedFormatHint"),
 				});
 				return;
 			}
 			setCustomImages((prev) => [filePath, ...prev]);
 			onWallpaperChange(filePath);
-			toast.success("Video background added");
+			toast.success(tSettings("background.videoAdded"));
 		} catch {
-			toast.error("Failed to import video background");
+			toast.error(tSettings("background.videoImportFailed"));
 		}
 	};
 
@@ -1947,10 +1939,10 @@ export function SettingsPanel({
 											style={{
 												background: `linear-gradient(135deg, ${selectedColor} 0%, ${selectedColor} 58%, rgba(255,255,255,0.92) 58%, rgba(255,255,255,0.92) 100%)`,
 											}}
-											aria-label="Custom color picker"
+											aria-label={t("common.color.customPicker")}
 										>
 											<div className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground/90">
-												Pick
+												{t("common.color.pick")}
 											</div>
 										</button>
 									</div>
@@ -2262,81 +2254,20 @@ export function SettingsPanel({
 			</div>
 
 			<div className="rounded-lg bg-foreground/[0.03] px-2.5 py-2 space-y-3">
-				<div>
+				<div className="grid w-full grid-cols-2 gap-2">
 					<Button
 						type="button"
 						variant="outline"
-						onClick={onPickWhisperModel}
-						className="h-10 w-full rounded-xl border-foreground/10 bg-foreground/5 px-4 text-sm text-foreground hover:bg-foreground/10 hover:text-foreground"
+						onClick={onClearAutoCaptions}
+						disabled={captionCueCount === 0}
+						className="h-10 w-full rounded-xl border-foreground/10 bg-foreground/5 px-4 text-sm text-foreground hover:bg-foreground/10 hover:text-foreground disabled:opacity-50"
 					>
-						{tSettings("captions.selectModel", "Select Model")}
+						{tSettings("captions.clearFull", "Clear Captions")}
 					</Button>
-				</div>
-				<div className="flex items-center justify-between gap-3">
-					<div className="text-sm font-medium text-foreground">
-						{tSettings("captions.language", "Language")}
-					</div>
-					<Select
-						value={autoCaptionSettings.language || "auto"}
-						onValueChange={(value) => updateAutoCaptionSettings({ language: value })}
-					>
-						<SelectTrigger className="h-10 w-[180px] rounded-xl border-foreground/10 bg-foreground/5 text-sm text-foreground hover:bg-foreground/10">
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent className="border-foreground/10 bg-editor-surface-alt text-foreground">
-							{CAPTION_LANGUAGE_OPTIONS.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
-				<div className="flex flex-wrap items-center gap-2">
-					<div className="grid w-full grid-cols-2 gap-2">
-						{whisperModelDownloadStatus === "downloading" ? (
-							<Button
-								type="button"
-								disabled
-								className="h-10 w-full rounded-xl bg-foreground/10 px-4 text-sm font-medium text-foreground hover:bg-foreground/10"
-							>
-								{tSettings("captions.downloading", "Downloading...")}{" "}
-								{Math.round(whisperModelDownloadProgress)}%
-							</Button>
-						) : whisperModelPath ? (
-							<Button
-								type="button"
-								variant="outline"
-								onClick={onDeleteWhisperSmallModel}
-								className="h-10 w-full rounded-xl border-foreground/10 bg-foreground/5 px-4 text-sm text-foreground hover:bg-foreground/10 hover:text-foreground"
-							>
-								{tSettings("captions.deleteModel", "Delete Model")}
-							</Button>
-						) : (
-							<Button
-								type="button"
-								onClick={onDownloadWhisperSmallModel}
-								className="h-10 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-medium text-white hover:bg-[#2563EB]/90"
-							>
-								{tSettings("captions.downloadModel", "Download Model")}
-							</Button>
-						)}
-						<Button
-							type="button"
-							variant="outline"
-							onClick={onClearAutoCaptions}
-							disabled={captionCueCount === 0}
-							className="h-10 w-full rounded-xl border-foreground/10 bg-foreground/5 px-4 text-sm text-foreground hover:bg-foreground/10 hover:text-foreground disabled:opacity-50"
-						>
-							{tSettings("captions.clearFull", "Clear Captions")}
-						</Button>
-					</div>
-				</div>
-				<div className="flex flex-col gap-2">
 					<Button
 						type="button"
 						onClick={onGenerateAutoCaptions}
-						disabled={isGeneratingCaptions || !whisperModelPath}
+						disabled={isGeneratingCaptions}
 						className="h-10 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-medium text-white hover:bg-[#2563EB]/90 disabled:opacity-60"
 					>
 						{isGeneratingCaptions
@@ -2345,24 +2276,13 @@ export function SettingsPanel({
 								? tSettings("captions.regenerateFull", "Regenerate Captions")
 								: tSettings("captions.generateFull", "Generate Captions")}
 					</Button>
-					{isGeneratingCaptions ? (
-						<div className="space-y-1">
-							<div className="text-xs text-muted-foreground">
-								{tSettings(
-									"captions.generatingStatus",
-									"Generating captions. This can take a moment.",
-								)}
-							</div>
-							<div className="indeterminate-progress h-2 rounded-full bg-foreground/5" />
-						</div>
-					) : null}
 				</div>
-				{whisperModelDownloadStatus === "downloading" ? (
-					<div className="h-2 overflow-hidden rounded-full bg-foreground/5">
-						<div
-							className="h-full rounded-full bg-[#2196f3] transition-all"
-							style={{ width: `${whisperModelDownloadProgress}%` }}
-						/>
+				{isGeneratingCaptions ? (
+					<div className="space-y-1">
+						<div className="text-xs text-muted-foreground">
+							{tSettings("captions.generatingHint")}
+						</div>
+						<div className="indeterminate-progress h-2 rounded-full bg-foreground/5" />
 					</div>
 				) : null}
 			</div>
@@ -2386,7 +2306,7 @@ export function SettingsPanel({
 						<SelectContent className="border-foreground/10 bg-editor-surface-alt text-foreground">
 							{CAPTION_ANIMATION_OPTIONS.map((option) => (
 								<SelectItem key={option.value} value={option.value}>
-									{option.label}
+									{tSettings(option.labelKey)}
 								</SelectItem>
 							))}
 						</SelectContent>
@@ -3299,10 +3219,10 @@ export function SettingsPanel({
 												style={{
 													background: `linear-gradient(135deg, ${cursorClickEffectColor} 0%, ${cursorClickEffectColor} 58%, rgba(255,255,255,0.92) 58%, rgba(255,255,255,0.92) 100%)`,
 												}}
-												aria-label="Custom effect color picker"
+												aria-label={t("common.color.customEffectPicker")}
 											>
 												<div className="absolute inset-0 flex items-center justify-center">
-													Pick
+													{t("common.color.pick")}
 												</div>
 											</button>
 										</div>

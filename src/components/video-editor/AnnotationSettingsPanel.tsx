@@ -713,7 +713,7 @@ export function AnnotationSettingsPanel({
 													? "border-[#2563EB] scale-110"
 													: "border-transparent hover:border-foreground/20",
 											)}
-											title="Black"
+											title={t("annotations.colorBlack")}
 										/>
 										<button
 											onClick={() => onBlurColorChange?.("#FFFFFF")}
@@ -723,7 +723,7 @@ export function AnnotationSettingsPanel({
 													? "border-[#2563EB] scale-110"
 													: "border-transparent hover:border-foreground/20",
 											)}
-											title="White"
+											title={t("annotations.colorWhite")}
 										/>
 
 										<Popover>
@@ -753,7 +753,7 @@ export function AnnotationSettingsPanel({
 																? annotation.blurColor
 																: "transparent",
 													}}
-													title="Custom Color"
+													title={t("annotations.customColor")}
 												>
 													{(!annotation.blurColor ||
 														[

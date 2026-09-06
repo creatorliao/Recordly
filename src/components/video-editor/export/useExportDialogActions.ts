@@ -1,5 +1,6 @@
 import { type RefObject, useCallback } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 import type { ExportSettings } from "@/lib/exporter";
 import { resolveExportStartSettings } from "../exportStartSettings";
 import type { VideoPlaybackRef } from "../VideoPlayback";
@@ -28,36 +29,35 @@ export function useExportDialogActions({
 	handleExport,
 	showExportSuccessToast,
 }: UseExportDialogActionsInput) {
+	const { t } = useI18n();
 	const handleOpenExportDropdown = useCallback(() => {
 		if (!videoPath) {
-			toast.error("No video loaded");
+			toast.error(t("common.toasts.noVideoLoaded"));
 			return;
 		}
 
 		if (session.hasPendingExportSave) {
 			session.setShowExportDropdown(true);
-			session.setExportError(
-				"Save dialog canceled. Click Save Again to save without re-rendering.",
-			);
+			session.setExportError(t("common.toasts.saveDialogCanceledPending"));
 			return;
 		}
 		session.setShowExportDropdown(true);
 		session.setExportProgress(null);
 		session.setExportError(null);
-	}, [videoPath, session]);
+	}, [videoPath, session, t]);
 
 	const handleStartExportFromDropdown = useCallback(() => {
 		const video = videoPlaybackRef.current?.video;
 		if (!videoPath) {
-			toast.error("No video loaded");
+			toast.error(t("common.toasts.noVideoLoaded"));
 			return;
 		}
 		if (!video) {
-			toast.error("Video not ready");
+			toast.error(t("common.toasts.videoNotReady"));
 			return;
 		}
 		if (video.videoWidth <= 0 || video.videoHeight <= 0) {
-			toast.error("Video metadata is still loading");
+			toast.error(t("common.toasts.videoMetadataLoading"));
 			return;
 		}
 
@@ -80,7 +80,7 @@ export function useExportDialogActions({
 		session.setExportedFilePath(undefined);
 		session.setShowExportDropdown(true);
 		handleExport(resolvedSettings);
-	}, [videoPath, videoPlaybackRef, hasCaptionsForSidecar, settings, session, handleExport]);
+	}, [videoPath, videoPlaybackRef, hasCaptionsForSidecar, settings, session, handleExport, t]);
 
 	const handleCancelExport = useCallback(() => {
 		if (!session.isExporting) return;
@@ -88,14 +88,14 @@ export function useExportDialogActions({
 		session.exportRunIdRef.current += 1;
 		session.exporterRef.current?.cancel();
 		session.exporterRef.current = null;
-		toast.info("Export canceled");
+		toast.info(t("common.toasts.exportCanceled"));
 		session.clearPendingExportSave();
 		session.setShowExportDropdown(false);
 		session.setIsExporting(false);
 		session.setExportProgress(null);
 		session.setExportError(null);
 		session.setExportedFilePath(undefined);
-	}, [session]);
+	}, [session, t]);
 
 	const handleExportDropdownClose = useCallback(() => {
 		session.clearPendingExportSave();
@@ -122,13 +122,11 @@ export function useExportDialogActions({
 						pendingSave.fileName,
 						pendingSave.captionSidecar,
 					)
-				: { success: false, message: "No pending export to save" };
+				: { success: false, message: t("common.toasts.failedSaveVideo") };
 
 		if (saveResult.canceled) {
-			session.setExportError(
-				"Save dialog canceled. Click Save Again to save without re-rendering.",
-			);
-			toast.info("Save canceled. You can try again.");
+			session.setExportError(t("common.toasts.saveDialogCanceledPending"));
+			toast.info(t("common.toasts.saveCanceledRetry"));
 			return;
 		}
 		if (saveResult.success && saveResult.path) {
@@ -141,22 +139,22 @@ export function useExportDialogActions({
 			return;
 		}
 
-		const errorMessage = saveResult.message || "Failed to save video";
+		const errorMessage = saveResult.message || t("common.toasts.failedSaveVideo");
 		session.setExportError(errorMessage);
 		toast.error(errorMessage);
-	}, [session, showExportSuccessToast]);
+	}, [session, showExportSuccessToast, t]);
 
 	const revealExportedFile = useCallback(async () => {
 		if (!session.exportedFilePath) return;
 		try {
 			const result = await window.electronAPI.revealInFolder(session.exportedFilePath);
 			if (!result.success) {
-				toast.error(result.error || result.message || "Failed to reveal item in folder.");
+				toast.error(result.error || result.message || t("common.toasts.failedRevealFolder"));
 			}
 		} catch (error) {
-			toast.error(`Failed to reveal item in folder: ${String(error)}`);
+			toast.error(t("common.toasts.revealFolderError", undefined, { error: String(error) }));
 		}
-	}, [session.exportedFilePath]);
+	}, [session.exportedFilePath, t]);
 
 	return {
 		handleOpenExportDropdown,

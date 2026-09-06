@@ -178,11 +178,13 @@
 		"selectOnTimeline": "Select a caption on the timeline to edit it.",
 		"enabled": "Show",
 		"timelineQuickAdd": "Hover to add on timeline",
+		"selectModel": "Select Model",
 		"language": "Language",
 		"downloading": "Downloading...",
 		"deleteModel": "Delete Model",
 		"clearModel": "Clear Model",
 		"downloadModel": "Download Model",
+		"bundledModelReady": "Recognition model included",
 		"generating": "Generating...",
 		"generateFull": "Generate Captions",
 		"regenerateFull": "Regenerate Captions",
@@ -209,7 +211,9 @@
 			"split": "Split",
 			"merge": "Merge",
 			"delete": "Delete"
-		}
+		},
+		"editSaved": "Caption updated",
+		"generatingHint": "Generating captions. This can take a moment."
 	},
 	"crop": {
 		"title": "Crop Video",
@@ -229,7 +233,14 @@
 		"uploadCustom": "Upload Custom",
 		"uploadSuccess": "Custom image uploaded successfully!",
 		"uploadError": "Please upload a JPG or JPEG image file.",
-		"uploadErrorDescription": "Only JPG and JPEG images are supported."
+		"uploadErrorDescription": "Only JPG and JPEG images are supported.",
+		"unsupportedFormat": "Unsupported format",
+		"unsupportedFormatHint": "Please select a video file (mp4, webm, mov, etc.)",
+		"videoAdded": "Video background added",
+		"videoImportFailed": "Failed to import video background",
+		"videoBackground": "Video background",
+		"hideAdvancedPadding": "Hide advanced padding controls",
+		"showAdvancedPadding": "Show advanced padding controls"
 	},
 	"export": {
 		"title": "Export",

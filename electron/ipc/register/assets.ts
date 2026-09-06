@@ -4,8 +4,13 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { app, ipcMain } from "electron";
 import { USER_DATA_PATH } from "../../appPaths";
+import { getMimeTypeForAssetPath, resolveWallpaperSourcePath } from "../assets/wallpaperPath";
 import { getAssetRootPath } from "../project/manager";
 import { normalizePath } from "../utils";
+
+function toJpegDataUrl(jpegData: Buffer): string {
+	return `data:image/jpeg;base64,${jpegData.toString("base64")}`;
+}
 
 export function registerAssetHandlers() {
 	async function resolveReadableLocalFilePath(filePath: string) {
@@ -18,44 +23,31 @@ export function registerAssetHandlers() {
 		return normalizePath(resolvedPath);
 	}
 
-	// Generate a tiny thumbnail for a wallpaper image and cache it in userData.
-	// Returns the cached thumbnail as raw JPEG bytes for fast grid rendering.
-	// Serialized to prevent concurrent nativeImage operations from eating memory.
+	function resolveBundledOrLocalPath(filePath: string): string {
+		return resolveWallpaperSourcePath(filePath, getAssetRootPath());
+	}
+
+	// 缩略图走 data URL 字符串，不走 Buffer。contextBridge 传 TypedArray 在打包窗会丢成空对象，
+	// 渲染进程再 new Uint8Array({}) 得到空图并缓存，网格就会一直裂。
 	const THUMB_SIZE = 96;
 	const thumbCacheDir = path.join(USER_DATA_PATH, "wallpaper-thumbs");
 	let thumbGenerationQueue: Promise<void> = Promise.resolve();
 
-	/** 打包窗常把 /wallpapers/foo.jpg 传进来；Windows 会当成盘符根路径。先落到 extraResources。 */
-	function resolveWallpaperSourcePath(filePath: string): string {
-		const input = String(filePath ?? "").trim();
-		const posix = input.replace(/\\/g, "/");
-		const match = posix.match(/(?:^|\/)wallpapers\/(.+)$/i);
-		const looksLikeDiskPath = /^[A-Za-z]:/.test(posix) || posix.startsWith("//");
-		if (match && !looksLikeDiskPath) {
-			return path.join(getAssetRootPath(), "wallpapers", decodeURIComponent(match[1]));
-		}
-		if (!path.isAbsolute(input) && posix.startsWith("wallpapers/")) {
-			return path.join(getAssetRootPath(), ...posix.split("/"));
-		}
-		return input;
-	}
-
 	ipcMain.handle("generate-wallpaper-thumbnail", async (_, filePath: string) => {
 		try {
-			const resolved = await resolveReadableLocalFilePath(resolveWallpaperSourcePath(filePath));
+			const resolved = await resolveReadableLocalFilePath(
+				resolveBundledOrLocalPath(filePath),
+			);
 
-			// Deterministic cache key from file path + mtime
 			const stat = await fs.stat(resolved);
 			const cacheKey = Buffer.from(`${resolved}:${stat.mtimeMs}`).toString("base64url");
 			const thumbPath = path.join(thumbCacheDir, `${cacheKey}.jpg`);
 
-			// Return cached thumbnail if it exists (no queue needed)
 			if (existsSync(thumbPath)) {
 				const data = await fs.readFile(thumbPath);
-				return { success: true, data };
+				return { success: true, dataUrl: toJpegDataUrl(data) };
 			}
 
-			// Serialize nativeImage operations to avoid OOM from concurrent full-res decodes
 			let jpegData: Buffer;
 			const generation = thumbGenerationQueue.then(async () => {
 				const { nativeImage } = await import("electron");
@@ -72,15 +64,44 @@ export function registerAssetHandlers() {
 				});
 				jpegData = resized.toJPEG(70);
 
-				// Cache to disk
 				await fs.mkdir(thumbCacheDir, { recursive: true });
 				await fs.writeFile(thumbPath, jpegData);
 			});
-			// Keep the queue moving even if one fails
 			thumbGenerationQueue = generation.catch(() => undefined);
 			await generation;
 
-			return { success: true, data: jpegData! };
+			return { success: true, dataUrl: toJpegDataUrl(jpegData!) };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	});
+
+	// 打包态预览/选中壁纸：整图也走 data URL，不依赖 HTTP /wallpapers（asar 里没有这些文件）。
+	ipcMain.handle("resolve-bundled-asset-path", async (_, filePath: string) => {
+		try {
+			const resolved = await resolveReadableLocalFilePath(
+				resolveBundledOrLocalPath(filePath),
+			);
+			return { success: true, path: resolved };
+		} catch (error) {
+			return { success: false, error: String(error) };
+		}
+	});
+
+	ipcMain.handle("read-bundled-asset-data-url", async (_, filePath: string) => {
+		try {
+			const resolved = await resolveReadableLocalFilePath(
+				resolveBundledOrLocalPath(filePath),
+			);
+			const data = await fs.readFile(resolved);
+			const mime = getMimeTypeForAssetPath(resolved);
+			if (!mime.startsWith("image/")) {
+				return { success: false, error: "Not an image asset" };
+			}
+			return {
+				success: true,
+				dataUrl: `data:${mime};base64,${data.toString("base64")}`,
+			};
 		} catch (error) {
 			return { success: false, error: String(error) };
 		}

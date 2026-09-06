@@ -15,6 +15,7 @@
 | [`06-问题_光标遥测仍未检出.md`](06-问题_光标遥测仍未检出.md) | 再验：sidecar 空写/漏读，时间轴无鼠标缩放 |
 | [`07-问题_壁纸网格仍裂图.md`](07-问题_壁纸网格仍裂图.md) | 再验：HTTP 缩略图仍裂，改走 IPC data URL |
 | [`08-问题_光标仍未记录与自动缩放.md`](08-问题_光标仍未记录与自动缩放.md) | 再验：空写仍删 sidecar；persist 不清 pending |
+| [`09-问题_dev能出图打包裂图.md`](09-问题_dev能出图打包裂图.md) | 真因：Vite `/wallpapers` ≠ 打包 extraResources；网格改走 IPC data URL |
 
 可复用（Areas，换仓库也用）：
 

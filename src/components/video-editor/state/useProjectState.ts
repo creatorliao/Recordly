@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { appLog } from "@/lib/appLog";
 import type { ProjectLibraryEntry } from "../ProjectBrowserDialog";
 import type { EditorProjectData } from "../projectPersistence";
 
@@ -53,6 +54,17 @@ export function useProjectState() {
 		loading,
 		setLoading,
 		error,
-		setError,
+		setError: (value: string | null) => {
+			if (value) {
+				appLog({
+					level: "error",
+					scope: "editor",
+					event: "ui.page-error",
+					msg: value,
+					data: { userMessage: value },
+				});
+			}
+			setError(value);
+		},
 	};
 }

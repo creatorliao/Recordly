@@ -33,6 +33,10 @@
 		"image": "Image",
 		"addAnnotation": "Add Annotation (A)"
 	},
+	"caption": {
+		"cannotPlace": "Cannot place caption here",
+		"existsHere": "A caption already exists at this position."
+	},
 	"audio": {
 		"label": "Audio"
 	},

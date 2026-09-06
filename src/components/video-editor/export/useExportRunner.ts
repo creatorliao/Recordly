@@ -1,5 +1,8 @@
 import { useCallback, useRef } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
+import { appLog, setAppLogCorrelation } from "@/lib/appLog";
+import { notifyError } from "@/lib/notifyError";
 import { getMp4ExportBitrate } from "@/lib/exporter/exportBitrate";
 import { DEFAULT_MP4_CODEC } from "@/lib/exporter/mp4Support";
 import type { ExportSettings } from "@/lib/exporter/types";
@@ -23,6 +26,7 @@ export function useExportRunner(input: ExportRunnerInput) {
 	const inputRef = useRef(input);
 	inputRef.current = input;
 	const showExportSuccessToast = useExportSuccessToast();
+	const { t } = useI18n();
 
 	const handleExport = useCallback(
 		async (settings: ExportSettings) => {
@@ -70,13 +74,19 @@ export function useExportRunner(input: ExportRunnerInput) {
 				cancelledExportRunIdRef,
 			} = exportSession;
 			if (!videoPath) {
-				toast.error("No video loaded");
+				notifyError(t("common.toasts.noVideoLoaded"), {
+					scope: "export",
+					event: "export.failed",
+				});
 				return;
 			}
 
 			const video = videoPlaybackRef.current?.video;
 			if (!video) {
-				toast.error("Video not ready");
+				notifyError(t("common.toasts.videoNotReady"), {
+					scope: "export",
+					event: "export.failed",
+				});
 				return;
 			}
 
@@ -178,10 +188,8 @@ export function useExportRunner(input: ExportRunnerInput) {
 						if (saveResult.canceled) {
 							pendingExportSaveRef.current = pendingSave;
 							setHasPendingExportSave(true);
-							setExportError(
-								"Save dialog canceled. Click Save Again to save without re-rendering.",
-							);
-							toast.info("Save canceled. You can save again without re-exporting.");
+							setExportError(t("common.toasts.saveDialogCanceledPending"));
+							toast.info(t("common.toasts.saveCanceledRetryExport"));
 							keepExportDialogOpen = true;
 						} else if (saveResult.success && saveResult.path) {
 							if (smokeExportStartedAt !== null) {
@@ -196,16 +204,22 @@ export function useExportRunner(input: ExportRunnerInput) {
 								return;
 							}
 						} else {
-							setExportError(saveResult.message || "Failed to save GIF");
-							toast.error(saveResult.message || "Failed to save GIF");
+							setExportError(saveResult.message || t("common.toasts.failedSaveGif"));
+							notifyError(saveResult.message || t("common.toasts.failedSaveGif"), {
+								scope: "export",
+								event: "export.failed",
+							});
 							if (smokeExportConfig.enabled) {
 								window.close();
 								return;
 							}
 						}
 					} else {
-						setExportError(result.error || "GIF export failed");
-						toast.error(result.error || "GIF export failed");
+						setExportError(result.error || t("common.toasts.gifExportFailed"));
+						notifyError(result.error || t("common.toasts.gifExportFailed"), {
+							scope: "export",
+							event: "export.failed",
+						});
 						if (smokeExportConfig.enabled) {
 							window.close();
 							return;
@@ -316,6 +330,26 @@ export function useExportRunner(input: ExportRunnerInput) {
 							? new Exporter({ ...exporterConfig, backendPreference })
 							: new Exporter(exporterConfig);
 
+					const exportId =
+						typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+							? crypto.randomUUID()
+							: `export-${Date.now()}`;
+					setAppLogCorrelation({ exportId });
+					appLog({
+						level: "info",
+						scope: "export",
+						event: "export.start",
+						corr: { exportId },
+						data: {
+							width: exportWidth,
+							height: exportHeight,
+							frameRate: selectedMp4FrameRate,
+							bitrate,
+							pipelineModel,
+							backendPreference,
+							encodingMode,
+						},
+					});
 					exporterRef.current = exporter;
 					const result = await exporter.export();
 					if (exportWasCancelled()) return;
@@ -399,19 +433,23 @@ export function useExportRunner(input: ExportRunnerInput) {
 									encodingMode,
 									shadowIntensity: effectiveShadowIntensity,
 									elapsedMs: smokeExportElapsedMs,
-									error: "Save canceled",
+									error: t("common.toasts.saveCanceled"),
 									progressSamples: smokeProgressSamples,
 									metrics: result.metrics,
 								});
 							}
 							pendingExportSaveRef.current = pendingOnCancel;
 							setHasPendingExportSave(true);
-							setExportError(
-								"Save dialog canceled. Click Save Again to save without re-rendering.",
-							);
-							toast.info("Save canceled. You can save again without re-exporting.");
+							setExportError(t("common.toasts.saveDialogCanceledPending"));
+							toast.info(t("common.toasts.saveCanceledRetryExport"));
 							keepExportDialogOpen = true;
 						} else if (saveResult.success && saveResult.path) {
+							appLog({
+								level: "info",
+								scope: "export",
+								event: "export.complete",
+								data: { path: saveResult.path, format: "mp4" },
+							});
 							if (smokeExportConfig.enabled) {
 								await writeSmokeExportReport(smokeExportConfig.outputPath, {
 									success: true,
@@ -449,13 +487,13 @@ export function useExportRunner(input: ExportRunnerInput) {
 									encodingMode,
 									shadowIntensity: effectiveShadowIntensity,
 									elapsedMs: smokeExportElapsedMs,
-									error: saveResult.message || "Failed to save video",
+									error: saveResult.message || t("common.toasts.failedSaveVideo"),
 									progressSamples: smokeProgressSamples,
 									metrics: result.metrics,
 								});
 							}
-							setExportError(saveResult.message || "Failed to save video");
-							showExportErrorToast(saveResult.message || "Failed to save video");
+							setExportError(saveResult.message || t("common.toasts.failedSaveVideo"));
+							showExportErrorToast(saveResult.message || t("common.toasts.failedSaveVideo"));
 							// Keep the pending-save entry so the user can retry without
 							// re-rendering. The temp file is still on disk (the main
 							// process only moves/deletes it on success) and the
@@ -537,7 +575,7 @@ export function useExportRunner(input: ExportRunnerInput) {
 				}
 			}
 		},
-		[showExportSuccessToast],
+		[showExportSuccessToast, t],
 	);
 
 	return { handleExport, showExportSuccessToast };

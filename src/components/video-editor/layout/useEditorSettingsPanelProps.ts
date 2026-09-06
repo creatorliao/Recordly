@@ -29,10 +29,6 @@ type Input = {
 	isPlaying: boolean;
 	aspectRatio: AspectRatio;
 	setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
-	whisperExecutablePath: string | null;
-	whisperModelPath: string | null;
-	whisperModelDownloadStatus: "idle" | "downloading" | "downloaded" | "error";
-	whisperModelDownloadProgress: number;
 	isGeneratingCaptions: boolean;
 	sessionNativeCaptureUnavailable: boolean;
 	setNativeCaptureUnavailableModalOpen: Dispatch<SetStateAction<boolean>>;
@@ -58,10 +54,6 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		isPlaying,
 		aspectRatio,
 		setAspectRatio,
-		whisperExecutablePath,
-		whisperModelPath,
-		whisperModelDownloadStatus,
-		whisperModelDownloadProgress,
 		isGeneratingCaptions,
 		sessionNativeCaptureUnavailable,
 		setNativeCaptureUnavailableModalOpen,
@@ -195,14 +187,8 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		annotationRegions: timeline.annotationRegions,
 		autoCaptions: timeline.autoCaptions,
 		autoCaptionSettings: timeline.autoCaptionSettings,
-		whisperExecutablePath,
-		whisperModelPath,
-		whisperModelDownloadStatus,
-		whisperModelDownloadProgress,
 		isGeneratingCaptions,
 		onAutoCaptionSettingsChange: timeline.setAutoCaptionSettings,
-		onPickWhisperExecutable: autoCaptionController.handlePickWhisperExecutable,
-		onPickWhisperModel: autoCaptionController.handlePickWhisperModel,
 		onGenerateAutoCaptions: autoCaptionController.handleGenerateAutoCaptions,
 		onClearAutoCaptions: captionCommands.handleClearAutoCaptions,
 		captionCurrentTimeMs: Math.round(currentTime * 1000),
@@ -213,8 +199,6 @@ export function useEditorSettingsPanelProps(input: Input): ComponentProps<typeof
 		onCaptionSplit: captionCommands.handleCaptionSplit,
 		onCaptionMerge: captionCommands.handleCaptionMerge,
 		onCaptionDelete: captionCommands.handleCaptionDelete,
-		onDownloadWhisperSmallModel: autoCaptionController.handleDownloadWhisperSmallModel,
-		onDeleteWhisperSmallModel: autoCaptionController.handleDeleteWhisperSmallModel,
 		nativeCaptureUnavailableSession: sessionNativeCaptureUnavailable,
 		onOpenNativeCaptureUnavailableModal: () => setNativeCaptureUnavailableModalOpen(true),
 		onAnnotationContentChange: annotationCommands.handleAnnotationContentChange,

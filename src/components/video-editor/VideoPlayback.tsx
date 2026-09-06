@@ -11,7 +11,8 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { getAssetPath, getRenderableAssetUrl, getRenderableVideoUrl } from "@/lib/assetPath";
+import { useI18n } from "@/contexts/I18nContext";
+import { getRenderableVideoUrl, resolveEditorWallpaperDisplayUrl } from "@/lib/assetPath";
 import { getWebcamShadowFilter } from "@/lib/exporter/shadowProfile";
 import { getSquircleSvgPath } from "@/lib/geometry/squircle";
 import {
@@ -24,11 +25,7 @@ import {
 	destroyPixiContainer,
 	initializePixiApplicationWithTimeout,
 } from "@/lib/pixiApplicationLifecycle";
-import {
-	DEFAULT_WALLPAPER_PATH,
-	DEFAULT_WALLPAPER_RELATIVE_PATH,
-	isVideoWallpaperSource,
-} from "@/lib/wallpapers";
+import { DEFAULT_WALLPAPER_PATH, isVideoWallpaperSource } from "@/lib/wallpapers";
 import { type AspectRatio, formatAspectRatioForCSS } from "@/utils/aspectRatioUtils";
 import { AnnotationOverlay } from "./AnnotationOverlay";
 import { type CaptionEditTarget, normalizeCaptionEditText } from "./captionEditing";
@@ -380,6 +377,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 		},
 		ref,
 	) => {
+		const { t } = useI18n();
 		const videoRef = useRef<HTMLVideoElement | null>(null);
 		const previewFrameRef = useRef<HTMLDivElement | null>(null);
 		const containerRef = useRef<HTMLDivElement | null>(null);
@@ -2310,7 +2308,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			(async () => {
 				try {
 					if (!wallpaper) {
-						const def = await getAssetPath(DEFAULT_WALLPAPER_RELATIVE_PATH);
+						const def = await resolveEditorWallpaperDisplayUrl(DEFAULT_WALLPAPER_PATH);
 						if (mounted) {
 							setResolvedWallpaper(def);
 							setResolvedWallpaperKind("image");
@@ -2353,23 +2351,24 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 						wallpaper.startsWith("file://") ||
 						wallpaper.startsWith("/")
 					) {
-						const renderable = await getRenderableAssetUrl(wallpaper);
+						const renderable = await resolveEditorWallpaperDisplayUrl(wallpaper);
 						if (mounted) {
 							setResolvedWallpaper(renderable);
 							setResolvedWallpaperKind("image");
 						}
 						return;
 					}
-					const p = await getRenderableAssetUrl(
-						await getAssetPath(wallpaper.replace(/^\//, "")),
-					);
+					const p = await resolveEditorWallpaperDisplayUrl(wallpaper);
 					if (mounted) {
 						setResolvedWallpaper(p);
 						setResolvedWallpaperKind("image");
 					}
 				} catch (_err) {
 					if (mounted) {
-						setResolvedWallpaper(wallpaper || DEFAULT_WALLPAPER_PATH);
+						const fallback = await resolveEditorWallpaperDisplayUrl(
+							wallpaper || DEFAULT_WALLPAPER_PATH,
+						);
+						setResolvedWallpaper(fallback);
 						setResolvedWallpaperKind(
 							isVideoWallpaperSource(wallpaper || "") ? "video" : "image",
 						);
@@ -2578,7 +2577,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 										}
 										aria-label={
 											onEditAutoCaption && !isCaptionEditing
-												? "Edit current caption"
+												? t("common.preview.editCaption")
 												: undefined
 										}
 										onClick={(event) => {
@@ -2676,7 +2675,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 													1,
 													activeCaptionLayout.visibleLines.length,
 												)}
-												aria-label="Edit current caption"
+												aria-label={t("common.preview.editCaption")}
 												style={{
 													display: "block",
 													width: `${

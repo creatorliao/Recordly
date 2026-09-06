@@ -80,7 +80,7 @@ export function useProjectSaveActions({
 			clearPendingAutosave();
 			return queueSave(async () => {
 				if (!currentSourcePath) {
-					if (!options?.silent) toast.error("No video loaded");
+					if (!options?.silent) toast.error(t("common.toasts.noVideoLoaded"));
 					return false;
 				}
 
@@ -125,12 +125,12 @@ export function useProjectSaveActions({
 						thumbnail,
 					);
 					if (result.canceled) {
-						if (!options?.silent) toast.info("Project save canceled");
+						if (!options?.silent) toast.info(t("common.toasts.projectSaveCanceled"));
 						return false;
 					}
 					if (!result.success) {
 						if (!options?.silent)
-							toast.error(result.message || "Failed to save project");
+							toast.error(t("common.toasts.projectSaveFailed"));
 						return false;
 					}
 
@@ -145,7 +145,10 @@ export function useProjectSaveActions({
 						),
 					);
 					if (refreshLibrary) await refreshProjectLibrary();
-					if (!options?.silent) toast.success(`Project saved to ${result.path}`);
+					if (!options?.silent)
+						toast.success(
+							t("common.toasts.projectSavedTo", undefined, { path: result.path ?? "" }),
+						);
 					return true;
 				} finally {
 					if (remount) remountPreview();
@@ -167,6 +170,7 @@ export function useProjectSaveActions({
 			captureProjectThumbnail,
 			refreshProjectLibrary,
 			remountPreview,
+			t,
 		],
 	);
 
@@ -207,11 +211,11 @@ export function useProjectSaveActions({
 		async (name: string, mode: "rename" | "copy" = "rename") => {
 			const trimmedName = name.trim();
 			if (!trimmedName) {
-				toast.error("Project name is required");
+				toast.error(t("common.toasts.projectNameRequired"));
 				return false;
 			}
 			if (!currentSourcePath) {
-				toast.error("No video loaded");
+				toast.error(t("common.toasts.noVideoLoaded"));
 				return false;
 			}
 			try {
@@ -230,11 +234,11 @@ export function useProjectSaveActions({
 					mode,
 				);
 				if (result.canceled) {
-					toast.info("Project save canceled");
+					toast.info(t("common.toasts.projectSaveCanceled"));
 					return false;
 				}
 				if (!result.success) {
-					toast.error(result.message || "Failed to save project");
+					toast.error(t("common.toasts.projectSaveFailed"));
 					return false;
 				}
 				if (result.path) setCurrentProjectPath(result.path);
@@ -248,7 +252,11 @@ export function useProjectSaveActions({
 					),
 				);
 				await refreshProjectLibrary();
-				toast.success(result.path ? `Project saved to ${result.path}` : "Project saved");
+				toast.success(
+					result.path
+						? t("common.toasts.projectSavedTo", undefined, { path: result.path })
+						: t("common.toasts.projectSaved"),
+				);
 				return true;
 			} finally {
 				remountPreview();
@@ -264,6 +272,7 @@ export function useProjectSaveActions({
 			captureProjectThumbnail,
 			refreshProjectLibrary,
 			remountPreview,
+			t,
 		],
 	);
 
@@ -272,7 +281,7 @@ export function useProjectSaveActions({
 			event?.preventDefault();
 			const name = projectSaveDialogDraft.trim();
 			if (!name) {
-				toast.error("Project name is required");
+				toast.error(t("common.toasts.projectNameRequired"));
 				projectSaveDialogInputRef.current?.focus();
 				return;
 			}

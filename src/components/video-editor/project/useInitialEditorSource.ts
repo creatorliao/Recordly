@@ -1,5 +1,7 @@
 /* biome-ignore-all lint/correctness/useExhaustiveDependencies: editor state setters are stable and initial source loading intentionally runs once per launch configuration. */
 import { type MutableRefObject, useEffect, useRef } from "react";
+import { useI18n } from "@/contexts/I18nContext";
+import { appLog } from "@/lib/appLog";
 import { fromFileUrl, resolveVideoUrl } from "../projectPersistence";
 import type { getDevOpenRecordingConfig, getSmokeExportConfig } from "../smokeExportConfig";
 import type { useAppearanceState } from "../state/useAppearanceState";
@@ -37,6 +39,7 @@ export function useInitialEditorSource({
 	resetSourceScopedEditorState,
 	applySessionPresentation,
 }: Input) {
+	const { t } = useI18n();
 	const initialLoadStartedRef = useRef(false);
 
 	useEffect(() => {
@@ -49,6 +52,12 @@ export function useInitialEditorSource({
 
 		async function loadInitialData() {
 			try {
+				appLog({
+					level: "info",
+					scope: "editor",
+					event: "editor.load",
+					msg: "initial editor source",
+				});
 				if (smokeConfig.enabled && smokeConfig.projectPath) {
 					const result = await window.electronAPI.openProjectFileAtPath(
 						smokeConfig.projectPath,
@@ -108,7 +117,7 @@ export function useInitialEditorSource({
 
 				if (smokeConfig.enabled) {
 					if (!smokeConfig.inputPath) {
-						project.setError("Smoke export input path is missing.");
+						project.setError(t("editor.errors.smokeInputMissing"));
 						return;
 					}
 					const sourcePath = fromFileUrl(smokeConfig.inputPath);
@@ -178,7 +187,7 @@ export function useInitialEditorSource({
 
 				const currentVideo = await window.electronAPI.getCurrentVideoPath();
 				if (!currentVideo.success || !currentVideo.path) {
-					project.setError("No video to load. Please record or select a video.");
+					project.setError(t("editor.errors.noVideoToLoad"));
 					return;
 				}
 				const sourcePath = fromFileUrl(currentVideo.path);
@@ -196,7 +205,9 @@ export function useInitialEditorSource({
 					timeOffsetMs: DEFAULT_WEBCAM_TIME_OFFSET_MS,
 				}));
 			} catch (error) {
-				project.setError(`Error loading video: ${String(error)}`);
+				project.setError(
+					t("editor.errors.loadVideoFailed", undefined, { error: String(error) }),
+				);
 			} finally {
 				project.setLoading(false);
 			}
@@ -208,6 +219,7 @@ export function useInitialEditorSource({
 		devConfig,
 		resetSourceScopedEditorState,
 		smokeConfig,
+		t,
 	]);
 
 	useEffect(() => {

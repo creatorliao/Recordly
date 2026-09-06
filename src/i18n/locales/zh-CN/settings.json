@@ -172,11 +172,13 @@
 		"selectOnTimeline": "在时间轴上选择字幕进行编辑。",
 		"enabled": "显示",
 		"timelineQuickAdd": "悬停以在时间轴上添加",
+		"selectModel": "选择模型",
 		"language": "语言",
 		"downloading": "下载中...",
 		"deleteModel": "删除模型",
 		"clearModel": "清除模型",
 		"downloadModel": "下载模型",
+		"bundledModelReady": "已内置识别模型",
 		"generating": "生成中...",
 		"generateFull": "生成字幕",
 		"regenerateFull": "重新生成字幕",
@@ -203,7 +205,9 @@
 			"split": "拆分",
 			"merge": "合并",
 			"delete": "删除"
-		}
+		},
+		"editSaved": "字幕已更新",
+		"generatingHint": "正在生成字幕，请稍候。"
 	},
 	"crop": {
 		"title": "裁剪视频",
@@ -223,7 +227,14 @@
 		"uploadCustom": "上传自定义",
 		"uploadSuccess": "自定义图片上传成功！",
 		"uploadError": "请上传 JPG 或 JPEG 图片文件。",
-		"uploadErrorDescription": "仅支持 JPG 和 JPEG 图片。"
+		"uploadErrorDescription": "仅支持 JPG 和 JPEG 图片。",
+		"unsupportedFormat": "不支持的格式",
+		"unsupportedFormatHint": "请选择视频文件（mp4、webm、mov 等）",
+		"videoAdded": "已添加视频背景",
+		"videoImportFailed": "导入视频背景失败",
+		"videoBackground": "视频背景",
+		"hideAdvancedPadding": "隐藏高级边距",
+		"showAdvancedPadding": "显示高级边距"
 	},
 	"export": {
 		"title": "导出",

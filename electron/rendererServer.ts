@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import fs from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import path from "node:path";
@@ -11,6 +12,8 @@ const MIME_TYPES: Record<string, string> = {
 	".json": "application/json; charset=utf-8",
 	".jpg": "image/jpeg",
 	".jpeg": "image/jpeg",
+	".mp4": "video/mp4",
+	".webm": "video/webm",
 	".mjs": "text/javascript; charset=utf-8",
 	".png": "image/png",
 	".svg": "image/svg+xml",
@@ -37,8 +40,16 @@ function getCacheControl(filePath: string): string {
 		: "no-cache";
 }
 
-/** HTTP 路径第一段 → 磁盘目录，例如 wallpapers → resources/assets/wallpapers */
-export type PackagedRendererExtraRoots = Record<string, string>;
+/** HTTP 路径第一段 → 磁盘目录。函数形式按请求现取，避免启动瞬间路径还不对。 */
+export type PackagedRendererExtraRoots =
+	| Record<string, string>
+	| (() => Record<string, string> | undefined);
+
+function resolveExtraRoots(
+	extraRoots?: PackagedRendererExtraRoots,
+): Record<string, string> | undefined {
+	return typeof extraRoots === "function" ? extraRoots() : extraRoots;
+}
 
 function isPathInsideRoot(resolvedFilePath: string, resolvedRootDir: string): boolean {
 	return (
@@ -75,12 +86,18 @@ export function resolveRequestedFilePath(
 	}
 
 	const firstSegment = relativePath.split("/")[0];
-	const extraRoot = extraRoots?.[firstSegment];
+	const extraRoot = resolveExtraRoots(extraRoots)?.[firstSegment];
 	if (extraRoot) {
 		const rest = relativePath.slice(firstSegment.length).replace(/^[/\\]+/, "");
 		const resolvedExtraRoot = path.resolve(extraRoot);
-		const resolvedFilePath = path.resolve(resolvedExtraRoot, rest);
-		return isPathInsideRoot(resolvedFilePath, resolvedExtraRoot) ? resolvedFilePath : null;
+		const resolvedExtraFilePath = path.resolve(resolvedExtraRoot, rest);
+		if (!isPathInsideRoot(resolvedExtraFilePath, resolvedExtraRoot)) {
+			return null;
+		}
+		// extraResources 优先；文件不在时回退 asar dist（避免映射指错就把 HTTP 整段打死）。
+		if (existsSync(resolvedExtraFilePath)) {
+			return resolvedExtraFilePath;
+		}
 	}
 
 	const resolvedRootDir = path.resolve(rootDir);
@@ -101,11 +118,7 @@ async function servePackagedRendererRequest(
 ): Promise<void> {
 	try {
 		const requestUrl = new URL(request.url ?? "/", "http://127.0.0.1");
-		const resolvedFilePath = resolveRequestedFilePath(
-			rootDir,
-			requestUrl.pathname,
-			extraRoots,
-		);
+		const resolvedFilePath = resolveRequestedFilePath(rootDir, requestUrl.pathname, extraRoots);
 
 		if (!resolvedFilePath) {
 			response.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });

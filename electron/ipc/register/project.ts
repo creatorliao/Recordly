@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { RECORDINGS_DIR } from "../../appPaths";
+import { uiDialog } from "../../uiLocale";
 import { buildMediaUrl, getMediaServerBaseUrl } from "../../mediaServer";
 import { LEGACY_PROJECT_FILE_EXTENSIONS, PROJECT_FILE_EXTENSION } from "../constants";
 import { getProjectBackupPath, writeProjectFileAtomically } from "../project/atomicSave";
@@ -280,7 +281,7 @@ export function registerProjectHandlers() {
 		try {
 			const current = await getRecordingsDir();
 			const result = await dialog.showOpenDialog({
-				title: "Choose recordings folder",
+				title: uiDialog("chooseRecordingsFolder"),
 				defaultPath: current,
 				properties: ["openDirectory", "createDirectory", "promptToCreate"],
 			});
@@ -357,11 +358,11 @@ export function registerProjectHandlers() {
 				const defaultName = `${safeName}.${PROJECT_FILE_EXTENSION}`;
 
 				const result = await dialog.showSaveDialog({
-					title: "Save Recordly Project",
+					title: uiDialog("saveProject"),
 					defaultPath: path.join(projectsDir, defaultName),
 					filters: [
-						{ name: "Recordly Project", extensions: [PROJECT_FILE_EXTENSION] },
-						{ name: "JSON", extensions: ["json"] },
+						{ name: uiDialog("filterRecordlyProject"), extensions: [PROJECT_FILE_EXTENSION] },
+						{ name: uiDialog("filterJson"), extensions: ["json"] },
 					],
 					properties: ["createDirectory", "showOverwriteConfirmation"],
 				});
@@ -510,15 +511,15 @@ export function registerProjectHandlers() {
 		try {
 			const projectsDir = await getProjectsDir();
 			const result = await dialog.showOpenDialog({
-				title: "Open Recordly Project",
+				title: uiDialog("openProject"),
 				defaultPath: projectsDir,
 				filters: [
 					{
-						name: "Recordly Project",
+						name: uiDialog("filterRecordlyProject"),
 						extensions: [PROJECT_FILE_EXTENSION, ...LEGACY_PROJECT_FILE_EXTENSIONS],
 					},
-					{ name: "JSON", extensions: ["json"] },
-					{ name: "All Files", extensions: ["*"] },
+					{ name: uiDialog("filterJson"), extensions: ["json"] },
+					{ name: uiDialog("filterAll"), extensions: ["*"] },
 				],
 				properties: ["openFile"],
 			});

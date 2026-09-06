@@ -13,6 +13,8 @@ export type NativeMacRecordingOptions = {
 	capturesMicrophone?: boolean;
 	microphoneDeviceId?: string;
 	microphoneLabel?: string;
+	/** 渲染进程生成的一次录制关联 id，写入会话日志。 */
+	recordingId?: string;
 };
 
 export type WindowBounds = {

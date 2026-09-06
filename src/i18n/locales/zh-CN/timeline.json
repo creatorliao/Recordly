@@ -33,6 +33,10 @@
 		"image": "图片",
 		"addAnnotation": "添加注释 (A)"
 	},
+	"caption": {
+		"cannotPlace": "无法在此处放置字幕",
+		"existsHere": "此位置已有字幕。"
+	},
 	"audio": {
 		"label": "音频"
 	},

@@ -43,7 +43,10 @@
 		"imageUploadError": "请上传 JPG、PNG、GIF 或 WebP 图片文件。",
 		"blurStrength": "模糊强度: {{strength}}",
 		"solidColor": "纯色 (审查)",
-		"borderRadius": "边框半径"
+		"borderRadius": "边框半径",
+		"colorBlack": "黑色",
+		"colorWhite": "白色",
+		"customColor": "自定义颜色"
 	},
 
 	"fontStyles": {
@@ -124,25 +127,25 @@
 		"projects": "打开项目",
 		"renameInput": "项目名称",
 		"renameTitle": "重命名项目",
-		"saveTitle": "保存项目 (Save Project)",
-		"saveDescription": "为此项目命名。文件会保存在 Recordly Projects 文件夹。(Name this project. It will be saved in your Recordly Projects folder.)",
+		"saveTitle": "保存项目",
+		"saveDescription": "为此项目命名。文件会保存在 Recordly Projects 文件夹。",
 		"saveNameLabel": "项目名称",
 		"saving": "正在保存...",
-		"unsavedChangesTitle": "未保存的更改 (Unsaved changes)",
+		"unsavedChangesTitle": "未保存的更改",
 		"unsavedChangesDescription": "在{{action}}之前保存当前项目吗？",
-		"discardChanges": "放弃更改 (Discard)",
+		"discardChanges": "放弃更改",
 		"saveProject": "保存项目",
 		"leaveActions": {
-			"openAnother": "打开另一个项目 (open another project)",
-			"importFile": "导入文件 (import a file)",
-			"returnToRecording": "返回录制 (return to recording)",
-			"closeEditor": "关闭编辑器 (close editor)"
+			"openAnother": "打开另一个项目",
+			"importFile": "导入文件",
+			"returnToRecording": "返回录制",
+			"closeEditor": "关闭编辑器"
 		},
-		"browserTitle": "项目 (Projects)",
-		"import": "导入 (Import)",
-		"noPreview": "暂无预览 (No preview yet)",
-		"current": "当前 (Current)",
-		"emptyLibrary": "还没有已保存的项目 (No saved projects yet)"
+		"browserTitle": "项目",
+		"import": "导入",
+		"noPreview": "暂无预览",
+		"current": "当前",
+		"emptyLibrary": "还没有已保存的项目"
 	},
 	"exportTips": {
 		"autoZooms": "提示：可在设置中关闭自动应用的缩放",
@@ -163,9 +166,13 @@
 		"renderingAudio": "正在渲染音频 {{percent}}%",
 		"renderSpeed": "渲染速度 {{fps}} FPS",
 		"completePercent": "已完成 {{percent}}%",
+		"finalizingPercent": "正在收尾 {{percent}}%",
+		"muxingAndSaving": "正在封装并保存…",
+		"muxingAndSavingPercent": "正在封装并保存 {{percent}}%",
 		"issue": "导出问题",
 		"complete": "导出完成",
-		"savedSuccessfully": "文件已成功保存。"
+		"savedSuccessfully": "文件已成功保存。",
+		"legacySlowHint": "导出太慢？可取消后改用 Lightning 导出。"
 	},
 	"export": {
 		"processingAudioEdits": "正在处理带有速度/叠加编辑的音频"
@@ -176,7 +183,17 @@
 	},
 	"timeline": {
 		"expand": "展开时间轴",
-		"collapse": "折叠时间轴"
+		"collapse": "折叠时间轴",
+		"noVideoLoaded": "尚未加载视频",
+		"dropToStart": "拖放一段视频开始编辑",
+		"loading": "正在加载…",
+		"speedClipOverlap": "变速区域与片段重叠，请调整后再试。",
+		"speedZoomOverlap": "变速区域与缩放重叠，请调整后再试。"
+	},
+	"errors": {
+		"noVideoToLoad": "没有可加载的视频。请先录制或选择一段视频。",
+		"smokeInputMissing": "冒烟导出缺少输入路径。",
+		"loadVideoFailed": "加载视频失败：{{error}}"
 	},
 	"openRecordingsFolder": "打开录制文件夹",
 	"theme": {
@@ -192,8 +209,17 @@
 		"namePlaceholder": "预设名称",
 		"savedList": "已保存的预设",
 		"empty": "还没有预设。",
+		"deleteAriaLabel": "删除预设 {{name}}",
 		"errors": {
-			"nameRequired": "请输入预设名称。"
+			"nameRequired": "请输入预设名称。",
+			"duplicateName": "已有同名预设。",
+			"saveFailed": "无法保存该预设，请检查存储权限后重试。",
+			"deleteFailed": "无法删除该预设，请检查存储权限后重试。"
+		},
+		"toasts": {
+			"applied": "已应用预设「{{name}}」",
+			"saved": "已保存预设「{{name}}」",
+			"deleted": "已删除预设「{{name}}」"
 		}
 	}
 }

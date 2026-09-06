@@ -78,16 +78,18 @@ export function useProjectOpenActions({
 			const result = await window.electronAPI.openProjectFileAtPath(projectPath);
 			if (result.canceled) return;
 			if (!result.success) {
-				toast.error(result.message || "Failed to load project");
+				toast.error(t("common.toasts.projectLoadFailed"));
 				return;
 			}
 			if (!(await applyLoadedProject(result.project, result.path ?? null))) {
-				toast.error("Invalid project file format");
+				toast.error(t("common.toasts.invalidProject"));
 				return;
 			}
 			project.setProjectBrowserOpen(false);
 			await refreshProjectLibrary();
-			toast.success(`Project loaded from ${result.path}`);
+			toast.success(
+				t("common.toasts.projectLoadedFrom", undefined, { path: result.path ?? "" }),
+			);
 		},
 		[
 			applyLoadedProject,
@@ -104,21 +106,25 @@ export function useProjectOpenActions({
 		const result = await window.electronAPI.openVideoFilePicker({ includeProjects: true });
 		if (result.canceled) return;
 		if (!result.success) {
-			toast.error(result.message || "Failed to import file");
+			toast.error(t("common.toasts.importFailed"));
 			return;
 		}
 		if (result.kind === "project" || result.project) {
 			if (!(await applyLoadedProject(result.project, result.path ?? null))) {
-				toast.error("Invalid project file format");
+				toast.error(t("common.toasts.invalidProject"));
 				return;
 			}
 			project.setProjectBrowserOpen(false);
 			await refreshProjectLibrary();
-			toast.success(result.path ? `Project loaded from ${result.path}` : "Project loaded");
+			toast.success(
+				result.path
+					? t("common.toasts.projectLoadedFrom", undefined, { path: result.path })
+					: t("common.toasts.projectLoaded"),
+			);
 			return;
 		}
 		if (!result.path) {
-			toast.error("No media file selected");
+			toast.error(t("common.toasts.noMediaSelected"));
 			return;
 		}
 
@@ -150,7 +156,7 @@ export function useProjectOpenActions({
 		applySessionPresentation(null);
 		project.setProjectBrowserOpen(false);
 		await refreshProjectLibrary();
-		toast.success("Media imported");
+		toast.success(t("common.toasts.mediaImported"));
 	}, [
 		confirmReplaceSourceWithUnsavedChanges,
 		applyLoadedProject,
@@ -183,7 +189,7 @@ export function useProjectOpenActions({
 	const handleReturnToRecording = useCallback(async () => {
 		// Leaving closes the editor window, which would silently kill a running export.
 		if (isExporting) {
-			toast.error("Wait for the export to finish before returning to recording");
+			toast.error(t("common.toasts.waitExportBeforeReturn"));
 			return;
 		}
 

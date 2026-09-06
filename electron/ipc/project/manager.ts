@@ -38,6 +38,7 @@ export function getAssetRootPath() {
 	}
 
 	// 打包后 extraResources 落在 resources/assets；portable / 异常布局再试相邻路径。
+	// 必须真有 wallpapers 目录。只判断 assets 存在会误判空目录，HTTP/IPC 随后全 404。
 	const candidates = [
 		path.join(process.resourcesPath, "assets"),
 		path.join(path.dirname(process.execPath), "resources", "assets"),
@@ -45,7 +46,7 @@ export function getAssetRootPath() {
 	];
 
 	for (const candidate of candidates) {
-		if (existsSync(path.join(candidate, "wallpapers")) || existsSync(candidate)) {
+		if (existsSync(path.join(candidate, "wallpapers"))) {
 			return candidate;
 		}
 	}

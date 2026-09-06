@@ -1,13 +1,61 @@
 import { createWriteStream } from "node:fs";
-import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
 import { get as httpsGet } from "node:https";
+import path from "node:path";
 import type Electron from "electron";
+import { app } from "electron";
 import {
 	WHISPER_MODEL_DIR,
 	WHISPER_MODEL_DOWNLOAD_URL,
 	WHISPER_SMALL_MODEL_PATH,
 } from "../constants";
+import {
+	collectBundledWhisperModelCandidates,
+	MIN_WHISPER_MODEL_BYTES,
+} from "./whisperModelPaths";
+
+export type WhisperModelSource = "user" | "bundled";
+export {
+	BUNDLED_WHISPER_MODEL_NAME,
+	collectBundledWhisperModelCandidates,
+	MIN_WHISPER_MODEL_BYTES,
+} from "./whisperModelPaths";
+
+export function getBundledWhisperModelCandidates(): string[] {
+	return collectBundledWhisperModelCandidates({
+		resourcesPath: process.resourcesPath,
+		execPath: process.execPath,
+		appPath: app.getAppPath(),
+		cwd: process.cwd(),
+	});
+}
+
+export async function isUsableWhisperModelFile(filePath: string): Promise<boolean> {
+	try {
+		const stat = await fs.stat(filePath);
+		return stat.isFile() && stat.size >= MIN_WHISPER_MODEL_BYTES;
+	} catch {
+		return false;
+	}
+}
+
+async function firstUsableModelFile(candidates: string[]): Promise<string | null> {
+	for (const candidate of candidates) {
+		if (await isUsableWhisperModelFile(candidate)) {
+			return path.resolve(candidate);
+		}
+	}
+	return null;
+}
+
+export async function resolveBundledWhisperModelPath(): Promise<string | null> {
+	return firstUsableModelFile(getBundledWhisperModelCandidates());
+}
+
+export async function resolveDefaultWhisperModelPath(): Promise<string | null> {
+	const status = await getWhisperSmallModelStatus();
+	return status.exists ? (status.path ?? null) : null;
+}
 
 export function sendWhisperModelDownloadProgress(
 	webContents: Electron.WebContents,
@@ -21,21 +69,37 @@ export function sendWhisperModelDownloadProgress(
 	webContents.send("whisper-small-model-download-progress", payload);
 }
 
-export async function getWhisperSmallModelStatus() {
-	try {
-		await fs.access(WHISPER_SMALL_MODEL_PATH, fsConstants.R_OK);
+export async function getWhisperSmallModelStatus(): Promise<{
+	success: true;
+	exists: boolean;
+	path: string | null;
+	source: WhisperModelSource | null;
+}> {
+	if (await isUsableWhisperModelFile(WHISPER_SMALL_MODEL_PATH)) {
 		return {
 			success: true,
 			exists: true,
 			path: WHISPER_SMALL_MODEL_PATH,
-		};
-	} catch {
-		return {
-			success: true,
-			exists: false,
-			path: null,
+			source: "user",
 		};
 	}
+
+	const bundled = await resolveBundledWhisperModelPath();
+	if (bundled) {
+		return {
+			success: true,
+			exists: true,
+			path: bundled,
+			source: "bundled",
+		};
+	}
+
+	return {
+		success: true,
+		exists: false,
+		path: null,
+		source: null,
+	};
 }
 
 export function downloadFileWithProgress(
@@ -150,6 +214,7 @@ export async function downloadWhisperSmallModel(
 	}
 }
 
+/** 只删 userData 里的副本，不碰 extraResources 捆绑模型。 */
 export async function deleteWhisperSmallModel(): Promise<void> {
 	await fs.rm(WHISPER_SMALL_MODEL_PATH, { force: true });
 }

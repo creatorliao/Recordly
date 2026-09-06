@@ -1,6 +1,8 @@
 import type { RefObject } from "react";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { notifyError } from "@/lib/notifyError";
+import { useI18n } from "@/contexts/I18nContext";
 import type { SupportedMp4Dimensions } from "@/lib/exporter";
 import type { useVideoEditorAudio } from "../audio/useVideoEditorAudio";
 import type { getSmokeExportConfig } from "../smokeExportConfig";
@@ -38,32 +40,43 @@ export type ExportRunnerInput = {
 
 export function showExportErrorToast(message: string) {
 	const summary = summarizeErrorMessage(message);
-	toast.error(summary, {
+	notifyError(summary, {
 		description: summary === message ? undefined : message,
 		duration: 20_000,
+		scope: "export",
+		event: "export.failed",
+		data: { detail: message },
 	});
 }
 
 export function useExportSuccessToast() {
-	return useCallback((filePath: string) => {
-		toast.success(`Exported successfully to ${filePath}`, {
-			action: {
-				label: "Show in Folder",
-				onClick: async () => {
-					try {
-						const result = await window.electronAPI.revealInFolder(filePath);
-						if (!result.success) {
+	const { t } = useI18n();
+	return useCallback(
+		(filePath: string) => {
+			toast.success(t("common.toasts.exportedTo", undefined, { path: filePath }), {
+				action: {
+					label: t("common.toasts.showInFolder"),
+					onClick: async () => {
+						try {
+							const result = await window.electronAPI.revealInFolder(filePath);
+							if (!result.success) {
+								toast.error(
+									result.error ||
+										result.message ||
+										t("common.toasts.failedRevealFolder"),
+								);
+							}
+						} catch (error) {
 							toast.error(
-								result.error ||
-									result.message ||
-									"Failed to reveal item in folder.",
+								t("common.toasts.revealFolderError", undefined, {
+									error: String(error),
+								}),
 							);
 						}
-					} catch (error) {
-						toast.error(`Error revealing in folder: ${String(error)}`);
-					}
+					},
 				},
-			},
-		});
-	}, []);
+			});
+		},
+		[t],
+	);
 }

@@ -43,7 +43,10 @@
 		"imageUploadError": "Please upload a JPG, PNG, GIF, or WebP image file.",
 		"blurStrength": "Blur Strength: {{strength}}",
 		"solidColor": "Solid Color (Censorship)",
-		"borderRadius": "Border Radius"
+		"borderRadius": "Border Radius",
+		"colorBlack": "Black",
+		"colorWhite": "White",
+		"customColor": "Custom color"
 	},
 
 	"fontStyles": {
@@ -163,9 +166,13 @@
 		"renderingAudio": "Rendering audio {{percent}}%",
 		"renderSpeed": "Render speed {{fps}} FPS",
 		"completePercent": "{{percent}}% complete",
+		"finalizingPercent": "Finalizing {{percent}}%",
+		"muxingAndSaving": "Muxing and saving…",
+		"muxingAndSavingPercent": "Muxing and saving {{percent}}%",
 		"issue": "Export issue",
 		"complete": "Export complete",
-		"savedSuccessfully": "Your file was saved successfully."
+		"savedSuccessfully": "Your file was saved successfully.",
+		"legacySlowHint": "Export too slow? Cancel and try Lightning export!"
 	},
 	"export": {
 		"processingAudioEdits": "Processing audio with speed/overlay edits"
@@ -176,7 +183,17 @@
 	},
 	"timeline": {
 		"expand": "Expand Timeline",
-		"collapse": "Collapse Timeline"
+		"collapse": "Collapse Timeline",
+		"noVideoLoaded": "No Video Loaded",
+		"dropToStart": "Drag and drop a video to start editing",
+		"loading": "Loading…",
+		"speedClipOverlap": "The speed region overlaps a clip. Adjust it and try again.",
+		"speedZoomOverlap": "The speed region overlaps a zoom. Adjust it and try again."
+	},
+	"errors": {
+		"noVideoToLoad": "No video to load. Please record or select a video.",
+		"smokeInputMissing": "Smoke export input path is missing.",
+		"loadVideoFailed": "Error loading video: {{error}}"
 	},
 	"openRecordingsFolder": "Open recordings folder",
 	"theme": {
@@ -192,8 +209,17 @@
 		"namePlaceholder": "Preset name",
 		"savedList": "Saved presets",
 		"empty": "No presets yet.",
+		"deleteAriaLabel": "Delete preset {{name}}",
 		"errors": {
-			"nameRequired": "Enter a preset name."
+			"nameRequired": "Enter a preset name.",
+			"duplicateName": "A preset with that name already exists.",
+			"saveFailed": "Could not save that preset. Check your browser storage settings and try again.",
+			"deleteFailed": "Could not delete that preset. Check your browser storage settings and try again."
+		},
+		"toasts": {
+			"applied": "Applied preset \"{{name}}\"",
+			"saved": "Saved preset \"{{name}}\"",
+			"deleted": "Deleted preset \"{{name}}\""
 		}
 	}
 }

@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/contexts/I18nContext";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -72,6 +73,7 @@ export default function TimelineToolbar({
 	addAudioLabel,
 	splitClipLabel,
 }: TimelineToolbarProps) {
+	const { t } = useI18n();
 	return (
 		<div className="flex items-center gap-2 px-4 py-2 border-b border-foreground/10 bg-editor-panel">
 			<div className="flex items-center gap-1">
@@ -166,7 +168,7 @@ export default function TimelineToolbar({
 								}
 								onKeyDown={onCustomAspectRatioKeyDown}
 								className="w-12 h-7 rounded border border-foreground/10 bg-foreground/5 px-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
-								aria-label="Custom aspect width"
+								aria-label={t("common.aspect.customWidth")}
 							/>
 							<span className="text-muted-foreground/70">:</span>
 							<input
@@ -180,7 +182,7 @@ export default function TimelineToolbar({
 								}
 								onKeyDown={onCustomAspectRatioKeyDown}
 								className="w-12 h-7 rounded border border-foreground/10 bg-foreground/5 px-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
-								aria-label="Custom aspect height"
+								aria-label={t("common.aspect.customHeight")}
 							/>
 							<Button
 								variant="ghost"

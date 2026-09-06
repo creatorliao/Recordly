@@ -14,6 +14,7 @@ import {
 	type I18nNamespace,
 	SUPPORTED_LOCALES,
 } from "@/i18n/config";
+import { loadAppSetting, saveAppSetting } from "@/lib/appSettings";
 import enCommon from "@/i18n/locales/en/common.json";
 import enDialogs from "@/i18n/locales/en/dialogs.json";
 import enEditor from "@/i18n/locales/en/editor.json";
@@ -31,6 +32,8 @@ import zhCNTimeline from "@/i18n/locales/zh-CN/timeline.json";
 
 /** 换 key，避免旧版默认 en 写进 localStorage 后界面一直英文。 */
 const LOCALE_STORAGE_KEY = "recordly.locale.v2";
+/** 同步给主进程文件对话框用，须与 electron/uiLocale.ts 一致。 */
+const UI_LOCALE_SETTING_KEY = "uiLocale";
 
 type LocaleBundle = Record<I18nNamespace, Record<string, unknown>>;
 
@@ -106,6 +109,11 @@ function getInitialLocale(): AppLocale {
 		return normalizeLocale(storedLocale);
 	}
 
+	const persistedLocale = loadAppSetting<string>(UI_LOCALE_SETTING_KEY);
+	if (persistedLocale) {
+		return normalizeLocale(persistedLocale);
+	}
+
 	// 培训师界面固定默认简体中文，不跟系统英文走。
 	return DEFAULT_LOCALE;
 }
@@ -166,8 +174,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 		setLocaleState(nextLocale);
 		if (typeof window !== "undefined") {
 			window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+			saveAppSetting(UI_LOCALE_SETTING_KEY, nextLocale);
 		}
 	}, []);
+
+	useEffect(() => {
+		// 启动时把当前语言写给主进程，避免文件对话框仍是英文标题。
+		saveAppSetting(UI_LOCALE_SETTING_KEY, locale);
+	}, [locale]);
 
 	useEffect(() => {
 		document.documentElement.lang = locale;
