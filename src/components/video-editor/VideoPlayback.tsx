@@ -2880,7 +2880,9 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 											)
 												return false;
 
-											if (annotation.id === selectedAnnotationId) return true;
+											// 播放中即使选中、出了时段也要收；暂停且选中才钉住改位置。
+											if (annotation.id === selectedAnnotationId && !isPlaying)
+												return true;
 
 											const timeMs = Math.round(currentTime * 1000);
 											return (

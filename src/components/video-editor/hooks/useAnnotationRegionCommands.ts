@@ -1,5 +1,6 @@
 import type { Span } from "dnd-timeline";
 import { type Dispatch, type MutableRefObject, type SetStateAction, useCallback } from "react";
+import { useScopedT } from "@/contexts/I18nContext";
 import {
 	type AnnotationRegion,
 	DEFAULT_ANNOTATION_POSITION,
@@ -26,6 +27,7 @@ export function useAnnotationRegionCommands({
 	nextAnnotationIdRef,
 	nextAnnotationZIndexRef,
 }: UseAnnotationRegionCommandsParams) {
+	const t = useScopedT("editor");
 	const handleAnnotationAdded = useCallback(
 		(span: Span, trackIndex = 0) => {
 			const id = `annotation-${nextAnnotationIdRef.current++}`;
@@ -34,7 +36,7 @@ export function useAnnotationRegionCommands({
 				startMs: Math.round(span.start),
 				endMs: Math.round(span.end),
 				type: "text",
-				content: "Enter text...",
+				content: t("annotations.textPlaceholder"),
 				position: { ...DEFAULT_ANNOTATION_POSITION },
 				size: { ...DEFAULT_ANNOTATION_SIZE },
 				style: { ...DEFAULT_ANNOTATION_STYLE },
@@ -51,6 +53,7 @@ export function useAnnotationRegionCommands({
 			setAnnotationRegions,
 			setSelectedAnnotationId,
 			setSelectedZoomId,
+			t,
 		],
 	);
 
@@ -107,7 +110,7 @@ export function useAnnotationRegionCommands({
 				current.map((region) => {
 					if (region.id !== id) return region;
 					const updated = { ...region, type };
-					if (type === "text") updated.content = region.textContent || "Enter text...";
+					if (type === "text") updated.content = region.textContent || t("annotations.textPlaceholder");
 					else if (type === "image") updated.content = region.imageContent || "";
 					else if (type === "figure") {
 						updated.content = "";
@@ -120,7 +123,7 @@ export function useAnnotationRegionCommands({
 				}),
 			);
 		},
-		[setAnnotationRegions],
+		[setAnnotationRegions, t],
 	);
 
 	const updateRegion = useCallback(

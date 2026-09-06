@@ -15,7 +15,7 @@
 		"arrow": "Arrow",
 		"blur": "Blur",
 		"textContent": "Text Content",
-		"textPlaceholder": "Enter your text...",
+		"textPlaceholder": "Enter text",
 		"fontStyle": "Font Style",
 		"selectStyle": "Select style",
 		"size": "Size",
@@ -51,6 +51,7 @@
 
 	"fontStyles": {
 		"classic": "Classic",
+		"yahei": "YaHei",
 		"editor": "Editor",
 		"strong": "Strong",
 		"typewriter": "Typewriter",

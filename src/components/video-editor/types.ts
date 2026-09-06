@@ -443,12 +443,16 @@ export interface AnnotationTextStyle {
 	borderRadius: number;
 }
 
+// 默认字体走 Windows 中文栈：培训师界面以简体中文为主，微软雅黑在前，
+// 英文 locale 或缺字体时回退 Segoe UI / 系统 sans-serif。
+const DEFAULT_WINDOWS_CJK_FONT_FAMILY = '"Microsoft YaHei UI", "Segoe UI", sans-serif';
+
 function getDefaultAnnotationFontFamily() {
-	return '"SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif';
+	return DEFAULT_WINDOWS_CJK_FONT_FAMILY;
 }
 
 export function getDefaultCaptionFontFamily() {
-	return '"SF Pro Text", "SF Pro Display", "Helvetica Neue", sans-serif';
+	return DEFAULT_WINDOWS_CJK_FONT_FAMILY;
 }
 
 export interface AnnotationRegion {

@@ -47,6 +47,7 @@ interface AnnotationSettingsPanelProps {
 }
 
 export const FONT_FAMILY_VALUES = [
+	{ value: '"Microsoft YaHei UI", "Segoe UI", sans-serif', labelKey: "fontStyles.yahei" },
 	{ value: "system-ui, -apple-system, sans-serif", labelKey: "fontStyles.classic" },
 	{ value: "Georgia, serif", labelKey: "fontStyles.editor" },
 	{ value: "Impact, Arial Black, sans-serif", labelKey: "fontStyles.strong" },

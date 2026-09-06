@@ -39,7 +39,7 @@ import { type AspectRatio } from "@/utils/aspectRatioUtils";
 import { useI18n, useScopedT } from "../../contexts/I18nContext";
 import type { AppLocale } from "../../i18n/config";
 import { SUPPORTED_LOCALES } from "../../i18n/config";
-import { AnnotationSettingsPanel } from "./AnnotationSettingsPanel";
+import { AnnotationSettingsPanel, FONT_FAMILY_VALUES } from "./AnnotationSettingsPanel";
 import CaptionListPanel from "./CaptionListPanel";
 import type { CaptionRetimeSpan } from "./captionOps";
 import {
@@ -1095,6 +1095,14 @@ export function SettingsPanel({
 		[builtInWallpapers],
 	);
 	const captionCueCount = autoCaptions.length;
+	const captionFontOptions = useMemo(
+		() =>
+			FONT_FAMILY_VALUES.map((font) => ({
+				value: font.value,
+				label: t(`editor.${font.labelKey}`),
+			})),
+		[t],
+	);
 	const updateAutoCaptionSettings = (partial: Partial<AutoCaptionSettings>) => {
 		onAutoCaptionSettingsChange?.({
 			...autoCaptionSettings,
@@ -2338,6 +2346,32 @@ export function SettingsPanel({
 				</label>
 				<div className="mb-1 text-sm font-medium text-foreground">
 					{tSettings("captions.fontSettings", "Font Settings")}
+				</div>
+				<div className="flex flex-col gap-1.5">
+					<span className="text-[10px] font-medium text-muted-foreground">
+						{tSettings("captions.fontFamily", "Font")}
+					</span>
+					<Select
+						value={autoCaptionSettings.fontFamily}
+						onValueChange={(value) =>
+							updateAutoCaptionSettings({ fontFamily: value })
+						}
+					>
+						<SelectTrigger className="h-8 w-full rounded-md border-foreground/10 bg-foreground/5 text-xs text-foreground">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent className="max-h-[260px] border-foreground/10 bg-editor-surface-alt text-foreground">
+							{captionFontOptions.map((font) => (
+								<SelectItem
+									key={font.value}
+									value={font.value}
+									style={{ fontFamily: font.value }}
+								>
+									{font.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 				</div>
 				<SliderControl
 					label={tSettings("captions.fontSize", "Font size")}
