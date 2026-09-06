@@ -30,6 +30,8 @@ interface AnnotationOverlayProps {
 	onClick: (id: string) => void;
 	zIndex: number;
 	isSelectedBoost: boolean; // Boost z-index when selected for easy editing
+	/** 进出淡出透明度（文本框进出动画复用字幕同套曲线，0–1）。 */
+	opacity?: number;
 }
 
 function clampPercent(value: number) {
@@ -53,6 +55,7 @@ export function AnnotationOverlay({
 	onClick,
 	zIndex,
 	isSelectedBoost,
+	opacity = 1,
 }: AnnotationOverlayProps) {
 	const safeRecordingRect =
 		recordingRect.width > 0 && recordingRect.height > 0
@@ -240,6 +243,7 @@ export function AnnotationOverlay({
 			)}
 			style={{
 				zIndex: isSelectedBoost ? zIndex + 1000 : zIndex, // Boost selected annotation to ensure it's on top
+				opacity,
 				pointerEvents: "auto",
 				border: isSelected ? "2px solid rgba(37, 99, 235, 0.8)" : "none",
 				backgroundColor: isSelected ? "rgba(37, 99, 235, 0.1)" : "transparent",

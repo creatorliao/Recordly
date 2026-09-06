@@ -2913,7 +2913,20 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 										}
 									};
 
-									return sorted.map((annotation) => (
+									return sorted.map((annotation) => {
+										const annotationTimeMs = Math.round(currentTime * 1000);
+										const enter = Math.max(
+											0,
+											Math.min(1, (annotationTimeMs - annotation.startMs) / 180),
+										);
+										const exit = Math.max(
+											0,
+											Math.min(1, (annotation.endMs - annotationTimeMs) / 180),
+										);
+										// 文本框进出淡出（接 C4），图形/模糊不做淡出。
+										const annotationOpacity =
+											annotation.type === "text" ? Math.min(enter, exit) : 1;
+										return (
 										<AnnotationOverlay
 											key={annotation.id}
 											annotation={annotation}
@@ -2951,8 +2964,10 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 											onClick={handleAnnotationClick}
 											zIndex={annotation.zIndex}
 											isSelectedBoost={annotation.id === selectedAnnotationId}
+											opacity={annotationOpacity}
 										/>
-									));
+										);
+									});
 								})()}
 							</div>
 						</div>

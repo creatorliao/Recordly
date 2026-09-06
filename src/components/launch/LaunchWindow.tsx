@@ -18,7 +18,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
 import { RxDragHandleDots2 } from "react-icons/rx";
 import { Separator } from "@/components/ui/separator";
+import { AudioLevelMeter } from "@/components/ui/audio-level-meter";
 import { useScopedT } from "../../contexts/I18nContext";
+import { useAudioLevelMeter } from "../../hooks/useAudioLevelMeter";
 import { useMicrophoneDevices } from "../../hooks/useMicrophoneDevices";
 import { useScreenRecorder } from "../../hooks/useScreenRecorder";
 import { useVideoDevices } from "../../hooks/useVideoDevices";
@@ -107,6 +109,10 @@ function LaunchWindowContent() {
 		selectedDeviceId: selectedVideoDeviceId,
 		setSelectedDeviceId: setSelectedVideoDeviceId,
 	} = useVideoDevices(webcamEnabled || openId === "webcam");
+	const { level: micLevel } = useAudioLevelMeter({
+		enabled: microphoneEnabled,
+		deviceId: microphoneDeviceId ?? selectedDeviceId ?? undefined,
+	});
 
 	const {
 		hudOverlayMousePassthroughSupported,
@@ -286,6 +292,9 @@ function LaunchWindowContent() {
 					</Button>
 				}
 			/>
+
+			{/* 开录前麦电平：能判断麦在不在（E1） */}
+			<AudioLevelMeter level={micLevel} className="w-12 shrink-0" />
 
 			<Button
 				variant="ghost"
