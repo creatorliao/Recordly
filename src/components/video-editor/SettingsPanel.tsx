@@ -1108,8 +1108,6 @@ export function SettingsPanel({
 	const [customImages, setCustomImages] = useState<string[]>(
 		initialEditorPreferences.customWallpapers,
 	);
-	const [experimentalUpdatesEnabled, setExperimentalUpdatesEnabled] = useState(false);
-	const [savingExperimentalUpdates, setSavingExperimentalUpdates] = useState(false);
 	const [internalActiveEffectSection] = useState<EditorEffectSection>("scene");
 	const activeEffectSection = activeEffectSectionProp ?? internalActiveEffectSection;
 	const removeBackgroundStateRef = useRef<{
@@ -1127,44 +1125,6 @@ export function SettingsPanel({
 			...autoCaptionSettings,
 			...partial,
 		});
-	};
-
-	useEffect(() => {
-		let cancelled = false;
-		void window.electronAPI
-			.getExperimentalUpdatesEnabled()
-			.then((enabled) => {
-				if (!cancelled) setExperimentalUpdatesEnabled(enabled);
-			})
-			.catch((error) => {
-				console.error("Failed to load experimental updates preference:", error);
-			});
-		return () => {
-			cancelled = true;
-		};
-	}, []);
-
-	const updateExperimentalUpdatesPreference = async (enabled: boolean) => {
-		const previousValue = experimentalUpdatesEnabled;
-		setExperimentalUpdatesEnabled(enabled);
-		setSavingExperimentalUpdates(true);
-		try {
-			const result = await window.electronAPI.setExperimentalUpdatesEnabled(enabled);
-			setExperimentalUpdatesEnabled(result.enabled);
-			if (!result.success) {
-				toast.error(
-					result.error ||
-						tSettings("updates.saveFailed", "Failed to change the update channel."),
-				);
-			}
-		} catch (error) {
-			setExperimentalUpdatesEnabled(previousValue);
-			toast.error(
-				`${tSettings("updates.saveFailed", "Failed to change the update channel.")} ${String(error)}`,
-			);
-		} finally {
-			setSavingExperimentalUpdates(false);
-		}
 	};
 
 	useEffect(() => {
@@ -2580,32 +2540,6 @@ export function SettingsPanel({
 							))}
 						</SelectContent>
 					</Select>
-				</section>
-
-				<section className="flex flex-col gap-2">
-					<SectionLabel>{tSettings("updates.title", "Updates")}</SectionLabel>
-					<div className="flex items-center justify-between gap-3 rounded-lg bg-foreground/[0.03] px-2.5 py-2">
-						<div>
-							<div className="text-[11px] font-medium text-foreground">
-								{tSettings("updates.experimental", "Experimental updates")}
-							</div>
-							<div className="mt-0.5 text-[10px] text-muted-foreground/70">
-								{tSettings(
-									"updates.experimentalDescription",
-									"This is the front line of user testing - highly experimental so expect bugs",
-								)}
-							</div>
-						</div>
-						<Switch
-							checked={experimentalUpdatesEnabled}
-							disabled={savingExperimentalUpdates}
-							onCheckedChange={(enabled) =>
-								void updateExperimentalUpdatesPreference(enabled)
-							}
-							aria-label={tSettings("updates.experimental", "Experimental updates")}
-							className="data-[state=checked]:bg-[#2563EB] scale-75"
-						/>
-					</div>
 				</section>
 
 				<section className="flex flex-col gap-1.5">

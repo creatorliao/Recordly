@@ -2,7 +2,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.electron.app",
-  "electronUpdaterCompatibility": ">=2.16",
   "asar": true,
   "asarUnpack": [
     "node_modules/ffmpeg-static/**",
@@ -41,15 +40,6 @@
     {
       "from": "public/wallpapers",
       "to": "assets/wallpapers"
-    }
-  ],
-  "publish": [
-    {
-      "provider": "github",
-      "owner": "webadderall",
-      "repo": "Recordly",
-      "tagNamePrefix": "v",
-      "publishAutoUpdate": true
     }
   ],
 

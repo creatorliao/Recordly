@@ -43,28 +43,6 @@ interface NativeCaptureDiagnostics {
 	error?: string;
 }
 
-interface UpdateToastState {
-	version: string;
-	detail: string;
-	phase: "available" | "downloading" | "ready" | "error";
-	delayMs: number;
-	isPreview?: boolean;
-	isExperimental?: boolean;
-	progressPercent?: number;
-	transferredBytes?: number;
-	totalBytes?: number;
-	remainingBytes?: number;
-	bytesPerSecond?: number;
-	primaryAction?: "install-and-restart" | "retry-check";
-}
-
-interface UpdateStatusSummary {
-	status: "idle" | "checking" | "up-to-date" | "available" | "downloading" | "ready" | "error";
-	currentVersion: string;
-	availableVersion: string | null;
-	detail?: string;
-}
-
 type RendererRecordingSessionData = import("./ipc/types").RecordingSessionData;
 
 interface RendererFfmpegAudioMuxMetrics {
@@ -810,37 +788,6 @@ interface Window {
 			message?: string;
 			error?: string;
 		}>;
-		installDownloadedUpdate: () => Promise<{ success: boolean }>;
-		downloadAvailableUpdate: (
-			installAfterDownload?: boolean,
-		) => Promise<{ success: boolean; message?: string }>;
-		deferDownloadedUpdate: (delayMs?: number) => Promise<{
-			success: boolean;
-			message?: string;
-		}>;
-		dismissUpdateToast: () => Promise<{ success: boolean }>;
-		skipUpdateVersion: () => Promise<{ success: boolean; message?: string }>;
-		getCurrentUpdateToastPayload: () => Promise<UpdateToastState | null>;
-		getUpdateStatusSummary: () => Promise<UpdateStatusSummary>;
-		getExperimentalUpdatesEnabled: () => Promise<boolean>;
-		setExperimentalUpdatesEnabled: (enabled: boolean) => Promise<{
-			success: boolean;
-			enabled: boolean;
-			error?: string;
-		}>;
-		previewUpdateToast: () => Promise<{ success: boolean }>;
-		checkForAppUpdates: () => Promise<{ success: boolean; logPath: string }>;
-		onUpdateToastStateChanged: (
-			callback: (payload: UpdateToastState | null) => void,
-		) => () => void;
-		onUpdateReadyToast: (
-			callback: (payload: {
-				version: string;
-				detail: string;
-				delayMs: number;
-				isPreview?: boolean;
-			}) => void,
-		) => () => void;
 		onMenuLoadProject: (callback: () => void) => () => void;
 		onMenuSaveProject: (callback: () => void) => () => void;
 		onMenuSaveProjectAs: (callback: () => void) => () => void;

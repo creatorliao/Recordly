@@ -43,8 +43,6 @@ import { SourcePopover } from "./popovers/SourcePopover";
 import { WebcamPopover } from "./popovers/WebcamPopover";
 import { RecordingControls } from "./RecordingControls";
 
-const SHOW_DEV_UPDATE_PREVIEW = import.meta.env.DEV;
-
 export function LaunchWindow() {
 	return (
 		<LaunchPopoverCoordinatorProvider>
@@ -55,7 +53,7 @@ export function LaunchWindow() {
 
 function LaunchWindowContent() {
 	const t = useScopedT("launch");
-	const { openId, requestClose, requestOpen } = useLaunchPopoverCoordinator();
+	const { openId, requestOpen } = useLaunchPopoverCoordinator();
 
 	const {
 		recording,
@@ -387,13 +385,6 @@ function LaunchWindowContent() {
 				onOpenProjectBrowser={() => {
 					refreshProjectLibrary().then(() => {
 						requestOpen("projects");
-					});
-				}}
-				showDevUpdatePreview={SHOW_DEV_UPDATE_PREVIEW}
-				onPreviewUpdateUi={() => {
-					if (openId) requestClose(openId);
-					void window.electronAPI.previewUpdateToast().catch((error) => {
-						console.warn("Failed to preview update toast:", error);
 					});
 				}}
 				appVersion={appVersion}

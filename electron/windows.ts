@@ -37,13 +37,8 @@ let hudOverlayMouseReassertTimer: NodeJS.Timeout | null = null;
 let hudOverlayRecordingActive = false;
 let hudOverlayWebcamPreviewVisible = false;
 let countdownWindow: BrowserWindow | null = null;
-let updateToastWindow: BrowserWindow | null = null;
-let hudWasVisibleBeforeUpdateToast = false;
 
 const HUD_OVERLAY_SETTINGS_FILE = path.join(USER_DATA_PATH, "hud-overlay-settings.json");
-const HUD_EDGE_MARGIN_DIP = 16;
-const UPDATE_TOAST_WIDTH = 420;
-const UPDATE_TOAST_HEIGHT = 172;
 
 function getEditorWindowQuery(): Record<string, string> {
 	const query: Record<string, string> = {
@@ -220,49 +215,10 @@ function applyHudOverlayBounds() {
 	}
 	hudOverlayWindow.setBounds(getHudOverlayBounds(), false);
 
-	positionUpdateToastWindow();
 	if (!hudOverlayWindow.isVisible()) {
 		return;
 	}
 	hudOverlayWindow.moveTop();
-}
-
-function getUpdateToastBounds() {
-	const hudWindow = getHudOverlayWindow();
-	if (hudWindow) {
-		const hudBounds = hudWindow.getBounds();
-		const display = getScreen().getDisplayMatching(hudBounds);
-		const { workArea } = display;
-		const x = Math.round(workArea.x + (workArea.width - UPDATE_TOAST_WIDTH) / 2);
-		const y = Math.round(
-			workArea.y + workArea.height - UPDATE_TOAST_HEIGHT - HUD_EDGE_MARGIN_DIP,
-		);
-
-		return {
-			x,
-			y,
-			width: UPDATE_TOAST_WIDTH,
-			height: UPDATE_TOAST_HEIGHT,
-		};
-	}
-
-	const primaryDisplay = getScreen().getPrimaryDisplay();
-	const { workArea } = primaryDisplay;
-	return {
-		x: Math.round(workArea.x + (workArea.width - UPDATE_TOAST_WIDTH) / 2),
-		y: Math.round(workArea.y + workArea.height - UPDATE_TOAST_HEIGHT - HUD_EDGE_MARGIN_DIP),
-		width: UPDATE_TOAST_WIDTH,
-		height: UPDATE_TOAST_HEIGHT,
-	};
-}
-
-function positionUpdateToastWindow() {
-	if (!updateToastWindow || updateToastWindow.isDestroyed()) {
-		return;
-	}
-
-	updateToastWindow.setBounds(getUpdateToastBounds(), false);
-	updateToastWindow.moveTop();
 }
 
 function setHudOverlayFallbackExpanded(expanded: boolean) {
@@ -287,7 +243,6 @@ function setHudOverlayFallbackExpanded(expanded: boolean) {
 		expanded,
 	);
 	hudOverlayWindow.setBounds(nextBounds, false);
-	positionUpdateToastWindow();
 	if (hudOverlayWindow.isVisible()) {
 		hudOverlayWindow.moveTop();
 	}
@@ -491,14 +446,6 @@ export function createHudOverlayWindow(): BrowserWindow {
 		if (hasShownHudWindow || win.isDestroyed()) {
 			return;
 		}
-		if (
-			updateToastWindow &&
-			!updateToastWindow.isDestroyed() &&
-			updateToastWindow.isVisible()
-		) {
-			hudWasVisibleBeforeUpdateToast = true;
-			return;
-		}
 		hasShownHudWindow = true;
 		// Showing or changing native window state can recreate platform window
 		// flags. Reassert capture protection on both sides of the transition.
@@ -691,113 +638,6 @@ export function setHudOverlayRecordingActive(recording: boolean): void {
 	setHudOverlayMousePassthrough(true);
 }
 
-export function createUpdateToastWindow(): BrowserWindow {
-	const initialBounds = getUpdateToastBounds();
-
-	const win = new BrowserWindow({
-		width: initialBounds.width,
-		height: initialBounds.height,
-		x: initialBounds.x,
-		y: initialBounds.y,
-		frame: false,
-		transparent: true,
-		resizable: false,
-		alwaysOnTop: true,
-		skipTaskbar: true,
-		hasShadow: false,
-		show: false,
-		focusable: true,
-		backgroundColor: "#00000000",
-		webPreferences: {
-			preload: path.join(electronWindowsDir, "preload.mjs"),
-			nodeIntegration: false,
-			contextIsolation: true,
-			backgroundThrottling: false,
-		},
-	});
-
-	if (process.platform === "darwin") {
-		win.setAlwaysOnTop(true, "status");
-	}
-
-	win.setVisibleOnAllWorkspaces(true, {
-		visibleOnFullScreen: true,
-		// Keep Recordly a foreground application so macOS does not temporarily
-		// remove its Dock icon while showing an overlay window.
-		skipTransformProcessType: process.platform === "darwin",
-	});
-	updateToastWindow = win;
-
-	win.on("closed", () => {
-		if (updateToastWindow === win) {
-			updateToastWindow = null;
-		}
-		restoreHudAfterUpdateToast();
-	});
-
-	if (VITE_DEV_SERVER_URL) {
-		win.loadURL(VITE_DEV_SERVER_URL + "?windowType=update-toast");
-	} else {
-		win.loadFile(path.join(RENDERER_DIST, "index.html"), {
-			query: { windowType: "update-toast" },
-		});
-	}
-
-	return win;
-}
-
-export function getUpdateToastWindow(): BrowserWindow | null {
-	return updateToastWindow && !updateToastWindow.isDestroyed() ? updateToastWindow : null;
-}
-
-export function showUpdateToastWindow(): BrowserWindow {
-	const win = getUpdateToastWindow() ?? createUpdateToastWindow();
-	const hud = getHudOverlayWindow();
-	if (!win.isVisible()) {
-		hudWasVisibleBeforeUpdateToast = Boolean(hud?.isVisible());
-	}
-	if (hud?.isVisible()) {
-		hud.hide();
-	}
-	positionUpdateToastWindow();
-	if (!win.isVisible()) {
-		if (process.platform === "win32") {
-			win.show();
-		} else {
-			win.showInactive();
-		}
-	}
-	win.moveTop();
-
-	return win;
-}
-
-function restoreHudAfterUpdateToast(): void {
-	if (!hudWasVisibleBeforeUpdateToast) {
-		return;
-	}
-
-	hudWasVisibleBeforeUpdateToast = false;
-	const hud = getHudOverlayWindow();
-	if (!hud) {
-		return;
-	}
-
-	if (process.platform === "win32") {
-		hud.showInactive();
-	} else {
-		hud.show();
-	}
-	hud.moveTop();
-	setHudOverlayMousePassthrough(hudOverlayIgnoringMouse);
-}
-
-export function hideUpdateToastWindow(): void {
-	if (updateToastWindow && !updateToastWindow.isDestroyed()) {
-		updateToastWindow.hide();
-	}
-	restoreHudAfterUpdateToast();
-}
 
 function loadPackagedEditorWindow(win: BrowserWindow) {
 	const query = getEditorWindowQuery();
