@@ -912,6 +912,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	hideOsCursor: () => ipcRenderer.invoke("hide-cursor"),
 	getAppVersion: () => ipcRenderer.invoke("app:getVersion"),
 	getAnnouncements: () => ipcRenderer.invoke("announcements:get"),
+	getExplorerContextMenu: () => ipcRenderer.invoke("get-explorer-context-menu"),
+	setExplorerContextMenu: (enabled: boolean) =>
+		ipcRenderer.invoke("set-explorer-context-menu", enabled),
 	getRecordingPreferences: () => ipcRenderer.invoke("get-recording-preferences"),
 	getRecordingAudioLabConfig: () => ipcRenderer.invoke("get-recording-audio-lab-config"),
 	setRecordingPreferences: (prefs: {

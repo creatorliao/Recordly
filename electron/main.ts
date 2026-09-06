@@ -17,6 +17,11 @@ import {
 import { RECORDINGS_DIR } from "./appPaths";
 import { readAppSetting, writeAppSetting } from "./appSettingsStore";
 import {
+	isExplorerContextMenuEnabled,
+	setExplorerContextMenuEnabled,
+	syncExplorerContextMenu,
+} from "./windowsExplorerContextMenu";
+import {
 	attachWebContentsConsoleLogging,
 	endSessionLog,
 	startSessionLog,
@@ -32,7 +37,7 @@ import {
 	registerIpcHandlers,
 } from "./ipc/handlers";
 import { getAssetRootPath, loadRecentProjectPaths } from "./ipc/project/manager";
-import { setCurrentProjectPath } from "./ipc/state";
+import { setCurrentProjectPath, setCurrentVideoPath } from "./ipc/state";
 import { ensureMediaServer } from "./mediaServer";
 import { hardenWebContentsNavigation, shouldHardenWebContentsType } from "./navigationPolicy";
 import { shouldGrantDisplayCapture, shouldGrantMediaPermission } from "./permissionPolicy";
@@ -216,6 +221,65 @@ function closeEditorWindowToHud(window: BrowserWindow | null) {
 // 设置「关闭窗口时」：默认退出应用；可选最小化到托盘。
 function shouldMinimizeToTrayOnClose() {
 	return readAppSetting("closeWindowBehavior") === "tray";
+}
+
+type LaunchVerb = "open" | "hud" | "record";
+type LaunchRequest = { verb: LaunchVerb; path?: string };
+
+function isProjectFilePath(filePath: string): boolean {
+	const lower = filePath.toLowerCase();
+	return lower.endsWith(".recordly") || lower.endsWith(".openscreen");
+}
+
+// 解析资源管理器右键传入的 argv：--record / --hud / --open [--path p] 或裸路径。
+function parseLaunchRequest(argv: string[]): LaunchRequest | null {
+	let verb: LaunchVerb | null = null;
+	let path: string | undefined;
+
+	for (let index = 1; index < argv.length; index += 1) {
+		const arg = argv[index];
+		if (arg === "--record" || arg === "--hud" || arg === "--open") {
+			verb = arg.slice(2) as LaunchVerb;
+		} else if (arg === "--path" && index + 1 < argv.length) {
+			path = argv[index + 1];
+			index += 1;
+		} else if (!arg.startsWith("-") && arg.trim().length > 0 && path === undefined) {
+			path = arg;
+		}
+	}
+
+	if (!verb) {
+		if (path) verb = "open";
+		else return null;
+	}
+	return { verb, path };
+}
+
+async function handleLaunchRequest(request: LaunchRequest) {
+	writeSessionLog({
+		level: "info",
+		scope: "window",
+		event: `cli.${request.verb}`,
+		msg: `handling explorer launch verb ${request.verb}`,
+		data: { path: request.path ?? null },
+	});
+
+	if (request.verb === "open") {
+		if (request.path) {
+			if (isProjectFilePath(request.path)) {
+				setCurrentProjectPath(request.path);
+			} else {
+				setCurrentVideoPath(request.path);
+			}
+		}
+		createEditorWindowWrapper();
+		return;
+	}
+
+	// hud / record：拉起录制工具栏（第一期 record 只拉工具栏，开录仍由用户点）。
+	if (!showHudOverlayFromTray()) {
+		createWindow();
+	}
 }
 
 // 冷启动进编辑器时打开最近一个项目（剪映开草稿的习惯）；没有则空态。
@@ -814,7 +878,12 @@ app.on("activate", () => {
 	focusOrCreateMainWindow();
 });
 
-app.on("second-instance", () => {
+app.on("second-instance", (_event, argv) => {
+	const request = parseLaunchRequest(argv);
+	if (request) {
+		void handleLaunchRequest(request);
+		return;
+	}
 	focusOrCreateMainWindow();
 });
 
@@ -925,6 +994,13 @@ app.whenReady().then(async () => {
 		createTray();
 		updateTrayMenu();
 	}
+	// 资源管理器右键：按设置（默认开）写/删 HKCU 级联，Portable 与安装版同一条代码。
+	void syncExplorerContextMenu();
+	ipcMain.handle("get-explorer-context-menu", () => isExplorerContextMenuEnabled());
+	ipcMain.handle("set-explorer-context-menu", async (_event, enabled: boolean) => {
+		await setExplorerContextMenuEnabled(Boolean(enabled));
+		return { success: true };
+	});
 	setupApplicationMenu();
 	await Promise.all([
 		ensureRecordingsDir(),
@@ -978,6 +1054,13 @@ app.whenReady().then(async () => {
 			);
 		}
 		createEditorWindowWrapper();
+		return;
+	}
+
+	// 资源管理器右键/双击关联传入的 CLI 动词优先于「启动时打开」默认。
+	const launchRequest = parseLaunchRequest(process.argv);
+	if (launchRequest) {
+		await handleLaunchRequest(launchRequest);
 		return;
 	}
 

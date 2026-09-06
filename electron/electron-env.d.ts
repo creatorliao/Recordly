@@ -867,6 +867,8 @@ interface Window {
 		/** Hide the OS cursor before browser capture starts. */
 		hideOsCursor: () => Promise<{ success: boolean }>;
 		/** Recording preferences (mic, system audio, webcam) */
+		getExplorerContextMenu: () => Promise<boolean>;
+		setExplorerContextMenu: (enabled: boolean) => Promise<{ success: boolean }>;
 		getRecordingPreferences: () => Promise<{
 			success: boolean;
 			microphoneEnabled: boolean;

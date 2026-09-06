@@ -128,6 +128,11 @@
 		"unsaved": "未保存",
 		"saved": "已保存"
 	},
+	"windowsIntegration": {
+		"title": "Windows 集成",
+		"explorerContextMenu": "在资源管理器右键菜单中显示 Recordly",
+		"explorerContextMenuHint": "打开后，右键文件/文件夹出现级联：开始录制、打开录制工具栏、用 Recordly 打开。"
+	},
 	"project": {
 		"untitled": "未命名",
 		"openRecent": "最近打开",

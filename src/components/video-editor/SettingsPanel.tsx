@@ -1093,6 +1093,7 @@ export function SettingsPanel({
 	);
 	const [recordingCapturePreset, setRecordingCapturePreset] =
 		useState<CapturePreset>(DEFAULT_CAPTURE_PRESET);
+	const [explorerContextMenuEnabled, setExplorerContextMenuEnabled] = useState(true);
 	const isBackgroundPanel = panelMode === "background";
 	const initialEditorPreferences = useMemo(() => loadEditorPreferences(), []);
 	const [builtInWallpapers, setBuiltInWallpapers] =
@@ -1143,6 +1144,18 @@ export function SettingsPanel({
 				setRecordingCapturePreset(result.capturePreset);
 			}
 		})();
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
+	useEffect(() => {
+		let cancelled = false;
+		void window.electronAPI?.getExplorerContextMenu?.().then((enabled) => {
+			if (!cancelled && typeof enabled === "boolean") {
+				setExplorerContextMenuEnabled(enabled);
+			}
+		});
 		return () => {
 			cancelled = true;
 		};
@@ -2614,6 +2627,34 @@ export function SettingsPanel({
 								{t(CAPTURE_PRESET_LABEL_KEYS[preset])}
 							</button>
 						))}
+					</div>
+				</section>
+
+				<section className="flex flex-col gap-2">
+					<SectionLabel>{t("editor.windowsIntegration.title", "Windows integration")}</SectionLabel>
+					<div className="flex items-center justify-between gap-3 rounded-lg bg-foreground/[0.03] px-2.5 py-2">
+						<div>
+							<div className="text-[11px] font-medium text-foreground">
+								{t(
+									"editor.windowsIntegration.explorerContextMenu",
+									"Show Recordly in the Explorer context menu",
+								)}
+							</div>
+							<div className="mt-0.5 text-[10px] text-muted-foreground/70">
+								{t(
+									"editor.windowsIntegration.explorerContextMenuHint",
+									"Right-click files/folders for Recordly actions.",
+								)}
+							</div>
+						</div>
+						<Switch
+							checked={explorerContextMenuEnabled}
+							onCheckedChange={(enabled) => {
+								setExplorerContextMenuEnabled(enabled);
+								void window.electronAPI?.setExplorerContextMenu?.(enabled);
+							}}
+							className="data-[state=checked]:bg-[#2563EB] scale-75"
+						/>
 					</div>
 				</section>
 
