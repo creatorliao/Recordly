@@ -20,33 +20,57 @@ export interface ShortcutBinding {
 export type ShortcutsConfig = Record<ShortcutAction, ShortcutBinding>;
 
 export interface FixedShortcut {
+	i18nKey: string;
 	label: string;
 	display: string;
 	bindings: ShortcutBinding[];
 }
 
 export const FIXED_SHORTCUTS: FixedShortcut[] = [
-	{ label: "Cycle Annotations Forward", display: "Tab", bindings: [{ key: "tab" }] },
 	{
+		i18nKey: "cycleForward",
+		label: "Cycle Annotations Forward",
+		display: "Tab",
+		bindings: [{ key: "tab" }],
+	},
+	{
+		i18nKey: "cycleBackward",
 		label: "Cycle Annotations Backward",
 		display: "Shift + Tab",
 		bindings: [{ key: "tab", shift: true }],
 	},
 	{
+		i18nKey: "deleteSelectedAlt",
 		label: "Delete Selected (alt)",
 		display: "Del / ⌫",
 		bindings: [{ key: "delete" }, { key: "backspace" }],
 	},
-	{ label: "Pan Timeline", display: "Shift + Scroll", bindings: [] },
-	{ label: "Zoom Timeline", display: "Ctrl + Scroll", bindings: [] },
-	{ label: "New Recording", display: "Ctrl + N", bindings: [{ key: "n", ctrl: true }] },
-	{ label: "Save Project", display: "Ctrl + S", bindings: [{ key: "s", ctrl: true }] },
+	{ i18nKey: "panTimeline", label: "Pan Timeline", display: "Shift + Scroll", bindings: [] },
+	{ i18nKey: "zoomTimeline", label: "Zoom Timeline", display: "Ctrl + Scroll", bindings: [] },
 	{
+		i18nKey: "newRecording",
+		label: "New Recording",
+		display: "Ctrl + N",
+		bindings: [{ key: "n", ctrl: true }],
+	},
+	{
+		i18nKey: "saveProject",
+		label: "Save Project",
+		display: "Ctrl + S",
+		bindings: [{ key: "s", ctrl: true }],
+	},
+	{
+		i18nKey: "saveProjectAs",
 		label: "Save Project As",
 		display: "Ctrl + Shift + S",
 		bindings: [{ key: "s", ctrl: true, shift: true }],
 	},
-	{ label: "Open Projects", display: "Ctrl + O", bindings: [{ key: "o", ctrl: true }] },
+	{
+		i18nKey: "openProjects",
+		label: "Open Projects",
+		display: "Ctrl + O",
+		bindings: [{ key: "o", ctrl: true }],
+	},
 ];
 
 export type ShortcutConflict =

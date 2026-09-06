@@ -125,12 +125,24 @@
 		"renameInput": "Project name",
 		"renameTitle": "Rename project",
 		"saveTitle": "Save Project",
+		"saveDescription": "Name this project. It will be saved in your Recordly Projects folder.",
 		"saveNameLabel": "Project name",
 		"saving": "Saving...",
 		"unsavedChangesTitle": "Unsaved changes",
 		"unsavedChangesDescription": "Save your current project before you {{action}}?",
 		"discardChanges": "Discard changes",
-		"saveProject": "Save project"
+		"saveProject": "Save project",
+		"leaveActions": {
+			"openAnother": "open another project",
+			"importFile": "import a file",
+			"returnToRecording": "return to recording",
+			"closeEditor": "close the editor"
+		},
+		"browserTitle": "Projects",
+		"import": "Import",
+		"noPreview": "No preview yet",
+		"current": "Current",
+		"emptyLibrary": "No saved projects yet"
 	},
 	"exportTips": {
 		"autoZooms": "Tip: Turn off auto-applied zooms in settings",

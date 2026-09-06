@@ -25,9 +25,24 @@ export function registerAssetHandlers() {
 	const thumbCacheDir = path.join(USER_DATA_PATH, "wallpaper-thumbs");
 	let thumbGenerationQueue: Promise<void> = Promise.resolve();
 
+	/** 打包窗常把 /wallpapers/foo.jpg 传进来；Windows 会当成盘符根路径。先落到 extraResources。 */
+	function resolveWallpaperSourcePath(filePath: string): string {
+		const input = String(filePath ?? "").trim();
+		const posix = input.replace(/\\/g, "/");
+		const match = posix.match(/(?:^|\/)wallpapers\/(.+)$/i);
+		const looksLikeDiskPath = /^[A-Za-z]:/.test(posix) || posix.startsWith("//");
+		if (match && !looksLikeDiskPath) {
+			return path.join(getAssetRootPath(), "wallpapers", decodeURIComponent(match[1]));
+		}
+		if (!path.isAbsolute(input) && posix.startsWith("wallpapers/")) {
+			return path.join(getAssetRootPath(), ...posix.split("/"));
+		}
+		return input;
+	}
+
 	ipcMain.handle("generate-wallpaper-thumbnail", async (_, filePath: string) => {
 		try {
-			const resolved = await resolveReadableLocalFilePath(filePath);
+			const resolved = await resolveReadableLocalFilePath(resolveWallpaperSourcePath(filePath));
 
 			// Deterministic cache key from file path + mtime
 			const stat = await fs.stat(resolved);

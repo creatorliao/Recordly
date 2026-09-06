@@ -115,10 +115,10 @@ describe("cursor telemetry pause clock", () => {
 		expect(rm).not.toHaveBeenCalled();
 	});
 
-	it("removes the sidecar when saving an empty cursor telemetry payload", async () => {
+	it("空 payload 不删已有 sidecar", async () => {
 		await writeCursorTelemetry("/tmp/recording.mp4", []);
 
-		expect(rm).toHaveBeenCalledWith("/tmp/recording.cursor.json", { force: true });
+		expect(rm).not.toHaveBeenCalled();
 		expect(writeFile).not.toHaveBeenCalled();
 	});
 

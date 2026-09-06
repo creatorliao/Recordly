@@ -13,6 +13,7 @@ import {
 	cursorCaptureStartTimeMs,
 	isCursorCaptureActive,
 	linuxCursorScreenPoint,
+	currentVideoPath,
 	pendingCursorSamples,
 	selectedSource,
 	selectedWindowBounds,
@@ -84,8 +85,8 @@ export async function writeCursorTelemetry(videoPath: string, samples: unknown) 
 	const telemetryPath = getTelemetryPathForVideo(videoPath);
 	const normalizedSamples = normalizeCursorTelemetrySamples(samples);
 
+	// 空数组不得删已有 sidecar：停录后二次 finalize / 编辑器空写会把刚落下的鼠标数据抹掉。
 	if (normalizedSamples.length === 0) {
-		await fs.rm(telemetryPath, { force: true });
 		return normalizedSamples;
 	}
 
@@ -274,7 +275,10 @@ export async function persistPendingCursorTelemetry(videoPath: string) {
 	}
 
 	await writeCursorTelemetry(videoPath, pendingCursorSamples);
-	setPendingCursorSamples([]);
+	if (currentVideoPath && currentVideoPath !== videoPath) {
+		await writeCursorTelemetry(currentVideoPath, pendingCursorSamples);
+	}
+	// 不清 pending：成片路径可能还会再 finalize 一次。下次开录会清空。
 }
 
 export function snapshotCursorTelemetryForPersistence() {

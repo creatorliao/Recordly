@@ -65,17 +65,13 @@ export async function getAssetPath(relativePath: string): Promise<string> {
 		return `/${encodedRelativePath}`;
 	}
 
-	try {
-		if (typeof window !== "undefined") {
-			if (typeof window.electronAPI?.getAssetBasePath === "function") {
-				const base = await window.electronAPI.getAssetBasePath();
-				if (base) {
-					return new URL(encodedRelativePath, ensureTrailingSlash(base)).toString();
-				}
+	if (typeof window !== "undefined") {
+		if (typeof window.electronAPI?.getAssetBasePath === "function") {
+			const base = await window.electronAPI.getAssetBasePath();
+			if (base) {
+				return new URL(encodedRelativePath, ensureTrailingSlash(base)).toString();
 			}
 		}
-	} catch (error) {
-		throw error;
 	}
 
 	throw new Error(`Failed to resolve asset base path for ${relativePath}`);
@@ -280,13 +276,18 @@ export async function getWallpaperThumbnailUrl(asset: string): Promise<string> {
 	const cached = thumbnailCache.get(asset);
 	if (cached) return cached;
 
-	const localFilePath = toLocalFilePath(
-		asset.startsWith("/") && !asset.startsWith("//")
-			? await getAssetPath(asset.replace(/^\//, ""))
-			: asset,
-	);
+	const bundledRelative = asset.replace(/^\/+/, "");
+	const thumbnailSource =
+		bundledRelative.startsWith("wallpapers/")
+			? bundledRelative
+			: toLocalFilePath(
+					asset.startsWith("/") && !asset.startsWith("//")
+						? await getAssetPath(bundledRelative)
+						: asset,
+				);
+
 	if (
-		!localFilePath ||
+		!thumbnailSource ||
 		typeof window === "undefined" ||
 		!window.electronAPI?.generateWallpaperThumbnail
 	) {
@@ -295,7 +296,7 @@ export async function getWallpaperThumbnailUrl(asset: string): Promise<string> {
 
 	await acquireThumbSlot();
 	try {
-		const result = await window.electronAPI.generateWallpaperThumbnail(localFilePath);
+		const result = await window.electronAPI.generateWallpaperThumbnail(thumbnailSource);
 		if (!result.success || !result.data) {
 			return getRenderableAssetUrl(asset);
 		}

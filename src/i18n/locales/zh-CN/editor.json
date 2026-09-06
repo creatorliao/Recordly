@@ -124,13 +124,25 @@
 		"projects": "打开项目",
 		"renameInput": "项目名称",
 		"renameTitle": "重命名项目",
-		"saveTitle": "保存项目",
+		"saveTitle": "保存项目 (Save Project)",
+		"saveDescription": "为此项目命名。文件会保存在 Recordly Projects 文件夹。(Name this project. It will be saved in your Recordly Projects folder.)",
 		"saveNameLabel": "项目名称",
 		"saving": "正在保存...",
-		"unsavedChangesTitle": "未保存的更改",
+		"unsavedChangesTitle": "未保存的更改 (Unsaved changes)",
 		"unsavedChangesDescription": "在{{action}}之前保存当前项目吗？",
-		"discardChanges": "放弃更改",
-		"saveProject": "保存项目"
+		"discardChanges": "放弃更改 (Discard)",
+		"saveProject": "保存项目",
+		"leaveActions": {
+			"openAnother": "打开另一个项目 (open another project)",
+			"importFile": "导入文件 (import a file)",
+			"returnToRecording": "返回录制 (return to recording)",
+			"closeEditor": "关闭编辑器 (close editor)"
+		},
+		"browserTitle": "项目 (Projects)",
+		"import": "导入 (Import)",
+		"noPreview": "暂无预览 (No preview yet)",
+		"current": "当前 (Current)",
+		"emptyLibrary": "还没有已保存的项目 (No saved projects yet)"
 	},
 	"exportTips": {
 		"autoZooms": "提示：可在设置中关闭自动应用的缩放",

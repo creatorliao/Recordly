@@ -193,6 +193,7 @@ export function useEditorProjectController(input: Input) {
 		projectSaveDialogInputRef: input.projectSaveDialogInputRef,
 		projectNameInputRef: input.projectNameInputRef,
 		openProjectSaveDialog: lifecycle.openProjectSaveDialog,
+		openUnsavedChangesDialog: lifecycle.openUnsavedChangesDialog,
 		resolveProjectSaveDialog: lifecycle.resolveProjectSaveDialog,
 		captureProjectThumbnail: input.captureProjectThumbnail,
 		refreshProjectLibrary: input.refreshProjectLibrary,

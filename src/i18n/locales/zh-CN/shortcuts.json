@@ -1,16 +1,21 @@
 {
 	"actions": {
-		"addZoom": "添加缩放",
-		"addTrim": "添加修剪",
-		"addSpeed": "添加变速",
-		"addAnnotation": "添加注释",
-		"addKeyframe": "添加关键帧",
-		"deleteSelected": "删除选中",
-		"playPause": "播放 / 暂停",
-		"cycleForward": "向前循环切换注释",
-		"cycleBackward": "向后循环切换注释",
-		"deleteSelectedAlt": "删除选中（替代）",
-		"panTimeline": "平移时间线",
-		"zoomTimeline": "缩放时间线"
+		"addZoom": "添加缩放 (Add Zoom)",
+		"splitClip": "拆分片段 (Split Clip)",
+		"addTrim": "添加修剪 (Add Trim)",
+		"addSpeed": "添加变速 (Add Speed)",
+		"addAnnotation": "添加注释 (Add Annotation)",
+		"addKeyframe": "添加关键帧 (Add Keyframe)",
+		"deleteSelected": "删除选中 (Delete Selected)",
+		"playPause": "播放 / 暂停 (Play / Pause)",
+		"cycleForward": "向前循环注释 (Cycle Annotations Forward)",
+		"cycleBackward": "向后循环注释 (Cycle Annotations Backward)",
+		"deleteSelectedAlt": "删除选中·备用 (Delete Selected alt)",
+		"panTimeline": "平移时间线 (Pan Timeline)",
+		"zoomTimeline": "缩放时间线 (Zoom Timeline)",
+		"newRecording": "新建录制 (New Recording)",
+		"saveProject": "保存项目 (Save Project)",
+		"saveProjectAs": "项目另存为 (Save Project As)",
+		"openProjects": "打开项目 (Open Projects)"
 	}
 }

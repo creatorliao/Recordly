@@ -7,6 +7,7 @@ import {
 	useEffect,
 } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 import { fromFileUrl, resolveVideoUrl } from "../projectPersistence";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useProjectState } from "../state/useProjectState";
@@ -54,6 +55,7 @@ export function useProjectOpenActions({
 	handleSaveProjectAs,
 	isExporting,
 }: UseProjectOpenActionsInput) {
+	const { t } = useI18n();
 	const confirmReplaceSourceWithUnsavedChanges = useCallback(
 		async (actionLabel: string) => {
 			if (!hasUnsavedChanges) return true;
@@ -67,7 +69,12 @@ export function useProjectOpenActions({
 
 	const handleOpenProjectFromLibrary = useCallback(
 		async (projectPath: string) => {
-			if (!(await confirmReplaceSourceWithUnsavedChanges("open another project"))) return;
+			if (
+				!(await confirmReplaceSourceWithUnsavedChanges(
+					t("editor.project.leaveActions.openAnother"),
+				))
+			)
+				return;
 			const result = await window.electronAPI.openProjectFileAtPath(projectPath);
 			if (result.canceled) return;
 			if (!result.success) {
@@ -87,11 +94,13 @@ export function useProjectOpenActions({
 			confirmReplaceSourceWithUnsavedChanges,
 			project,
 			refreshProjectLibrary,
+			t,
 		],
 	);
 
 	const handleImportMediaOrProject = useCallback(async () => {
-		if (!(await confirmReplaceSourceWithUnsavedChanges("import a file"))) return;
+		if (!(await confirmReplaceSourceWithUnsavedChanges(t("editor.project.leaveActions.importFile"))))
+			return;
 		const result = await window.electronAPI.openVideoFilePicker({ includeProjects: true });
 		if (result.canceled) return;
 		if (!result.success) {
@@ -155,6 +164,7 @@ export function useProjectOpenActions({
 		pendingFreshRecordingAutoZoomPathRef,
 		applySessionPresentation,
 		refreshProjectLibrary,
+		t,
 	]);
 
 	const handleOpenProjectBrowser = useCallback(() => {
@@ -177,7 +187,7 @@ export function useProjectOpenActions({
 			return;
 		}
 
-		if (!(await confirmReplaceSourceWithUnsavedChanges("return to recording"))) {
+		if (!(await confirmReplaceSourceWithUnsavedChanges(t("editor.project.leaveActions.returnToRecording")))) {
 			return;
 		}
 
@@ -193,7 +203,7 @@ export function useProjectOpenActions({
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : String(error));
 		}
-	}, [confirmReplaceSourceWithUnsavedChanges, isExporting, setIsPlaying, videoPlaybackRef]);
+	}, [confirmReplaceSourceWithUnsavedChanges, isExporting, setIsPlaying, t, videoPlaybackRef]);
 
 	useEffect(() => {
 		const removeLoad = window.electronAPI.onMenuLoadProject(

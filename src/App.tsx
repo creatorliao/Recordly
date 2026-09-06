@@ -19,6 +19,7 @@ export default function App() {
 		() => new URLSearchParams(window.location.search).get("windowType") || "",
 	);
 	const { t } = useI18n();
+	const [appVersion, setAppVersion] = useState<string | null>(null);
 	const appIconSrc = "/app-icons/recordly-128.png";
 
 	useEffect(() => {
@@ -43,11 +44,18 @@ export default function App() {
 	}, [windowType]);
 
 	useEffect(() => {
-		document.title =
+		void window.electronAPI?.getAppVersion?.()
+			.then((version) => setAppVersion(version))
+			.catch(() => undefined);
+	}, []);
+
+	useEffect(() => {
+		const baseTitle =
 			windowType === "editor"
 				? t("app.editorTitle", "Recordly Editor")
 				: t("app.name", "Recordly");
-	}, [windowType, t]);
+		document.title = windowType === "editor" && appVersion ? `${baseTitle} ${appVersion}` : baseTitle;
+	}, [windowType, t, appVersion]);
 
 	let content;
 	switch (windowType) {

@@ -1,6 +1,7 @@
 {
 	"actions": {
 		"addZoom": "Add Zoom",
+		"splitClip": "Split Clip",
 		"addTrim": "Add Trim",
 		"addSpeed": "Add Speed",
 		"addAnnotation": "Add Annotation",
@@ -11,6 +12,10 @@
 		"cycleBackward": "Cycle Annotations Backward",
 		"deleteSelectedAlt": "Delete Selected (alt)",
 		"panTimeline": "Pan Timeline",
-		"zoomTimeline": "Zoom Timeline"
+		"zoomTimeline": "Zoom Timeline",
+		"newRecording": "New Recording",
+		"saveProject": "Save Project",
+		"saveProjectAs": "Save Project As",
+		"openProjects": "Open Projects"
 	}
 }

@@ -1,5 +1,6 @@
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/contexts/I18nContext";
 import { createProjectData, type EditorProjectData } from "../projectPersistence";
 import type { useProjectState } from "../state/useProjectState";
 import { cloneStructured, getErrorMessage } from "../videoEditorUtils";
@@ -23,6 +24,7 @@ type UseProjectSaveActionsInput = {
 	projectSaveDialogInputRef: RefObject<HTMLInputElement | null>;
 	projectNameInputRef: RefObject<HTMLInputElement | null>;
 	openProjectSaveDialog: (initialName: string) => Promise<boolean>;
+	openUnsavedChangesDialog: (actionLabel: string) => Promise<"save" | "discard" | "cancel">;
 	resolveProjectSaveDialog: (saved: boolean) => void;
 	captureProjectThumbnail: () => Promise<string | null>;
 	refreshProjectLibrary: () => Promise<void>;
@@ -39,11 +41,13 @@ export function useProjectSaveActions({
 	projectSaveDialogInputRef,
 	projectNameInputRef,
 	openProjectSaveDialog,
+	openUnsavedChangesDialog,
 	resolveProjectSaveDialog,
 	captureProjectThumbnail,
 	refreshProjectLibrary,
 	remountPreview,
 }: UseProjectSaveActionsInput) {
+	const { t } = useI18n();
 	const {
 		currentProjectPath,
 		lastSavedSnapshot,
@@ -170,8 +174,16 @@ export function useProjectSaveActions({
 		window.electronAPI.setHasUnsavedChanges(hasUnsavedChanges);
 	}, [hasUnsavedChanges]);
 	useEffect(
-		() => window.electronAPI.onRequestSaveBeforeClose(() => saveProject(false)),
-		[saveProject],
+		() =>
+			window.electronAPI.onRequestSaveBeforeClose(async () => {
+				const decision = await openUnsavedChangesDialog(
+					t("editor.project.leaveActions.closeEditor"),
+				);
+				if (decision === "cancel") return false;
+				if (decision === "save") return saveProject(false);
+				return true;
+			}),
+		[openUnsavedChangesDialog, saveProject, t],
 	);
 	useEffect(() => {
 		if (!currentProjectPath || !hasUnsavedChanges) {

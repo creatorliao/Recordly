@@ -5,7 +5,6 @@ import {
 	app,
 	BrowserWindow,
 	desktopCapturer,
-	dialog,
 	webContents as electronWebContents,
 	ipcMain,
 	Menu,
@@ -661,41 +660,21 @@ function createEditorWindowWrapper() {
 			return;
 		}
 
+		// 不弹系统原生框：交给渲染进程用和「返回录制」同一套未保存对话框。
 		event.preventDefault();
+		editorWindow.webContents.send("request-save-before-close");
+		ipcMain.once("save-before-close-done", (_event, proceed: boolean) => {
+			if (!proceed) {
+				isAppQuitting = false;
+				return;
+			}
 
-		const choice = dialog.showMessageBoxSync(editorWindow, {
-			type: "warning",
-			buttons: ["Save & Close", "Discard & Close", "Cancel"],
-			defaultId: 0,
-			cancelId: 2,
-			title: "Unsaved Changes",
-			message: "You have unsaved changes.",
-			detail: "Do you want to save your project before closing?",
-		});
-
-		if (choice === 0) {
-			editorWindow.webContents.send("request-save-before-close");
-			ipcMain.once("save-before-close-done", (_event, saved: boolean) => {
-				if (!saved) {
-					isAppQuitting = false;
-					return;
-				}
-
-				if (process.platform === "win32" && !isAppQuitting) {
-					closeEditorWindowToHud(editorWindow);
-				} else {
-					closeEditorWindowBypassingUnsavedPrompt(editorWindow);
-				}
-			});
-		} else if (choice === 1) {
 			if (process.platform === "win32" && !isAppQuitting) {
 				closeEditorWindowToHud(editorWindow);
 			} else {
 				closeEditorWindowBypassingUnsavedPrompt(editorWindow);
 			}
-		} else {
-			isAppQuitting = false;
-		}
+		});
 	});
 
 	return editorWindow;

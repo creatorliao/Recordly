@@ -2,12 +2,13 @@ import { Gear as Settings2, Question as HelpCircle } from "@phosphor-icons/react
 import { useEffect, useState } from "react";
 import { useScopedT } from "@/contexts/I18nContext";
 import { useShortcuts } from "@/contexts/ShortcutsContext";
-import { formatBinding, SHORTCUT_ACTIONS, SHORTCUT_LABELS } from "@/lib/shortcuts";
+import { formatBinding, SHORTCUT_ACTIONS } from "@/lib/shortcuts";
 import { formatShortcut } from "@/utils/platformUtils";
 
 export function KeyboardShortcutsHelp() {
 	const { shortcuts, isMac, openConfig } = useShortcuts();
 	const t = useScopedT("editor");
+	const st = useScopedT("shortcuts");
 
 	const [scrollLabels, setScrollLabels] = useState({
 		pan: "Shift + Scroll",
@@ -43,7 +44,7 @@ export function KeyboardShortcutsHelp() {
 				<div className="space-y-1.5 text-[10px]">
 					{SHORTCUT_ACTIONS.map((action) => (
 						<div key={action} className="flex items-center justify-between">
-							<span className="text-muted-foreground">{SHORTCUT_LABELS[action]}</span>
+							<span className="text-muted-foreground">{st(`actions.${action}`)}</span>
 							<kbd className="px-1 py-0.5 bg-foreground/5 border border-foreground/10 rounded text-[#2563EB] font-mono">
 								{formatBinding(shortcuts[action], isMac)}
 							</kbd>
