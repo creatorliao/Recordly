@@ -117,8 +117,16 @@
 		"returnToRecording": "Return to recording",
 		"returnToRecordingBlockedByExport": "Wait for the export to finish before returning to recording"
 	},
+	"menubar": {
+		"file": "File(F)",
+		"edit": "Edit(E)"
+	},
+	"layout": {
+		"toggleSideBar": "Toggle sidebar"
+	},
 	"project": {
 		"untitled": "Untitled",
+		"openRecent": "Open recent",
 		"menu": "Project",
 		"newRecording": "New recording",
 		"newFromFile": "New project from file…",

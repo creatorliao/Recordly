@@ -221,6 +221,7 @@ export function EditorShell(props: Props) {
 				canUndo={history.canUndo}
 				canRedo={history.canRedo}
 				handleOpenProjectBrowser={openActions.handleOpenProjectBrowser}
+				handleOpenProjectFromLibrary={openActions.handleOpenProjectFromLibrary}
 				handleReturnToRecording={openActions.handleReturnToRecording}
 				handleSaveProject={saveActions.handleSaveProject}
 				handleSaveProjectAs={saveActions.handleSaveProjectAs}
@@ -230,6 +231,8 @@ export function EditorShell(props: Props) {
 				handleRedo={history.handleRedo}
 				handleProjectNameSubmit={saveActions.handleProjectNameSubmit}
 				closeProjectNameEditor={saveActions.closeProjectNameEditor}
+				settingsPanelVisible={ui.settingsPanelVisible}
+				onToggleSettingsPanel={() => ui.setSettingsPanelVisible((v) => !v)}
 				presets={presets}
 				exportSettings={exportSettings}
 				exportSession={exportSession}
@@ -254,6 +257,7 @@ export function EditorShell(props: Props) {
 						t={t}
 						activeSection={ui.activeEffectSection}
 						setActiveSection={ui.setActiveEffectSection}
+						settingsPanelVisible={ui.settingsPanelVisible}
 						settingsPanelProps={settingsPanelProps}
 					/>
 					<EditorPreviewPanel

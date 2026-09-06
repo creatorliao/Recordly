@@ -1,19 +1,14 @@
-import {
-	FileText,
-	FloppyDisk,
-	FolderOpen,
-	ArrowClockwise as Redo2,
-	ArrowCounterClockwise as Undo2,
-	VideoCamera,
-} from "@phosphor-icons/react";
-import type { CSSProperties, FormEvent, RefObject } from "react";
-import { Button } from "@/components/ui/button";
+import { SidebarSimple } from "@phosphor-icons/react";
+import type { CSSProperties, FormEvent, ReactNode, RefObject } from "react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuShortcut,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { useI18n } from "@/contexts/I18nContext";
@@ -23,7 +18,6 @@ import type { useExportSettings } from "../export/useExportSettings";
 import type { useExportStatusViewModel } from "../export/useExportStatusViewModel";
 import type { useVideoEditorPresets } from "../presets/useVideoEditorPresets";
 import type { useProjectState } from "../state/useProjectState";
-import { APP_HEADER_ICON_BUTTON_CLASS } from "../TutorialHelp";
 import { EditorExportMenu } from "./EditorExportMenu";
 import { EditorPresetMenu } from "./EditorPresetMenu";
 
@@ -38,6 +32,7 @@ type Props = {
 	canUndo: boolean;
 	canRedo: boolean;
 	handleOpenProjectBrowser: () => void;
+	handleOpenProjectFromLibrary: (projectPath: string) => void;
 	handleReturnToRecording: () => void;
 	handleSaveProject: () => void;
 	handleSaveProjectAs: () => void;
@@ -47,6 +42,8 @@ type Props = {
 	handleRedo: () => void;
 	handleProjectNameSubmit: (event?: FormEvent<HTMLFormElement>) => void;
 	closeProjectNameEditor: () => void;
+	settingsPanelVisible: boolean;
+	onToggleSettingsPanel: () => void;
 	presets: ReturnType<typeof useVideoEditorPresets>;
 	exportSettings: ReturnType<typeof useExportSettings>;
 	exportSession: ReturnType<typeof useExportSession>;
@@ -65,6 +62,33 @@ type Props = {
 	exportMessage: string | null;
 };
 
+function MenubarMenu({
+	label,
+	triggerRef,
+	children,
+}: {
+	label: string;
+	triggerRef?: RefObject<HTMLButtonElement>;
+	children: ReactNode;
+}) {
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<button
+					ref={triggerRef}
+					type="button"
+					className="flex h-full items-center rounded-[5px] px-2 text-xs font-medium text-foreground/80 outline-none transition-colors hover:bg-foreground/10 hover:text-foreground"
+				>
+					{label}
+				</button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="start" sideOffset={4} className="min-w-52">
+				{children}
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+}
+
 export function EditorHeader(props: Props) {
 	const {
 		t,
@@ -77,6 +101,7 @@ export function EditorHeader(props: Props) {
 		canUndo,
 		canRedo,
 		handleOpenProjectBrowser,
+		handleOpenProjectFromLibrary,
 		handleReturnToRecording,
 		handleSaveProject,
 		handleSaveProjectAs,
@@ -86,6 +111,8 @@ export function EditorHeader(props: Props) {
 		handleRedo,
 		handleProjectNameSubmit,
 		closeProjectNameEditor,
+		settingsPanelVisible,
+		onToggleSettingsPanel,
 		presets,
 		exportSettings,
 		exportSession,
@@ -111,112 +138,79 @@ export function EditorHeader(props: Props) {
 		isSavingProjectName,
 	} = project;
 	const primaryModifierLabel = isMac ? "⌘" : "Ctrl+";
+	const recentProjects = project.projectLibraryEntries.slice(0, 10);
 
 	return (
 		<div
-			className="relative z-50 flex h-11 flex-shrink-0 items-center justify-between border-b border-foreground/10 bg-editor-header/88 px-5 backdrop-blur-md"
+			className="relative z-50 flex h-[30px] flex-shrink-0 items-center justify-between border-b border-foreground/10 bg-editor-header/88 px-2 backdrop-blur-md"
 			style={{ WebkitAppRegion: "drag" } as CSSProperties}
 		>
 			<div
-				className={`flex items-center justify-self-start gap-1.5 ${headerLeftControlsPaddingClass}`}
+				className={`flex h-full items-center ${headerLeftControlsPaddingClass}`}
 				style={{ WebkitAppRegion: "no-drag" } as CSSProperties}
 			>
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					onClick={() => void handleReturnToRecording()}
-					className={APP_HEADER_ICON_BUTTON_CLASS}
-					title={t("editor.actions.returnToRecording", "Return to recording")}
-					aria-label={t("editor.actions.returnToRecording", "Return to recording")}
+				<MenubarMenu
+					label={t("editor.menubar.file", "File(F)")}
+					triggerRef={projectBrowserTriggerRef}
 				>
-					<VideoCamera className="h-4 w-4" />
-				</Button>
-				<Button
-					ref={projectBrowserTriggerRef}
-					type="button"
-					variant="ghost"
-					size="sm"
-					onClick={handleOpenProjectBrowser}
-					className={APP_HEADER_ICON_BUTTON_CLASS}
-					title={t("editor.project.projects", "Open projects")}
-					aria-label={t("editor.project.projects", "Open projects")}
-				>
-					<FolderOpen className="h-4 w-4" />
-				</Button>
-				<Button
-					type="button"
-					variant="ghost"
-					size="sm"
-					onClick={() => void handleSaveProject()}
-					className={APP_HEADER_ICON_BUTTON_CLASS}
-					title={t("editor.project.save", "Save project")}
-					aria-label={t("editor.project.save", "Save project")}
-				>
-					<FloppyDisk className="h-4 w-4" />
-				</Button>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							type="button"
-							variant="ghost"
-							size="sm"
-							className={APP_HEADER_ICON_BUTTON_CLASS}
-							title={t("editor.project.menu", "Project")}
-							aria-label={t("editor.project.menu", "Project")}
-						>
-							<FileText className="h-4 w-4" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start" sideOffset={8} className="w-60">
-						<DropdownMenuItem onSelect={() => void handleReturnToRecording()}>
-							{t("editor.project.newRecording", "New recording")}
-							<DropdownMenuShortcut>{primaryModifierLabel}N</DropdownMenuShortcut>
-						</DropdownMenuItem>
-						<DropdownMenuItem onSelect={() => void handleImportMediaOrProject()}>
-							{t("editor.project.newFromFile", "New project from file…")}
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onSelect={() => void handleOpenProjectBrowser()}>
-							{t("editor.project.open", "Open projects…")}
-							<DropdownMenuShortcut>{primaryModifierLabel}O</DropdownMenuShortcut>
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onSelect={() => void handleSaveProject()}>
-							{t("editor.project.save", "Save project")}
-							<DropdownMenuShortcut>{primaryModifierLabel}S</DropdownMenuShortcut>
-						</DropdownMenuItem>
-						<DropdownMenuItem onSelect={() => void handleSaveProjectAs()}>
-							{t("editor.project.saveAs", "Save project as…")}
-							<DropdownMenuShortcut>
-								{isMac ? "⇧⌘S" : "Ctrl+Shift+S"}
-							</DropdownMenuShortcut>
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
-				<div className="ml-1 h-5 w-px bg-foreground/10" />
-				<Button
-					type="button"
-					variant="ghost"
-					onClick={handleUndo}
-					disabled={!canUndo}
-					className="inline-flex h-8 w-8 items-center justify-center rounded-[5px] border border-foreground/10 bg-foreground/5 p-0 text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-					title={t("common.actions.undo", "Undo")}
-					aria-label={t("common.actions.undo", "Undo")}
-				>
-					<Undo2 className="h-4 w-4" />
-				</Button>
-				<Button
-					type="button"
-					variant="ghost"
-					onClick={handleRedo}
-					disabled={!canRedo}
-					className="inline-flex h-8 w-8 items-center justify-center rounded-[5px] border border-foreground/10 bg-foreground/5 p-0 text-foreground transition-colors hover:bg-foreground/10 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-					title={t("common.actions.redo", "Redo")}
-					aria-label={t("common.actions.redo", "Redo")}
-				>
-					<Redo2 className="h-4 w-4" />
-				</Button>
+					<DropdownMenuItem onSelect={() => void handleReturnToRecording()}>
+						{t("editor.project.newRecording", "New recording")}
+						<DropdownMenuShortcut>{primaryModifierLabel}N</DropdownMenuShortcut>
+					</DropdownMenuItem>
+					<DropdownMenuItem onSelect={() => void handleImportMediaOrProject()}>
+						{t("editor.project.newFromFile", "New project from file…")}
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem onSelect={() => void handleOpenProjectBrowser()}>
+						{t("editor.project.open", "Open projects…")}
+						<DropdownMenuShortcut>{primaryModifierLabel}O</DropdownMenuShortcut>
+					</DropdownMenuItem>
+					<DropdownMenuSub>
+						<DropdownMenuSubTrigger>
+							{t("editor.project.openRecent", "Open recent")}
+						</DropdownMenuSubTrigger>
+						<DropdownMenuSubContent className="min-w-52">
+							{recentProjects.length === 0 ? (
+								<div className="px-2 py-1.5 text-xs text-muted-foreground">
+									{t("editor.project.emptyLibrary", "No saved projects yet")}
+								</div>
+							) : (
+								recentProjects.map((entry) => (
+									<DropdownMenuItem
+										key={entry.path}
+										onSelect={() => void handleOpenProjectFromLibrary(entry.path)}
+									>
+										<span className="truncate">{entry.name}</span>
+									</DropdownMenuItem>
+								))
+							)}
+						</DropdownMenuSubContent>
+					</DropdownMenuSub>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem onSelect={() => void handleSaveProject()}>
+						{t("editor.project.save", "Save project")}
+						<DropdownMenuShortcut>{primaryModifierLabel}S</DropdownMenuShortcut>
+					</DropdownMenuItem>
+					<DropdownMenuItem onSelect={() => void handleSaveProjectAs()}>
+						{t("editor.project.saveAs", "Save project as…")}
+						<DropdownMenuShortcut>
+							{isMac ? "⇧⌘S" : "Ctrl+Shift+S"}
+						</DropdownMenuShortcut>
+					</DropdownMenuItem>
+				</MenubarMenu>
+
+				<MenubarMenu label={t("editor.menubar.edit", "Edit(E)")}>
+					<DropdownMenuItem onSelect={handleUndo} disabled={!canUndo}>
+						{t("common.actions.undo", "Undo")}
+						<DropdownMenuShortcut>{primaryModifierLabel}Z</DropdownMenuShortcut>
+					</DropdownMenuItem>
+					<DropdownMenuItem onSelect={handleRedo} disabled={!canRedo}>
+						{t("common.actions.redo", "Redo")}
+						<DropdownMenuShortcut>
+							{isMac ? "⇧⌘Z" : "Ctrl+Y"}
+						</DropdownMenuShortcut>
+					</DropdownMenuItem>
+				</MenubarMenu>
 			</div>
 
 			<div
@@ -226,10 +220,10 @@ export function EditorHeader(props: Props) {
 				{isEditingProjectName ? (
 					<form
 						onSubmit={(event) => void handleProjectNameSubmit(event)}
-						className="flex max-w-[min(52vw,460px)] items-baseline gap-1 rounded-[7px] border border-foreground/10 bg-editor-panel/[0.88] px-2.5 py-1 shadow-[0_10px_28px_rgba(0,0,0,0.18)]"
+						className="flex max-w-[min(52vw,460px)] items-baseline gap-1 rounded-[7px] border border-foreground/10 bg-editor-panel/[0.88] px-2.5 py-0.5 shadow-[0_10px_28px_rgba(0,0,0,0.18)]"
 					>
 						{hasUnsavedChanges ? (
-							<span className="mt-[1px] size-2 shrink-0 rounded-full bg-[#2563EB]" />
+							<span className="mt-[1px] size-1.5 shrink-0 rounded-full bg-[#2563EB]" />
 						) : null}
 						<input
 							ref={projectNameInputRef}
@@ -246,11 +240,11 @@ export function EditorHeader(props: Props) {
 								}
 							}}
 							disabled={isSavingProjectName}
-							className="min-w-[10ch] max-w-[min(40vw,360px)] bg-transparent text-sm font-semibold tracking-tight text-foreground/95 outline-none placeholder:text-muted-foreground/60 disabled:cursor-wait"
+							className="min-w-[10ch] max-w-[min(40vw,360px)] bg-transparent text-[12px] font-semibold tracking-tight text-foreground/95 outline-none placeholder:text-muted-foreground/60 disabled:cursor-wait"
 							style={{ width: `${Math.max(projectNameDraft.length, 10)}ch` }}
 							aria-label={t("editor.project.renameInput", "Project name")}
 						/>
-						<span className="shrink-0 text-xs font-medium tracking-tight text-muted-foreground/70">
+						<span className="shrink-0 text-[11px] font-medium tracking-tight text-muted-foreground/70">
 							.recordly
 						</span>
 					</form>
@@ -258,17 +252,17 @@ export function EditorHeader(props: Props) {
 					<button
 						type="button"
 						onClick={() => setIsEditingProjectName(true)}
-						className="inline-flex max-w-[min(52vw,460px)] items-baseline gap-1 rounded-[7px] px-2.5 py-1 transition-colors hover:bg-foreground/5"
+						className="inline-flex max-w-[min(52vw,460px)] items-baseline gap-1 rounded-[7px] px-2.5 py-0.5 transition-colors hover:bg-foreground/5"
 						title={t("editor.project.renameTitle", "Rename project")}
 						aria-label={t("editor.project.renameTitle", "Rename project")}
 					>
 						{hasUnsavedChanges ? (
-							<span className="mt-[1px] size-2 shrink-0 rounded-full bg-[#2563EB]" />
+							<span className="mt-[1px] size-1.5 shrink-0 rounded-full bg-[#2563EB]" />
 						) : null}
-						<span className="truncate text-sm font-semibold tracking-tight text-foreground/90">
+						<span className="truncate text-[12px] font-semibold tracking-tight text-foreground/90">
 							{projectDisplayName}
 						</span>
-						<span className="shrink-0 text-xs font-medium tracking-tight text-muted-foreground/70">
+						<span className="shrink-0 text-[11px] font-medium tracking-tight text-muted-foreground/70">
 							.recordly
 						</span>
 					</button>
@@ -276,14 +270,11 @@ export function EditorHeader(props: Props) {
 			</div>
 
 			<div
-				className="flex items-center justify-self-end"
+				className="flex h-full items-center justify-self-end gap-1"
 				style={{ WebkitAppRegion: "no-drag" } as CSSProperties}
 			>
 				<EditorPresetMenu t={t} presets={presets} />
-				<div
-					aria-hidden="true"
-					className="mx-2 h-4 w-px shrink-0 bg-foreground/10 opacity-0"
-				/>
+				<div aria-hidden="true" className="mx-1.5 h-4 w-px shrink-0 bg-foreground/10" />
 				<EditorExportMenu
 					t={t}
 					exportSettings={exportSettings}
@@ -302,6 +293,16 @@ export function EditorHeader(props: Props) {
 					revealExportedFile={revealExportedFile}
 					exportMessage={exportMessage}
 				/>
+				<button
+					type="button"
+					onClick={onToggleSettingsPanel}
+					className="inline-flex h-6 w-6 items-center justify-center rounded-[5px] text-foreground/70 transition-colors hover:bg-foreground/10 hover:text-foreground"
+					title={t("editor.layout.toggleSideBar", "Toggle sidebar")}
+					aria-label={t("editor.layout.toggleSideBar", "Toggle sidebar")}
+					aria-pressed={settingsPanelVisible}
+				>
+					<SidebarSimple size={16} weight={settingsPanelVisible ? "fill" : "regular"} />
+				</button>
 			</div>
 		</div>
 	);

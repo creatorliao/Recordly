@@ -96,16 +96,14 @@ export function EditorExportMenu(props: Props) {
 	return (
 		<DropdownMenu open={showExportDropdown} onOpenChange={setShowExportDropdown} modal={false}>
 			<DropdownMenuTrigger asChild>
-				<Button
+				<button
 					type="button"
 					onClick={handleOpenExportDropdown}
-					className="inline-flex h-8 min-w-[112px] items-center justify-center gap-2 rounded-[5px] bg-[#2563EB] px-4.5 text-white transition-colors hover:bg-[#2563EB]/92"
+					className="inline-flex items-center gap-1.5 bg-transparent p-0 text-xs font-medium tracking-tight text-foreground outline-none transition-opacity hover:opacity-80"
 				>
-					<Download className="h-4 w-4" />
-					<span className="text-sm font-semibold tracking-tight">
-						{t("common.actions.export", "Export")}
-					</span>
-				</Button>
+					<Download className="h-3.5 w-3.5" />
+					<span>{t("common.actions.export", "Export")}</span>
+				</button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent
 				align="end"

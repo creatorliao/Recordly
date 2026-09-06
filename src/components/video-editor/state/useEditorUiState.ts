@@ -46,6 +46,7 @@ export function useEditorUiState(
 	const [previewVolume, setPreviewVolume] = useState(1);
 	const [aspectRatio, setAspectRatio] = useState<AspectRatio>(initialPreferences.aspectRatio);
 	const [activeEffectSection, setActiveEffectSection] = useState<EditorEffectSection>("scene");
+	const [settingsPanelVisible, setSettingsPanelVisible] = useState(true);
 	const [showCropModal, setShowCropModal] = useState(false);
 	const [previewVersion, setPreviewVersion] = useState(0);
 	const [isPreviewReady, setIsPreviewReady] = useState(false);
@@ -143,6 +144,8 @@ export function useEditorUiState(
 		setAspectRatio,
 		activeEffectSection,
 		setActiveEffectSection,
+		settingsPanelVisible,
+		setSettingsPanelVisible,
 		showCropModal,
 		previewVersion,
 		setPreviewVersion,

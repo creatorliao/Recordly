@@ -117,8 +117,16 @@
 		"returnToRecording": "返回录制",
 		"returnToRecordingBlockedByExport": "请等待导出完成后再返回录制"
 	},
+	"menubar": {
+		"file": "文件(F)",
+		"edit": "编辑(E)"
+	},
+	"layout": {
+		"toggleSideBar": "切换侧栏"
+	},
 	"project": {
 		"untitled": "未命名",
+		"openRecent": "最近打开",
 		"menu": "项目",
 		"newRecording": "新建录制",
 		"newFromFile": "从文件新建项目…",
