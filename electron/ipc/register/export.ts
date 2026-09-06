@@ -42,7 +42,19 @@ import {
 	sendNativeVideoExportWriteFrameResult,
 	settleNativeVideoExportWriteFrameRequest,
 } from "../export/native-video";
-import { getFfmpegBinaryPath } from "../ffmpeg/binary";
+import {
+	getFfmpegBinaryPath,
+	inspectFfmpegBinaryResolution,
+	type FfmpegBinaryResolution,
+} from "../ffmpeg/binary";
+import {
+	registerSessionLogChildProcess,
+	sessionLogErrorFields,
+	setSessionLogCorrelation,
+	setSessionLogPhase,
+	unregisterSessionLogChildProcess,
+	writeSessionLog,
+} from "../../sessionLog";
 import {
 	buildNativeH264StreamExportArgs,
 	buildNativeVideoExportArgs,
@@ -246,6 +258,31 @@ function isTempPathSafe(tempPath: string): boolean {
 	return candidate.startsWith(withSep);
 }
 
+/**
+ * 导出前把 ffmpeg 解析过程写入会话日志。
+ * 修好：resolvedInUnpacked=true 且路径含 asar.unpacked。
+ * 仍坏：rawInAsar=true 且 resolvedInUnpacked=false（接着必 ENOENT）。
+ */
+function logFfmpegExportResolution(
+	event: "export.ffmpeg.resolve",
+	extra: Record<string, unknown>,
+): FfmpegBinaryResolution {
+	const inspection = inspectFfmpegBinaryResolution();
+	const stillInAsar = inspection.rawInAsar && !inspection.resolvedInUnpacked;
+	writeSessionLog({
+		level: stillInAsar || inspection.source === "missing" ? "error" : "info",
+		scope: "export",
+		event,
+		msg: stillInAsar
+			? "ffmpeg path still inside app.asar; spawn will ENOENT"
+			: inspection.resolvedPath
+				? "resolved ffmpeg for export"
+				: "ffmpeg binary missing",
+		data: { ...inspection, ...extra },
+	});
+	return inspection;
+}
+
 export function registerExportHandlers() {
 	ipcMain.handle(
 		"native-video-export-start",
@@ -265,9 +302,18 @@ export function registerExportHandlers() {
 					throw new Error("Native export requires even output dimensions");
 				}
 
-				const ffmpegPath = getFfmpegBinaryPath();
+				setSessionLogPhase("export");
 				const inputMode = options.inputMode ?? "rawvideo";
+				const ffmpegInspection = logFfmpegExportResolution("export.ffmpeg.resolve", {
+					inputMode,
+					encodingMode: options.encodingMode,
+					width: options.width,
+					height: options.height,
+					frameRate: options.frameRate,
+				});
+				const ffmpegPath = getFfmpegBinaryPath();
 				const sessionId = `recordly-export-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+				setSessionLogCorrelation({ exportId: sessionId });
 				const outputPath = path.join(app.getPath("temp"), `${sessionId}.mp4`);
 
 				let encoderName: string;
@@ -288,6 +334,25 @@ export function registerExportHandlers() {
 				const ffmpegProcess = spawn(ffmpegPath, ffmpegArgs, {
 					stdio: ["pipe", "ignore", "pipe"],
 				}) as ChildProcessByStdio<Writable, null, Readable>;
+				registerSessionLogChildProcess("ffmpeg-export", ffmpegProcess.pid);
+				ffmpegProcess.once("exit", () =>
+					unregisterSessionLogChildProcess(ffmpegProcess.pid),
+				);
+				writeSessionLog({
+					level: "info",
+					scope: "export",
+					event: "export.ffmpeg.spawn",
+					msg: "spawned ffmpeg for native export",
+					data: {
+						sessionId,
+						pid: ffmpegProcess.pid ?? null,
+						encoderName,
+						inputMode,
+						ffmpegPath,
+						resolvedInUnpacked: ffmpegInspection.resolvedInUnpacked,
+					},
+					corr: { exportId: sessionId },
+				});
 				// For rawvideo, frames are a fixed RGBA size. For h264-stream, chunks are variable.
 				const inputByteSize =
 					inputMode === "rawvideo"
@@ -315,6 +380,19 @@ export function registerExportHandlers() {
 						ffmpegProcess.once("error", (error) => {
 							const processError =
 								error instanceof Error ? error : new Error(String(error));
+							writeSessionLog({
+								level: "error",
+								scope: "export",
+								event: "export.ffmpeg.spawn-failed",
+								msg: processError.message,
+								data: {
+									sessionId,
+									ffmpegPath,
+									...ffmpegInspection,
+									...sessionLogErrorFields(processError),
+								},
+								corr: { exportId: sessionId },
+							});
 							if (session.terminating) {
 								resolve();
 								return;
@@ -379,6 +457,16 @@ export function registerExportHandlers() {
 					"[native-export] Failed to start native video export session:",
 					error,
 				);
+				writeSessionLog({
+					level: "error",
+					scope: "export",
+					event: "export.ffmpeg.spawn-failed",
+					msg: error instanceof Error ? error.message : String(error),
+					data: {
+						...inspectFfmpegBinaryResolution(),
+						...sessionLogErrorFields(error),
+					},
+				});
 				return {
 					success: false,
 					error: String(error),
@@ -437,6 +525,10 @@ export function registerExportHandlers() {
 					throw new Error("Native static layout export requires an input path");
 				}
 				const sanitizedOptions = await sanitizeNativeStaticLayoutExportOptions(options);
+				setSessionLogPhase("export");
+				logFfmpegExportResolution("export.ffmpeg.resolve", {
+					route: "native-static-layout",
+				});
 
 				const result = await exportNativeStaticLayoutVideo(
 					getFfmpegBinaryPath(),
@@ -466,6 +558,17 @@ export function registerExportHandlers() {
 				};
 			} catch (error) {
 				console.warn("[native-static-layout-export] Failed:", error);
+				writeSessionLog({
+					level: "error",
+					scope: "export",
+					event: "export.ffmpeg.spawn-failed",
+					msg: error instanceof Error ? error.message : String(error),
+					data: {
+						route: "native-static-layout",
+						...inspectFfmpegBinaryResolution(),
+						...sessionLogErrorFields(error),
+					},
+				});
 				return {
 					success: false,
 					error: error instanceof Error ? error.message : String(error),

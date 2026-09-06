@@ -2,7 +2,8 @@
 
 > 2026-09-06 用户点名 + 真机 toast + 两次会话日志。  
 > **已落地（beta.9）**：`resolveUnpackedAppPath` 看见 `.asar` 就改写 unpacked，不再看 `app.isPackaged`。  
-> 想先把「为什么起不来、两条采集差在哪」读明白：见 [`11-理解_本机采集与浏览器采集.md`](11-理解_本机采集与浏览器采集.md)。
+> 想先把「为什么起不来、两条采集差在哪」读明白：见 [`11-理解_本机采集与浏览器采集.md`](11-理解_本机采集与浏览器采集.md)。  
+> 同因漏网：Lightning 导出的 `ffmpeg-static` 仍看 `isPackaged`，见 [`R20260906-13`](../R20260906-13-Lightning导出找不到FFmpeg/01-问题_Lightning导出ffmpeg在asar里ENOENT.md)。
 
 ## 1. 现象
 

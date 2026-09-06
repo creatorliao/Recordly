@@ -19,6 +19,8 @@
 | [`10-问题_本机Windows采集启动失败回退浏览器.md`](10-问题_本机Windows采集启动失败回退浏览器.md) | 真机：每次录制 toast 回退浏览器；根因是 Electron 身份下 `isPackaged=false`，spawn 进了 asar |
 | [`11-理解_本机采集与浏览器采集.md`](11-理解_本机采集与浏览器采集.md) | 讲清楚：不是权限；asar 看得见却跑不起来；主路径 vs 浏览器退路；和相邻问题怎么叠 |
 
+同因漏网（导出 FFmpeg）：[`R20260906-13`](../R20260906-13-Lightning导出找不到FFmpeg/01-问题_Lightning导出ffmpeg在asar里ENOENT.md)。
+
 可复用（Areas，换仓库也用）：
 
 - [`docs/02-Areas/20260906-02-最佳实践_Windows本机CMake与原生C++编译.md`](../../02-Areas/20260906-02-最佳实践_Windows本机CMake与原生C++编译.md)

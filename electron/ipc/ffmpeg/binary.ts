@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { app } from "electron";
+import { rewriteAsarToUnpacked } from "../paths/binaries";
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -116,21 +117,72 @@ export function resolveSystemFfprobeBinaryPath(): string | null {
 	return null;
 }
 
-export function getFfmpegBinaryPath(): string {
-	const ffmpegStatic = loadFfmpegStatic();
-	if (ffmpegStatic && typeof ffmpegStatic === "string") {
-		const bundledPath = app.isPackaged
-			? ffmpegStatic.replace(/\.asar([/\\])/, ".asar.unpacked$1")
-			: ffmpegStatic;
+/** 落在 asar 虚拟段（不含 unpacked）。Electron 能 access，操作系统不能 spawn。 */
+export function pathLooksInsideAsarArchive(candidate: string): boolean {
+	return /\.asar([/\\])/.test(candidate) && !/\.asar\.unpacked([/\\])/.test(candidate);
+}
 
-		if (existsSync(bundledPath)) {
-			return bundledPath;
-		}
+export function pathLooksInsideAsarUnpacked(candidate: string): boolean {
+	return /\.asar\.unpacked([/\\])/.test(candidate);
+}
+
+/**
+ * 打包进 asarUnpack 的 exe：看见 .asar 就改写 unpacked，不看 isPackaged。
+ * Portable 主程序叫 electron.exe 时 Electron 43 会把 isPackaged 判成 false，
+ * 旧逻辑会把 ffmpeg-static 的 asar 路径直接拿去 spawn（ENOENT）。
+ */
+export function resolveBundledExecutablePath(rawPath: string | null): string | null {
+	if (!rawPath) {
+		return null;
 	}
+	const rewritten = rewriteAsarToUnpacked(rawPath);
+	if (existsSync(rewritten)) {
+		return rewritten;
+	}
+	return null;
+}
 
-	const systemFfmpeg = resolveSystemFfmpegBinaryPath();
-	if (systemFfmpeg) {
-		return systemFfmpeg;
+export type FfmpegBinarySource = "ffmpeg-static" | "system" | "missing";
+
+/** 给导出会话日志用：raw / resolved / 是否还在 asar，便于确认 Portable 已走 unpacked。 */
+export type FfmpegBinaryResolution = {
+	rawPath: string | null;
+	resolvedPath: string | null;
+	source: FfmpegBinarySource;
+	isPackaged: boolean;
+	rawInAsar: boolean;
+	resolvedInUnpacked: boolean;
+	rawExists: boolean;
+	resolvedExists: boolean;
+};
+
+export function inspectFfmpegBinaryResolution(): FfmpegBinaryResolution {
+	const rawPath = loadFfmpegStatic();
+	const bundledPath = resolveBundledExecutablePath(rawPath);
+	const systemPath = bundledPath ? null : resolveSystemFfmpegBinaryPath();
+	const resolvedPath = bundledPath ?? systemPath;
+	const source: FfmpegBinarySource = bundledPath
+		? "ffmpeg-static"
+		: systemPath
+			? "system"
+			: "missing";
+
+	return {
+		rawPath,
+		resolvedPath,
+		source,
+		isPackaged: app.isPackaged,
+		rawInAsar: Boolean(rawPath && pathLooksInsideAsarArchive(rawPath)),
+		resolvedInUnpacked: Boolean(resolvedPath && pathLooksInsideAsarUnpacked(resolvedPath)),
+		rawExists: Boolean(rawPath && existsSync(rawPath)),
+		resolvedExists: Boolean(resolvedPath && existsSync(resolvedPath)),
+	};
+}
+
+export function getFfmpegBinaryPath(): string {
+	const inspection = inspectFfmpegBinaryResolution();
+	if (inspection.resolvedPath) {
+		return inspection.resolvedPath;
 	}
 
 	throw new Error(
@@ -139,15 +191,9 @@ export function getFfmpegBinaryPath(): string {
 }
 
 export function getFfprobeBinaryPath(): string {
-	const ffprobeStatic = loadFfprobeStatic();
-	if (ffprobeStatic && typeof ffprobeStatic === "string") {
-		const bundledPath = app.isPackaged
-			? ffprobeStatic.replace(/\.asar([/\\])/, ".asar.unpacked$1")
-			: ffprobeStatic;
-
-		if (existsSync(bundledPath)) {
-			return bundledPath;
-		}
+	const bundledPath = resolveBundledExecutablePath(loadFfprobeStatic());
+	if (bundledPath) {
+		return bundledPath;
 	}
 
 	const systemFfprobe = resolveSystemFfprobeBinaryPath();

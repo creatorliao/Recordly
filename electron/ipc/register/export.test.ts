@@ -27,6 +27,16 @@ vi.mock("electron", () => ({
 
 vi.mock("../ffmpeg/binary", () => ({
 	getFfmpegBinaryPath: () => "ffmpeg",
+	inspectFfmpegBinaryResolution: () => ({
+		rawPath: "ffmpeg",
+		resolvedPath: "ffmpeg",
+		source: "system",
+		isPackaged: false,
+		rawInAsar: false,
+		resolvedInUnpacked: false,
+		rawExists: true,
+		resolvedExists: true,
+	}),
 }));
 
 import { moveExportedTempFile } from "./export";
