@@ -159,7 +159,7 @@ export function ShortcutsConfigDialog() {
 											setConflict(null);
 											setCaptureFor(isCapturing ? null : action);
 										}}
-										title={
+										data-tooltip={
 											isCapturing
 												? t("shortcutsConfig.pressEscToCancel")
 												: t("shortcutsConfig.clickToChange")

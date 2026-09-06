@@ -47,15 +47,32 @@ export interface ButtonProps
 	asChild?: boolean;
 	/** Size of the icon inside the button */
 	iconSize?: "default" | "sm" | "lg" | "xl";
+	/** 图贴方向；有 title 时走全站浮层，不走系统原生 title。 */
+	tooltipSide?: "top" | "bottom" | "left" | "right";
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-	({ className, variant, size, iconSize, asChild = false, ...props }, ref) => {
+	(
+		{
+			className,
+			variant,
+			size,
+			iconSize,
+			asChild = false,
+			title,
+			tooltipSide,
+			...props
+		},
+		ref,
+	) => {
 		const Comp = asChild ? Slot : "button";
 		return (
 			<Comp
 				className={cn(buttonVariants({ variant, size, iconSize, className }))}
 				ref={ref}
+				aria-label={props["aria-label"] ?? title}
+				data-tooltip={title || undefined}
+				data-tooltip-side={title ? tooltipSide : undefined}
 				{...props}
 			/>
 		);

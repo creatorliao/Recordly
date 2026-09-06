@@ -318,7 +318,11 @@ export function EditorPreviewPanel(props: Props) {
 							size="icon"
 							className={`h-7 w-7 rounded-full border border-foreground/10 shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition-all ${isPlaying ? "bg-foreground/10 text-foreground hover:bg-foreground/20" : "bg-neutral-800 text-white hover:bg-neutral-700 dark:bg-white dark:text-black dark:hover:bg-white/90"}`}
 							onClick={playback.togglePlayPause}
-							title={isPlaying ? "Pause" : "Play"}
+							title={
+								isPlaying
+									? t("editor.playback.pause")
+									: t("editor.playback.play")
+							}
 						>
 							{isPlaying ? (
 								<Pause className="h-3.5 w-3.5" weight="fill" />
@@ -346,7 +350,7 @@ export function EditorPreviewPanel(props: Props) {
 						<button
 							type="button"
 							className="text-muted-foreground transition-colors hover:text-foreground"
-							title={t("editor.playback.muteUnmute")}
+							data-tooltip={t("editor.playback.muteUnmute")}
 							onClick={() => setPreviewVolume(previewVolume <= 0.001 ? 1 : 0)}
 						>
 							{previewVolume <= 0.001 ? (

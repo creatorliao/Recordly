@@ -33,7 +33,7 @@ const ToggleGroupItem = React.forwardRef<
 	React.ElementRef<typeof ToggleGroupPrimitive.Item>,
 	React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> &
 		VariantProps<typeof toggleVariants>
->(({ className, children, variant, size, ...props }, ref) => {
+>(({ className, children, variant, size, title, ...props }, ref) => {
 	const context = React.useContext(ToggleGroupContext);
 
 	return (
@@ -46,6 +46,8 @@ const ToggleGroupItem = React.forwardRef<
 				}),
 				className,
 			)}
+			aria-label={props["aria-label"] ?? title}
+			data-tooltip={title || undefined}
 			{...props}
 		>
 			{children}

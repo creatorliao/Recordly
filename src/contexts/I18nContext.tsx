@@ -7,6 +7,7 @@ import {
 	useMemo,
 	useState,
 } from "react";
+import { AppTooltipHost } from "@/components/ui/AppTooltipHost";
 import {
 	type AppLocale,
 	DEFAULT_LOCALE,
@@ -203,7 +204,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 		[locale, setLocale, t],
 	);
 
-	return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+	return (
+		<I18nContext.Provider value={value}>
+			{children}
+			<AppTooltipHost />
+		</I18nContext.Provider>
+	);
 }
 
 export function useI18n() {

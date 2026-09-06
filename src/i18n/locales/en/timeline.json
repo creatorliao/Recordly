@@ -42,5 +42,6 @@
 	},
 	"addSpeed": "Add Speed (S)",
 	"resizeLeft": "Resize left",
-	"resizeRight": "Resize right"
+	"resizeRight": "Resize right",
+	"keyframeTooltip": "Keyframe {{time}}ms (drag to move, Delete to remove)"
 }

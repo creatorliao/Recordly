@@ -33,7 +33,7 @@ export function KeyboardShortcutsHelp() {
 					<button
 						type="button"
 						onClick={openConfig}
-						title={t("keyboardShortcuts.customizeTooltip")}
+						data-tooltip={t("keyboardShortcuts.customizeTooltip")}
 						className="flex items-center gap-1 text-[10px] text-muted-foreground/70 hover:text-[#2563EB] transition-colors"
 					>
 						<Settings2 className="w-3 h-3" />

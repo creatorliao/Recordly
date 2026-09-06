@@ -195,12 +195,12 @@ export default function Item({
 					<div
 						className={cn(glassStyles.zoomEndCap, glassStyles.left)}
 						style={{ cursor: "col-resize", pointerEvents: "auto" }}
-						title={t("timeline.resizeLeft")}
+						data-tooltip={t("timeline.resizeLeft")}
 					/>
 					<div
 						className={cn(glassStyles.zoomEndCap, glassStyles.right)}
 						style={{ cursor: "col-resize", pointerEvents: "auto" }}
-						title={t("timeline.resizeRight")}
+						data-tooltip={t("timeline.resizeRight")}
 					/>
 					{showAudioWaveform && waveformPeaks && (
 						<AudioWaveform

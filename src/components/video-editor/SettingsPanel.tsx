@@ -451,7 +451,7 @@ function CursorClickEffectCards({
 					onClick={onToggleAdvanced}
 					aria-pressed={showAdvanced}
 					className="text-[10px] text-[#2563EB] transition-opacity hover:opacity-80"
-					title={
+					data-tooltip={
 						showAdvanced
 							? tSettings(
 									"effects.cursorClickEffects.advancedHide",
@@ -662,16 +662,17 @@ const ZOOM_DEPTH_OPTIONS: Array<{ depth: ZoomDepth; label: string }> = [
 const WEBCAM_POSITION_PRESETS: Array<{
 	preset: Exclude<WebcamPositionPreset, "custom">;
 	label: string;
+	i18nKey: string;
 }> = [
-	{ preset: "top-left", label: "↖" },
-	{ preset: "top-center", label: "↑" },
-	{ preset: "top-right", label: "↗" },
-	{ preset: "center-left", label: "←" },
-	{ preset: "center", label: "•" },
-	{ preset: "center-right", label: "→" },
-	{ preset: "bottom-left", label: "↙" },
-	{ preset: "bottom-center", label: "↓" },
-	{ preset: "bottom-right", label: "↘" },
+	{ preset: "top-left", label: "↖", i18nKey: "effects.webcamPosTopLeft" },
+	{ preset: "top-center", label: "↑", i18nKey: "effects.webcamPosTopCenter" },
+	{ preset: "top-right", label: "↗", i18nKey: "effects.webcamPosTopRight" },
+	{ preset: "center-left", label: "←", i18nKey: "effects.webcamPosCenterLeft" },
+	{ preset: "center", label: "•", i18nKey: "effects.webcamPosCenter" },
+	{ preset: "center-right", label: "→", i18nKey: "effects.webcamPosCenterRight" },
+	{ preset: "bottom-left", label: "↙", i18nKey: "effects.webcamPosBottomLeft" },
+	{ preset: "bottom-center", label: "↓", i18nKey: "effects.webcamPosBottomCenter" },
+	{ preset: "bottom-right", label: "↘", i18nKey: "effects.webcamPosBottomRight" },
 ];
 
 type CursorStyleOption = { value: CursorStyle; label: string };
@@ -1419,7 +1420,7 @@ export function SettingsPanel({
 			key={props?.key}
 			className={wallpaperTileClass(isSelected)}
 			aria-label={props?.ariaLabel}
-			title={props?.title}
+			data-tooltip={props?.title}
 			onClick={props?.onClick}
 			role="button"
 		>
@@ -2076,16 +2077,10 @@ export function SettingsPanel({
 							onClick={togglePaddingLink}
 							aria-pressed={padding.linked === false}
 							className="text-[10px] text-[#2563EB] transition-opacity hover:opacity-80"
-							title={
+							data-tooltip={
 								padding.linked === false
-									? tSettings(
-											"effects.paddingAdvancedHide",
-											"Hide advanced padding controls",
-										)
-									: tSettings(
-											"effects.paddingAdvancedShow",
-											"Show advanced padding controls",
-										)
+									? tSettings("effects.paddingAdvancedHide")
+									: tSettings("effects.paddingAdvancedShow")
 							}
 						>
 							{tSettings("effects.paddingAdvanced", "Advanced")}
@@ -3448,6 +3443,7 @@ export function SettingsPanel({
 												onClick={() =>
 													applyWebcamPositionPreset(option.preset)
 												}
+												title={tSettings(option.i18nKey)}
 												className={cn(
 													"h-8 rounded-lg border px-0 text-sm font-semibold transition-all",
 													isActive

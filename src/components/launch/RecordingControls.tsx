@@ -65,7 +65,7 @@ export const RecordingControls = ({
 
 				<Separator orientation="vertical" className="mx-[5px] h-6" />
 
-				<span title={t("recording.micToggleDisabledTip")}>
+				<span data-tooltip={t("recording.micToggleDisabledTip")}>
 					<Button
 						variant="ghost"
 						size="icon"
@@ -104,7 +104,7 @@ export const RecordingControls = ({
 				<button
 					type="button"
 					onClick={onStopRecording}
-					title={t("recording.stop")}
+					data-tooltip={t("recording.stop")}
 					aria-label={t("recording.stop")}
 					className={`${styles.recBtn} ${styles.electronNoDrag}`}
 				>

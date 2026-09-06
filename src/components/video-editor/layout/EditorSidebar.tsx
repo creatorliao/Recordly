@@ -55,7 +55,8 @@ export function EditorSidebar({ t, activeSection, setActiveSection, settingsPane
 							<motion.button
 								type="button"
 								onClick={() => setActiveSection(section.id)}
-								title={section.label}
+								data-tooltip={section.label}
+								data-tooltip-side="right"
 								className="group relative flex h-9 w-9 items-center justify-center rounded-lg outline-none focus:outline-none focus-visible:outline-none"
 								animate={{ opacity: isActive ? 1 : 0.55 }}
 								transition={{ duration: 0.14 }}

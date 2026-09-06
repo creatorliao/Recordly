@@ -699,7 +699,7 @@ export function AnnotationSettingsPanel({
 													? "border-[#2563EB] scale-110"
 													: "border-transparent hover:border-foreground/20",
 											)}
-											title={t("annotations.none", "None")}
+											data-tooltip={t("annotations.none")}
 										>
 											<div className="w-5 h-5 rounded-full bg-editor-bg flex items-center justify-center overflow-hidden relative">
 												<div className="absolute w-full h-0.5 bg-red-500 rotate-45" />
@@ -713,7 +713,7 @@ export function AnnotationSettingsPanel({
 													? "border-[#2563EB] scale-110"
 													: "border-transparent hover:border-foreground/20",
 											)}
-											title={t("annotations.colorBlack")}
+											data-tooltip={t("annotations.colorBlack")}
 										/>
 										<button
 											onClick={() => onBlurColorChange?.("#FFFFFF")}
@@ -723,7 +723,7 @@ export function AnnotationSettingsPanel({
 													? "border-[#2563EB] scale-110"
 													: "border-transparent hover:border-foreground/20",
 											)}
-											title={t("annotations.colorWhite")}
+											data-tooltip={t("annotations.colorWhite")}
 										/>
 
 										<Popover>
@@ -753,7 +753,7 @@ export function AnnotationSettingsPanel({
 																? annotation.blurColor
 																: "transparent",
 													}}
-													title={t("annotations.customColor")}
+													data-tooltip={t("annotations.customColor")}
 												>
 													{(!annotation.blurColor ||
 														[

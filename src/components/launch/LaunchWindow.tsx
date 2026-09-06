@@ -357,7 +357,7 @@ function LaunchWindowContent() {
 							}
 				}
 				disabled={countdownActive}
-				title={t("recording.record")}
+				data-tooltip={t("recording.record")}
 			>
 				<div className={styles.recDot} />
 			</button>
@@ -522,7 +522,7 @@ function LaunchWindowContent() {
 								ref={recordingWebcamPreviewContainerRef}
 								className={`${styles.recordingWebcamPreview} ${styles.electronNoDrag} pointer-events-auto`}
 								data-hud-interactive
-								title={t("recording.webcam")}
+								data-tooltip={t("recording.webcam")}
 								style={{
 									transform: `translate(${webcamPreviewOffset.x}px, ${webcamPreviewOffset.y}px)`,
 								}}

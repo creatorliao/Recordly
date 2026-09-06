@@ -116,7 +116,7 @@ export function EditorPresetMenu({ t, presets }: Props) {
 													"Delete preset {{name}}",
 													{ name: preset.name },
 												)}
-												title={t(
+												data-tooltip={t(
 													"editor.presets.deleteAriaLabel",
 													"Delete preset {{name}}",
 													{ name: preset.name },
