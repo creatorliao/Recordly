@@ -42,6 +42,8 @@ type Input = {
 	experimentalNvidiaCudaExport: boolean;
 	nvidiaCudaExportAvailable: boolean;
 	remountPreview: () => void;
+	/** 导出默认文件名基名（课名/未命名），不含扩展名。 */
+	projectName: string;
 };
 
 export function useEditorExportController(input: Input) {
@@ -73,6 +75,7 @@ export function useEditorExportController(input: Input) {
 		session: input.session,
 		handleExport: runner.handleExport,
 		showExportSuccessToast: runner.showExportSuccessToast,
+		defaultExportFileName: input.projectName,
 	});
 	useSmokeExportAutomation({
 		config: input.smokeConfig,

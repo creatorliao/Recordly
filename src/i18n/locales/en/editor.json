@@ -164,6 +164,7 @@
 		"renderingFile": "Rendering your file.",
 		"preparing": "Preparing export...",
 		"saving": "Opening save dialog...",
+		"encoding": "Encoding",
 		"renderingAudio": "Rendering audio {{percent}}%",
 		"renderSpeed": "Render speed {{fps}} FPS",
 		"completePercent": "{{percent}}% complete",

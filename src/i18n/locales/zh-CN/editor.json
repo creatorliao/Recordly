@@ -164,6 +164,7 @@
 		"renderingFile": "正在渲染你的文件。",
 		"preparing": "正在准备导出...",
 		"saving": "正在打开保存对话框...",
+		"encoding": "编码",
 		"renderingAudio": "正在渲染音频 {{percent}}%",
 		"renderSpeed": "渲染速度 {{fps}} FPS",
 		"completePercent": "已完成 {{percent}}%",

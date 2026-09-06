@@ -650,6 +650,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
 	openAccessibilityPreferences: () => {
 		return ipcRenderer.invoke("open-accessibility-preferences");
 	},
+	chooseExportPath: (payload: { defaultFileName?: string; format?: "mp4" | "gif" }) => {
+		return ipcRenderer.invoke("choose-export-path", payload);
+	},
 	saveExportedVideo: (
 		videoData: ArrayBuffer,
 		fileName: string,

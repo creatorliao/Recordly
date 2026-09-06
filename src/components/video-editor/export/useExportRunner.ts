@@ -29,7 +29,7 @@ export function useExportRunner(input: ExportRunnerInput) {
 	const { t } = useI18n();
 
 	const handleExport = useCallback(
-		async (settings: ExportSettings) => {
+		async (settings: ExportSettings, outputPath?: string | null) => {
 			const {
 				videoPath,
 				videoPlaybackRef,
@@ -178,7 +178,8 @@ export function useExportRunner(input: ExportRunnerInput) {
 						const { saveResult, pendingSave } = await saveExportBlob(
 							result.blob,
 							fileName,
-							smokeExportConfig.enabled ? smokeExportConfig.outputPath : null,
+							outputPath ??
+								(smokeExportConfig.enabled ? smokeExportConfig.outputPath : null),
 						);
 						if (exportWasCancelled()) {
 							await discardCancelledTemp(pendingSave);
@@ -383,9 +384,10 @@ export function useExportRunner(input: ExportRunnerInput) {
 								tempPath: result.tempFilePath,
 								fileName,
 								outputPath:
-									smokeExportConfig.enabled && smokeExportConfig.outputPath
+									outputPath ??
+									(smokeExportConfig.enabled && smokeExportConfig.outputPath
 										? smokeExportConfig.outputPath
-										: null,
+										: null),
 								captionSidecar: sidecarForThisExport,
 							});
 							if (exportWasCancelled()) {
@@ -408,7 +410,8 @@ export function useExportRunner(input: ExportRunnerInput) {
 							const blobSave = await saveExportBlob(
 								result.blob,
 								fileName,
-								smokeExportConfig.enabled ? smokeExportConfig.outputPath : null,
+								outputPath ??
+									(smokeExportConfig.enabled ? smokeExportConfig.outputPath : null),
 								sidecarForThisExport,
 							);
 							if (exportWasCancelled()) {

@@ -5,6 +5,7 @@ import path from "node:path";
 import type { Readable, Writable } from "node:stream";
 import type { SaveDialogOptions } from "electron";
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
+import { readAppSetting, writeAppSetting } from "../../appSettingsStore";
 import { uiDialog } from "../../uiLocale";
 import {
 	parseCaptionSidecarPayload,
@@ -283,7 +284,61 @@ function logFfmpegExportResolution(
 	return inspection;
 }
 
+// 去掉 Windows 非法文件名字符，作为导出默认文件名兜底。
+function sanitizeExportFileName(name: string): string {
+	const cleaned = String(name ?? "")
+		.replace(/[<>:"/\\|?*]/g, "_")
+		.trim();
+	return cleaned || "Recordly-export";
+}
+
 export function registerExportHandlers() {
+	// 导出先选路：编码前弹系统保存框，取消则不编码。只负责返回路径，不写文件。
+	ipcMain.handle(
+		"choose-export-path",
+		async (
+			event,
+			payload: { defaultFileName?: string; format?: "mp4" | "gif" },
+		) => {
+			try {
+				const isGif = payload?.format === "gif";
+				const filters = isGif
+					? [{ name: uiDialog("filterGif"), extensions: ["gif"] }]
+					: [{ name: uiDialog("filterMp4"), extensions: ["mp4"] }];
+				const lastDirectory = readAppSetting("lastExportDirectory");
+				const defaultDir =
+					typeof lastDirectory === "string" && lastDirectory.trim() !== ""
+						? lastDirectory
+						: app.getPath("downloads");
+				const defaultFileName = sanitizeExportFileName(
+					payload?.defaultFileName ?? "Recordly-export",
+				);
+				const parentWindow = BrowserWindow.fromWebContents(event.sender);
+				const saveDialogOptions: SaveDialogOptions = {
+					title: isGif ? uiDialog("saveExportedGif") : uiDialog("saveExportedVideo"),
+					defaultPath: path.join(defaultDir, defaultFileName),
+					filters,
+					properties: ["createDirectory", "showOverwriteConfirmation"],
+				};
+
+				const result = parentWindow
+					? await dialog.showSaveDialog(parentWindow, saveDialogOptions)
+					: await dialog.showSaveDialog(saveDialogOptions);
+
+				if (result.canceled || !result.filePath) {
+					return { success: false, canceled: true };
+				}
+
+				// 记住上次导出目录，下一节少点两次。
+				writeAppSetting("lastExportDirectory", path.dirname(result.filePath));
+				return { success: true, path: result.filePath };
+			} catch (error) {
+				console.error("Failed to choose export path:", error);
+				return { success: false, error: String(error) };
+			}
+		},
+	);
+
 	ipcMain.handle(
 		"native-video-export-start",
 		async (

@@ -606,6 +606,15 @@ interface Window {
 		}>;
 		openScreenRecordingPreferences: () => Promise<{ success: boolean; error?: string }>;
 		openAccessibilityPreferences: () => Promise<{ success: boolean; error?: string }>;
+		chooseExportPath: (payload: {
+			defaultFileName?: string;
+			format?: "mp4" | "gif";
+		}) => Promise<{
+			success: boolean;
+			path?: string;
+			canceled?: boolean;
+			error?: string;
+		}>;
 		saveExportedVideo: (
 			videoData: ArrayBuffer,
 			fileName: string,

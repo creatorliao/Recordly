@@ -171,7 +171,7 @@ export function EditorExportMenu(props: Props) {
 						) : null}
 						{exportRuntimeLabel ? (
 							<p className="mt-1 text-[11px] text-muted-foreground/70">
-								Path: {exportRuntimeLabel}
+								{t("editor.exportStatus.encoding", "Encoding")}: {exportRuntimeLabel}
 							</p>
 						) : null}
 						{exportNativeSkipLabel ? (
@@ -187,7 +187,7 @@ export function EditorExportMenu(props: Props) {
 						</p>
 						{exportRuntimeLabel ? (
 							<p className="mt-1 text-[11px] text-muted-foreground/70">
-								Path: {exportRuntimeLabel}
+								{t("editor.exportStatus.encoding", "Encoding")}: {exportRuntimeLabel}
 							</p>
 						) : null}
 						<p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
@@ -226,7 +226,7 @@ export function EditorExportMenu(props: Props) {
 						</p>
 						{exportRuntimeLabel ? (
 							<p className="mt-1 text-[11px] text-muted-foreground/70">
-								Path: {exportRuntimeLabel}
+								{t("editor.exportStatus.encoding", "Encoding")}: {exportRuntimeLabel}
 							</p>
 						) : null}
 						<p className="mt-3 truncate text-xs text-muted-foreground/70">
@@ -246,7 +246,7 @@ export function EditorExportMenu(props: Props) {
 								onClick={handleExportDropdownClose}
 								className="h-8 flex-1 border-foreground/10 bg-foreground/5 text-xs text-muted-foreground hover:bg-foreground/10"
 							>
-								Done
+								{t("common.actions.done", "Done")}
 							</Button>
 						</div>
 					</div>

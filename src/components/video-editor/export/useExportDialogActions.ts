@@ -1,6 +1,7 @@
 import { type RefObject, useCallback } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/contexts/I18nContext";
+import { appLog } from "@/lib/appLog";
 import type { ExportSettings } from "@/lib/exporter";
 import { resolveExportStartSettings } from "../exportStartSettings";
 import type { VideoPlaybackRef } from "../VideoPlayback";
@@ -16,8 +17,10 @@ type UseExportDialogActionsInput = {
 	hasCaptionsForSidecar: boolean;
 	settings: ExportSettingsState;
 	session: ExportSession;
-	handleExport: (settings: ExportSettings) => void;
+	handleExport: (settings: ExportSettings, outputPath?: string | null) => void;
 	showExportSuccessToast: (filePath: string) => void;
+	/** 导出默认文件名基名（课名/未命名），不含扩展名。 */
+	defaultExportFileName: string;
 };
 
 export function useExportDialogActions({
@@ -28,6 +31,7 @@ export function useExportDialogActions({
 	session,
 	handleExport,
 	showExportSuccessToast,
+	defaultExportFileName,
 }: UseExportDialogActionsInput) {
 	const { t } = useI18n();
 	const handleOpenExportDropdown = useCallback(() => {
@@ -46,7 +50,7 @@ export function useExportDialogActions({
 		session.setExportError(null);
 	}, [videoPath, session, t]);
 
-	const handleStartExportFromDropdown = useCallback(() => {
+	const handleStartExportFromDropdown = useCallback(async () => {
 		const video = videoPlaybackRef.current?.video;
 		if (!videoPath) {
 			toast.error(t("common.toasts.noVideoLoaded"));
@@ -76,11 +80,42 @@ export function useExportDialogActions({
 			gifSizePreset: settings.gifSizePreset,
 		});
 
+		// 导出先选路：编码前弹系统保存框，取消则不编码。
+		const format = settings.exportFormat === "gif" ? "gif" : "mp4";
+		const defaultFileName = `${defaultExportFileName}.${format}`;
+		appLog({
+			level: "info",
+			scope: "export",
+			event: "export.choose-path",
+			data: { defaultFileName, format },
+		});
+		const chooseResult = await window.electronAPI.chooseExportPath({
+			defaultFileName,
+			format,
+		});
+		if (!chooseResult?.success || !chooseResult.path) {
+			appLog({
+				level: "info",
+				scope: "export",
+				event: "export.choose-path-canceled",
+			});
+			return;
+		}
+
 		session.setExportError(null);
 		session.setExportedFilePath(undefined);
 		session.setShowExportDropdown(true);
-		handleExport(resolvedSettings);
-	}, [videoPath, videoPlaybackRef, hasCaptionsForSidecar, settings, session, handleExport, t]);
+		handleExport(resolvedSettings, chooseResult.path);
+	}, [
+		videoPath,
+		videoPlaybackRef,
+		hasCaptionsForSidecar,
+		settings,
+		session,
+		handleExport,
+		t,
+		defaultExportFileName,
+	]);
 
 	const handleCancelExport = useCallback(() => {
 		if (!session.isExporting) return;

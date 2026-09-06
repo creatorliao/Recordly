@@ -323,6 +323,8 @@ export default function VideoEditor() {
 		experimentalNvidiaCudaExport,
 		nvidiaCudaExportAvailable,
 		remountPreview,
+		projectName:
+			project.projectNameDraft.trim() || t("editor.project.untitled", "Untitled"),
 	});
 	const previewAspectRatioValue = getAspectRatioValue(
 		aspectRatio,
