@@ -3,6 +3,24 @@
 export const SESSION_LOG_LEVELS = ["debug", "info", "warn", "error"] as const;
 export type SessionLogLevel = (typeof SESSION_LOG_LEVELS)[number];
 
+export const SESSION_LOG_PHASES = [
+	"idle",
+	"recording",
+	"mux",
+	"editor",
+	"export",
+	"captions",
+] as const;
+export type SessionLogPhaseName = (typeof SESSION_LOG_PHASES)[number];
+
+/**
+ * 只有导出和字幕识别才停编辑器预览。
+ * 录制 / mux 与「停录立刻回放」重叠，不能让路，否则画面闪、声画都起不来。
+ */
+export function shouldYieldPreviewForPhase(phase: SessionLogPhaseName): boolean {
+	return phase === "export" || phase === "captions";
+}
+
 export const SESSION_LOG_MAX_BYTES = 8 * 1024 * 1024;
 export const SESSION_LOG_MAX_LINES = 20_000;
 export const SESSION_LOG_KEEP_COUNT = 20;

@@ -23,15 +23,11 @@ import {
 	type SessionLogInput,
 	type SessionLogLevel,
 	shouldWriteSessionLogLevel,
+	shouldYieldPreviewForPhase,
+	type SessionLogPhaseName,
 } from "./sessionLogFormat";
 
-export type SessionLogPhase =
-	| "idle"
-	| "recording"
-	| "mux"
-	| "editor"
-	| "export"
-	| "captions";
+export type SessionLogPhase = SessionLogPhaseName;
 
 type SessionLogState = {
 	sessionId: string;
@@ -208,7 +204,7 @@ function isEditorWindow(window: BrowserWindow) {
 	}
 }
 
-/** 录/导/字幕时让编辑器预览停转，避免和采集抢 GPU。 */
+/** 仅导出/字幕时让编辑器预览停转，避免和重活抢 GPU。录制与 mux 不得停预览。 */
 function broadcastPreviewYield(active: boolean) {
 	for (const window of BrowserWindow.getAllWindows()) {
 		if (window.isDestroyed() || !isEditorWindow(window)) {
@@ -226,9 +222,7 @@ export function setSessionLogPhase(phase: SessionLogPhase) {
 		return;
 	}
 	state.phase = phase;
-	const yieldPreview =
-		phase === "recording" || phase === "mux" || phase === "export" || phase === "captions";
-	broadcastPreviewYield(yieldPreview);
+	broadcastPreviewYield(shouldYieldPreviewForPhase(phase));
 	writeSessionLog({
 		level: "info",
 		scope: "resource",

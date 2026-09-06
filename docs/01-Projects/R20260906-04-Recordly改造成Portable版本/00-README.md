@@ -16,6 +16,8 @@
 | [`07-问题_壁纸网格仍裂图.md`](07-问题_壁纸网格仍裂图.md) | 再验：HTTP 缩略图仍裂，改走 IPC data URL |
 | [`08-问题_光标仍未记录与自动缩放.md`](08-问题_光标仍未记录与自动缩放.md) | 再验：空写仍删 sidecar；persist 不清 pending |
 | [`09-问题_dev能出图打包裂图.md`](09-问题_dev能出图打包裂图.md) | 真因：Vite `/wallpapers` ≠ 打包 extraResources；网格改走 IPC data URL |
+| [`10-问题_本机Windows采集启动失败回退浏览器.md`](10-问题_本机Windows采集启动失败回退浏览器.md) | 真机：每次录制 toast 回退浏览器；根因是 Electron 身份下 `isPackaged=false`，spawn 进了 asar |
+| [`11-理解_本机采集与浏览器采集.md`](11-理解_本机采集与浏览器采集.md) | 讲清楚：不是权限；asar 看得见却跑不起来；主路径 vs 浏览器退路；和相邻问题怎么叠 |
 
 可复用（Areas，换仓库也用）：
 

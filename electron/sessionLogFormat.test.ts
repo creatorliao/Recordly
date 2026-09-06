@@ -6,6 +6,7 @@ import {
 	listSessionLogsToPrune,
 	parseRendererSessionLogPayload,
 	shouldWriteSessionLogLevel,
+	shouldYieldPreviewForPhase,
 } from "./sessionLogFormat";
 
 describe("sessionLogFormat", () => {
@@ -53,5 +54,14 @@ describe("sessionLogFormat", () => {
 				msg: "boom",
 			}),
 		).toMatchObject({ event: "ui.toast", msg: "boom" });
+	});
+
+	it("只有导出和字幕才让编辑器预览让路，录制与 mux 不能停回放", () => {
+		expect(shouldYieldPreviewForPhase("export")).toBe(true);
+		expect(shouldYieldPreviewForPhase("captions")).toBe(true);
+		expect(shouldYieldPreviewForPhase("recording")).toBe(false);
+		expect(shouldYieldPreviewForPhase("mux")).toBe(false);
+		expect(shouldYieldPreviewForPhase("editor")).toBe(false);
+		expect(shouldYieldPreviewForPhase("idle")).toBe(false);
 	});
 });

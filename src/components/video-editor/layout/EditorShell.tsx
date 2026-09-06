@@ -69,6 +69,7 @@ export function EditorShell(props: Props) {
 		effectiveShowCursor,
 		previewAspectRatioValue,
 	} = props;
+	// 只应在导出/字幕时为 true。录制与 mux 不再发 preview-yield，避免刚进编辑器就被按停。
 	const [recordingYield, setRecordingYield] = useState(false);
 	useEffect(() => {
 		const unsubscribe = window.electronAPI?.onPreviewYield?.((active) => {

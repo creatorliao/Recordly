@@ -1146,6 +1146,8 @@ export function registerRecordingHandlers(
 						msg: "native windows capture stopped",
 						data: { path: finalVideoPath },
 					});
+					// 停录后马上进编辑器回放；相位离开 recording，避免窗口已开着时误判还在采。
+					setSessionLogPhase("editor");
 					return { success: true, path: finalVideoPath };
 				} catch (error) {
 					console.error("Failed to stop native Windows capture:", error);
@@ -1652,7 +1654,6 @@ export function registerRecordingHandlers(
 					msg: "windows mux complete",
 					data: { outputPath: videoPath },
 				});
-				setSessionLogPhase("editor");
 				return await finalizeStoredVideo(videoPath);
 			} catch (error) {
 				console.error("Failed to mux native Windows recording:", error);
@@ -1707,6 +1708,9 @@ export function registerRecordingHandlers(
 						error: String(error),
 					};
 				}
+			} finally {
+				// 成功或失败都离开 mux，避免预览让路开关粘住（即使 mux 不再 yield）。
+				setSessionLogPhase("editor");
 			}
 		} finally {
 			console.log(
