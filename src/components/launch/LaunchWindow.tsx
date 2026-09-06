@@ -2,10 +2,13 @@ import {
 	ArrowClockwiseIcon,
 	CaretUpIcon,
 	DotsThreeVerticalIcon,
+	MagicWandIcon,
 	MicrophoneIcon,
 	MicrophoneSlashIcon,
 	MinusIcon,
 	MonitorIcon,
+	SpeakerHighIcon,
+	SpeakerXIcon,
 	TimerIcon,
 	VideoCameraIcon,
 	VideoCameraSlashIcon,
@@ -254,8 +257,6 @@ function LaunchWindowContent() {
 
 			<MicPopover
 				disabled={recording}
-				systemAudioEnabled={systemAudioEnabled}
-				onToggleSystemAudio={() => setSystemAudioEnabled(!systemAudioEnabled)}
 				microphoneEnabled={microphoneEnabled}
 				onDisableMicrophone={() => setMicrophoneEnabled(false)}
 				devices={devices}
@@ -286,6 +287,26 @@ function LaunchWindowContent() {
 					</Button>
 				}
 			/>
+
+			<Button
+				variant="ghost"
+				size="icon"
+				iconSize="lg"
+				title={
+					systemAudioEnabled
+						? t("recording.disableSystemAudio")
+						: t("recording.enableSystemAudio")
+				}
+				aria-label={t("recording.systemAudio")}
+				onClick={() => setSystemAudioEnabled(!systemAudioEnabled)}
+				className={systemAudioEnabled ? styles.ibActive : ""}
+			>
+				{systemAudioEnabled ? (
+					<SpeakerHighIcon size={18} />
+				) : (
+					<SpeakerXIcon size={18} />
+				)}
+			</Button>
 
 			<WebcamPopover
 				disabled={recording}
@@ -359,6 +380,17 @@ function LaunchWindowContent() {
 			>
 				<div className={styles.recDot} />
 			</button>
+
+			<Button
+				variant="ghost"
+				size="icon"
+				iconSize="lg"
+				onClick={() => void window.electronAPI?.switchToEditor?.()}
+				title={t("recording.openEditor")}
+				aria-label={t("recording.openEditor")}
+			>
+				<MagicWandIcon size={18} />
+			</Button>
 
 			<Separator orientation="vertical" className="mx-[5px] h-6" />
 
