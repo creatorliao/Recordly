@@ -27,6 +27,7 @@
 | 困难 | 怎么处理的 | 下次怎么避免 |
 |------|------------|--------------|
 | 内部监控拦截非备案厂商应用 | 把包装身份改成 Electron 默认（`a2e32fa1`） | 不要把 `productName` / `author` / `executableName` 改回 Recordly 官方名再打包给这台机器用 |
+| 安装包**每次**被内部软件拦（你 2026-09-06 补充） | 尚未改产物；策略已记 **D17**：对内主发 ZIP | 真机对照 T3（安装包）与 T12（ZIP 内 exe）。详见 `R20260906-03` §1.6.1 |
 | whisper 运行时 DLL 被 stage 进仓库 | `.gitignore`（`2fe3c40b`） | 构建后先 `git status`，二进制 runtime 不要提交 |
 | 官方包会带厂商元数据 | 只在本分支改 builder 配置 | 从 upstream rebase 时盯 `package.json`、`electron-builder.json5`，避免被盖回去 |
 
@@ -47,11 +48,16 @@ npm ci
 # 3. 开发态冒烟（可选）
 npm run dev
 
-# 4. 打 Windows 安装包
+# 4. 打 Windows 安装包（备胎，不主发）
 npm run build:win
+
+# 4b. 打 Windows portable（解压即跑 ZIP，对内主发）
+npm run build:win:portable
 ```
 
-产物目录：`release/`，NSIS 文件名形如 `Electron-windows-<arch>.exe`（见 `artifactName`）。
+产物目录：`release/`。
+- NSIS：`Electron-windows-<arch>.exe`（`build:win`）
+- portable：`Electron-windows-<arch>.zip`（`build:win:portable`，内含 `electron.exe`，解压即跑）
 
 验收：
 
@@ -73,8 +79,9 @@ npm run build:win
 ## 五、待核验（构建已跑通，剩余人工）
 
 - [x] `npm run build:win` 在本机完整跑通（2026-09-06，产物 `release/Electron-windows-x64.exe`，~177MB，NSIS + signtool 均完成，退出码 0）
+- [x] `npm run build:win:portable` 在本机完整跑通（2026-09-06，产物 `release/Electron-windows-x64.zip`，~226MB，内含 `electron.exe`，退出码 0）
 - [ ] 得到的 installer 能安装、能启动（待真机）
-- [ ] 监控不拦截（待真机）
+- [ ] 解压 ZIP 后双击 `electron.exe` 能启动、监控是否拦（待真机，`14` T12）
 - [ ] 金路径冒烟通过（待真机，见 `16` A-B + A-G）
 - [ ] 若 rebase 上游后身份字段被盖回，再补一刀并留痕到 `09`
 
