@@ -32,6 +32,7 @@ type UseProjectOpenActionsInput = {
 	applySessionPresentation: (session: null) => void;
 	handleSaveProject: () => Promise<unknown>;
 	handleSaveProjectAs: () => Promise<unknown>;
+	isExporting: boolean;
 };
 
 export function useProjectOpenActions({
@@ -51,6 +52,7 @@ export function useProjectOpenActions({
 	applySessionPresentation,
 	handleSaveProject,
 	handleSaveProjectAs,
+	isExporting,
 }: UseProjectOpenActionsInput) {
 	const confirmReplaceSourceWithUnsavedChanges = useCallback(
 		async (actionLabel: string) => {
@@ -164,6 +166,35 @@ export function useProjectOpenActions({
 		void refreshProjectLibrary();
 	}, [project.projectBrowserOpen, project.setProjectBrowserOpen, refreshProjectLibrary]);
 
+	/**
+	 * Leaves the editor and brings the recording UI back, discarding the current
+	 * project unless the user chooses to save it first.
+	 */
+	const handleReturnToRecording = useCallback(async () => {
+		// Leaving closes the editor window, which would silently kill a running export.
+		if (isExporting) {
+			toast.error("Wait for the export to finish before returning to recording");
+			return;
+		}
+
+		if (!(await confirmReplaceSourceWithUnsavedChanges("return to recording"))) {
+			return;
+		}
+
+		try {
+			videoPlaybackRef.current?.pause();
+		} catch {
+			// The preview may already be tearing down.
+		}
+		setIsPlaying(false);
+
+		try {
+			await window.electronAPI.switchToRecording();
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : String(error));
+		}
+	}, [confirmReplaceSourceWithUnsavedChanges, isExporting, setIsPlaying, videoPlaybackRef]);
+
 	useEffect(() => {
 		const removeLoad = window.electronAPI.onMenuLoadProject(
 			() => void handleOpenProjectBrowser(),
@@ -177,5 +208,10 @@ export function useProjectOpenActions({
 		};
 	}, [handleOpenProjectBrowser, handleSaveProject, handleSaveProjectAs]);
 
-	return { handleOpenProjectFromLibrary, handleImportMediaOrProject, handleOpenProjectBrowser };
+	return {
+		handleOpenProjectFromLibrary,
+		handleImportMediaOrProject,
+		handleOpenProjectBrowser,
+		handleReturnToRecording,
+	};
 }

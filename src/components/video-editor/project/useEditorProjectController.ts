@@ -53,6 +53,7 @@ type Input = {
 	isGeneratingCaptions: boolean;
 	setIsGeneratingCaptions: Dispatch<SetStateAction<boolean>>;
 	videoPlaybackRef: RefObject<VideoPlaybackRef>;
+	isExporting: boolean;
 	projectNameInputRef: RefObject<HTMLInputElement>;
 	projectSaveDialogInputRef: RefObject<HTMLInputElement>;
 	nextZoomIdRef: MutableRefObject<number>;
@@ -214,6 +215,7 @@ export function useEditorProjectController(input: Input) {
 		applySessionPresentation: input.applySessionPresentation,
 		handleSaveProject: saveActions.handleSaveProject,
 		handleSaveProjectAs: saveActions.handleSaveProjectAs,
+		isExporting: input.isExporting,
 	});
 
 	return {

@@ -224,6 +224,7 @@ export default function VideoEditor() {
 		isGeneratingCaptions,
 		setIsGeneratingCaptions,
 		videoPlaybackRef,
+		isExporting: exportSession.isExporting,
 		projectNameInputRef,
 		projectSaveDialogInputRef,
 		nextZoomIdRef,
@@ -377,6 +378,7 @@ export default function VideoEditor() {
 			exportDimensions={exportDimensions}
 			settingsPanelProps={settingsPanelProps}
 			headerLeftControlsPaddingClass={headerLeftControlsPaddingClass}
+			isMac={isMac}
 			hasCaptionsForSidecar={hasCaptionsForSidecar}
 			nvidiaCudaExportAvailable={nvidiaCudaExportAvailable}
 			experimentalNvidiaCudaExport={experimentalNvidiaCudaExport}

@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { useEffect, type ComponentProps } from "react";
 import { EditorAnnouncementBanner } from "@/components/announcements/EditorAnnouncementBanner";
 import { Toaster } from "@/components/ui/sonner";
 import type { useI18n } from "@/contexts/I18nContext";
@@ -36,6 +36,7 @@ type Props = {
 	exportDimensions: ReturnType<typeof useExportDimensions>;
 	settingsPanelProps: ComponentProps<typeof SettingsPanel>;
 	headerLeftControlsPaddingClass: string;
+	isMac: boolean;
 	hasCaptionsForSidecar: boolean;
 	nvidiaCudaExportAvailable: boolean;
 	experimentalNvidiaCudaExport: boolean;
@@ -60,6 +61,7 @@ export function EditorShell(props: Props) {
 		exportDimensions,
 		settingsPanelProps,
 		headerLeftControlsPaddingClass,
+		isMac,
 		hasCaptionsForSidecar,
 		nvidiaCudaExportAvailable,
 		experimentalNvidiaCudaExport,
@@ -90,6 +92,59 @@ export function EditorShell(props: Props) {
 		handleAutoSuggestZoomsConsumed,
 	} = editing;
 	const { dialogActions, status: exportStatus, exportMessage } = exportController;
+
+	// Project shortcuts. On macOS the native File menu owns Cmd+S / Cmd+Shift+S / Cmd+O and
+	// swallows those keystrokes before they reach the renderer; every other platform runs
+	// without an application menu, so the editor has to bind them itself.
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			const target = e.target as HTMLElement | null;
+			const isEditableTarget =
+				target instanceof HTMLInputElement ||
+				target instanceof HTMLTextAreaElement ||
+				target?.isContentEditable;
+			if (isEditableTarget) {
+				return;
+			}
+
+			const usesPrimaryModifier = isMac ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey;
+			if (!usesPrimaryModifier || e.altKey) {
+				return;
+			}
+
+			const key = e.key.toLowerCase();
+			if (key === "n") {
+				e.preventDefault();
+				void openActions.handleReturnToRecording();
+				return;
+			}
+			if (isMac) {
+				return;
+			}
+			if (key === "s") {
+				e.preventDefault();
+				if (e.shiftKey) {
+					void saveActions.handleSaveProjectAs();
+				} else {
+					void saveActions.handleSaveProject();
+				}
+				return;
+			}
+			if (key === "o" && !e.shiftKey) {
+				e.preventDefault();
+				openActions.handleOpenProjectBrowser();
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown, { capture: true });
+		return () => window.removeEventListener("keydown", handleKeyDown, { capture: true });
+	}, [
+		isMac,
+		openActions.handleOpenProjectBrowser,
+		openActions.handleReturnToRecording,
+		saveActions.handleSaveProject,
+		saveActions.handleSaveProjectAs,
+	]);
 	const editorDialogs = (
 		<EditorDialogs
 			t={t}
@@ -130,14 +185,23 @@ export function EditorShell(props: Props) {
 			<div className="flex h-screen items-center justify-center bg-background">
 				<div className="flex flex-col items-center gap-3">
 					<div className="text-destructive">{project.error}</div>
-					<button
-						ref={ui.projectBrowserFallbackTriggerRef}
-						type="button"
-						onClick={openActions.handleOpenProjectBrowser}
-						className="rounded-[5px] bg-neutral-800 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(0,0,0,0.18)] transition-colors hover:bg-neutral-700 dark:bg-white dark:text-black dark:hover:bg-white/90"
-					>
-						Open Projects
-					</button>
+					<div className="flex items-center gap-2">
+						<button
+							ref={ui.projectBrowserFallbackTriggerRef}
+							type="button"
+							onClick={openActions.handleOpenProjectBrowser}
+							className="rounded-[5px] bg-neutral-800 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(0,0,0,0.18)] transition-colors hover:bg-neutral-700 dark:bg-white dark:text-black dark:hover:bg-white/90"
+						>
+							Open Projects
+						</button>
+						<button
+							type="button"
+							onClick={() => void openActions.handleReturnToRecording()}
+							className="rounded-[5px] border border-foreground/15 px-3 py-1.5 text-sm font-semibold text-foreground transition-colors hover:bg-foreground/10"
+						>
+							{t("editor.actions.returnToRecording", "Return to recording")}
+						</button>
+					</div>
 				</div>
 				{editorDialogs}
 				<Toaster className="pointer-events-auto" />
@@ -157,6 +221,11 @@ export function EditorShell(props: Props) {
 				canUndo={history.canUndo}
 				canRedo={history.canRedo}
 				handleOpenProjectBrowser={openActions.handleOpenProjectBrowser}
+				handleReturnToRecording={openActions.handleReturnToRecording}
+				handleSaveProject={saveActions.handleSaveProject}
+				handleSaveProjectAs={saveActions.handleSaveProjectAs}
+				handleImportMediaOrProject={openActions.handleImportMediaOrProject}
+				isMac={isMac}
 				handleUndo={history.handleUndo}
 				handleRedo={history.handleRedo}
 				handleProjectNameSubmit={saveActions.handleProjectNameSubmit}

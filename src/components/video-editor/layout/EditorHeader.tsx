@@ -1,10 +1,20 @@
 import {
+	FileText,
 	FolderOpen,
 	ArrowClockwise as Redo2,
 	ArrowCounterClockwise as Undo2,
+	VideoCamera,
 } from "@phosphor-icons/react";
 import type { CSSProperties, FormEvent, RefObject } from "react";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuShortcut,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { useI18n } from "@/contexts/I18nContext";
 import type { useExportDimensions } from "../export/useExportDimensions";
 import type { useExportSession } from "../export/useExportSession";
@@ -27,6 +37,11 @@ type Props = {
 	canUndo: boolean;
 	canRedo: boolean;
 	handleOpenProjectBrowser: () => void;
+	handleReturnToRecording: () => void;
+	handleSaveProject: () => void;
+	handleSaveProjectAs: () => void;
+	handleImportMediaOrProject: () => void;
+	isMac: boolean;
 	handleUndo: () => void;
 	handleRedo: () => void;
 	handleProjectNameSubmit: (event?: FormEvent<HTMLFormElement>) => void;
@@ -61,6 +76,11 @@ export function EditorHeader(props: Props) {
 		canUndo,
 		canRedo,
 		handleOpenProjectBrowser,
+		handleReturnToRecording,
+		handleSaveProject,
+		handleSaveProjectAs,
+		handleImportMediaOrProject,
+		isMac,
 		handleUndo,
 		handleRedo,
 		handleProjectNameSubmit,
@@ -89,6 +109,7 @@ export function EditorHeader(props: Props) {
 		setProjectNameDraft,
 		isSavingProjectName,
 	} = project;
+	const primaryModifierLabel = isMac ? "⌘" : "Ctrl+";
 
 	return (
 		<div
@@ -99,6 +120,17 @@ export function EditorHeader(props: Props) {
 				className={`flex items-center justify-self-start gap-1.5 ${headerLeftControlsPaddingClass}`}
 				style={{ WebkitAppRegion: "no-drag" } as CSSProperties}
 			>
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					onClick={() => void handleReturnToRecording()}
+					className={APP_HEADER_ICON_BUTTON_CLASS}
+					title={t("editor.actions.returnToRecording", "Return to recording")}
+					aria-label={t("editor.actions.returnToRecording", "Return to recording")}
+				>
+					<VideoCamera className="h-4 w-4" />
+				</Button>
 				<Button
 					ref={projectBrowserTriggerRef}
 					type="button"
@@ -111,6 +143,45 @@ export function EditorHeader(props: Props) {
 				>
 					<FolderOpen className="h-4 w-4" />
 				</Button>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							className={APP_HEADER_ICON_BUTTON_CLASS}
+							title={t("editor.project.menu", "Project")}
+							aria-label={t("editor.project.menu", "Project")}
+						>
+							<FileText className="h-4 w-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="start" sideOffset={8} className="w-60">
+						<DropdownMenuItem onSelect={() => void handleReturnToRecording()}>
+							{t("editor.project.newRecording", "New recording")}
+							<DropdownMenuShortcut>{primaryModifierLabel}N</DropdownMenuShortcut>
+						</DropdownMenuItem>
+						<DropdownMenuItem onSelect={() => void handleImportMediaOrProject()}>
+							{t("editor.project.newFromFile", "New project from file…")}
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onSelect={() => void handleOpenProjectBrowser()}>
+							{t("editor.project.open", "Open projects…")}
+							<DropdownMenuShortcut>{primaryModifierLabel}O</DropdownMenuShortcut>
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onSelect={() => void handleSaveProject()}>
+							{t("editor.project.save", "Save project")}
+							<DropdownMenuShortcut>{primaryModifierLabel}S</DropdownMenuShortcut>
+						</DropdownMenuItem>
+						<DropdownMenuItem onSelect={() => void handleSaveProjectAs()}>
+							{t("editor.project.saveAs", "Save project as…")}
+							<DropdownMenuShortcut>
+								{isMac ? "⇧⌘S" : "Ctrl+Shift+S"}
+							</DropdownMenuShortcut>
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
 				<DiscordLinkButton />
 				<FeedbackDialog />
 				<div className="ml-1 h-5 w-px bg-foreground/10" />
