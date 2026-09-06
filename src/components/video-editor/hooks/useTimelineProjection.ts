@@ -48,7 +48,10 @@ export function useTimelineProjection({
 								const id = `clip-${nextClipIdRef.current++}`;
 								autoFullTrackIdRef.current = id;
 								autoFullTrackEndRef.current = totalMs;
-								return [{ id, startMs: 0, endMs: totalMs, speed: 1 as const }];
+								// 新录制默认显示源音频（讲解声）波形轨，可在片段面板关闭。
+								return [
+									{ id, startMs: 0, endMs: totalMs, speed: 1 as const, showSourceAudio: true },
+								];
 							})();
 				if (trimRegions.length > 0) {
 					nextClipIdRef.current = deriveNextId(
