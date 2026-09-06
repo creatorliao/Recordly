@@ -853,6 +853,26 @@ function createEditorWindowWrapper() {
 	return editorWindow;
 }
 
+/**
+ * Leaves the editor and brings the recording UI (HUD overlay) back.
+ * Reuses closeEditorWindowToHud: it hides the editor, restores the HUD window,
+ * and closes the editor window without firing the native unsaved-changes prompt.
+ * The renderer confirms unsaved changes before invoking this.
+ */
+function returnToRecording() {
+	const editorWindow = getExistingEditorWindow();
+	if (editorWindow && !editorWindow.isDestroyed()) {
+		closeEditorWindowToHud(editorWindow);
+		return;
+	}
+	createWindow();
+}
+
+ipcMain.handle("switch-to-recording", () => {
+	console.log("[switch-to-recording] Returning to the recording UI");
+	returnToRecording();
+});
+
 function createSourceSelectorWindowWrapper() {
 	sourceSelectorWindow = createSourceSelectorWindow();
 	sourceSelectorWindow.on("closed", () => {

@@ -109,10 +109,18 @@
 	},
 	"actions": {
 		"saveAgain": "Salvar novamente",
-		"showInFolder": "Mostrar na pasta"
+		"showInFolder": "Mostrar na pasta",
+		"returnToRecording": "Voltar para a gravação",
+		"returnToRecordingBlockedByExport": "Aguarde a exportação terminar antes de voltar para a gravação"
 	},
 	"project": {
 		"untitled": "Sem título",
+		"menu": "Projeto",
+		"newRecording": "Nova gravação",
+		"newFromFile": "Novo projeto a partir de arquivo…",
+		"open": "Abrir projetos…",
+		"save": "Salvar projeto",
+		"saveAs": "Salvar projeto como…",
 		"unsavedChangesTitle": "Alterações não salvas",
 		"unsavedChangesDescription": "Salvar o projeto atual antes de {{action}}?",
 		"discardChanges": "Descartar alterações",

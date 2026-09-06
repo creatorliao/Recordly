@@ -109,10 +109,18 @@
 	},
 	"actions": {
 		"saveAgain": "Enregistrer à nouveau",
-		"showInFolder": "Afficher dans le dossier"
+		"showInFolder": "Afficher dans le dossier",
+		"returnToRecording": "Retour à l'enregistrement",
+		"returnToRecordingBlockedByExport": "Attendez la fin de l'exportation avant de revenir à l'enregistrement"
 	},
 	"project": {
 		"untitled": "Sans titre",
+		"menu": "Projet",
+		"newRecording": "Nouvel enregistrement",
+		"newFromFile": "Nouveau projet depuis un fichier…",
+		"open": "Ouvrir des projets…",
+		"save": "Enregistrer le projet",
+		"saveAs": "Enregistrer le projet sous…",
 		"unsavedChangesTitle": "Modifications non enregistrées",
 		"unsavedChangesDescription": "Enregistrer le projet actuel avant de {{action}} ?",
 		"discardChanges": "Ignorer les modifications",

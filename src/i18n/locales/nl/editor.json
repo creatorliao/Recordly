@@ -110,10 +110,18 @@
 	},
 	"actions": {
 		"saveAgain": "Opnieuw opslaan",
-		"showInFolder": "Tonen in map"
+		"showInFolder": "Tonen in map",
+		"returnToRecording": "Terug naar opnemen",
+		"returnToRecordingBlockedByExport": "Wacht tot het exporteren klaar is voordat je teruggaat naar opnemen"
 	},
 	"project": {
 		"untitled": "Naamloos",
+		"menu": "Project",
+		"newRecording": "Nieuwe opname",
+		"newFromFile": "Nieuw project uit bestand…",
+		"open": "Projecten openen…",
+		"save": "Project opslaan",
+		"saveAs": "Project opslaan als…",
 		"unsavedChangesTitle": "Niet-opgeslagen wijzigingen",
 		"unsavedChangesDescription": "Wil je het huidige project opslaan voordat je {{action}}?",
 		"discardChanges": "Wijzigingen negeren",

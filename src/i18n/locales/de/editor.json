@@ -108,10 +108,18 @@
 	},
 	"actions": {
 		"saveAgain": "Erneut speichern",
-		"showInFolder": "In Ordner anzeigen"
+		"showInFolder": "In Ordner anzeigen",
+		"returnToRecording": "Zurück zur Aufnahme",
+		"returnToRecordingBlockedByExport": "Warte, bis der Export abgeschlossen ist, bevor du zur Aufnahme zurückkehrst"
 	},
 	"project": {
 		"untitled": "Unbenannt",
+		"menu": "Projekt",
+		"newRecording": "Neue Aufnahme",
+		"newFromFile": "Neues Projekt aus Datei…",
+		"open": "Projekte öffnen…",
+		"save": "Projekt speichern",
+		"saveAs": "Projekt speichern unter…",
 		"unsavedChangesTitle": "Ungespeicherte Änderungen",
 		"unsavedChangesDescription": "Möchtest du dein aktuelles Projekt speichern, bevor du {{action}}?",
 		"discardChanges": "Änderungen verwerfen",

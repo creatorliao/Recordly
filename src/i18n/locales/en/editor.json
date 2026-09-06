@@ -109,10 +109,18 @@
 	},
 	"actions": {
 		"saveAgain": "Save Again",
-		"showInFolder": "Show In Folder"
+		"showInFolder": "Show In Folder",
+		"returnToRecording": "Return to recording",
+		"returnToRecordingBlockedByExport": "Wait for the export to finish before returning to recording"
 	},
 	"project": {
 		"untitled": "Untitled",
+		"menu": "Project",
+		"newRecording": "New recording",
+		"newFromFile": "New project from file…",
+		"open": "Open projects…",
+		"save": "Save project",
+		"saveAs": "Save project as…",
 		"unsavedChangesTitle": "Unsaved changes",
 		"unsavedChangesDescription": "Save your current project before you {{action}}?",
 		"discardChanges": "Discard changes",
