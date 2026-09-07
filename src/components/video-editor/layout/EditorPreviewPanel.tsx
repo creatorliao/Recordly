@@ -12,7 +12,14 @@ import {
 	SpeakerLow,
 	SpeakerX,
 } from "@phosphor-icons/react";
-import type { Dispatch, RefObject, SetStateAction } from "react";
+import {
+	useEffect,
+	useRef,
+	useState,
+	type Dispatch,
+	type RefObject,
+	type SetStateAction,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -104,12 +111,50 @@ export function EditorPreviewPanel(props: Props) {
 		setIsPlaying,
 		setError,
 	} = props;
+	const previewViewportRef = useRef<HTMLDivElement>(null);
+	const [previewFrameSize, setPreviewFrameSize] = useState<{
+		width: number;
+		height: number;
+	} | null>(null);
+
+	useEffect(() => {
+		const viewport = previewViewportRef.current;
+		if (
+			!viewport ||
+			!Number.isFinite(previewAspectRatioValue) ||
+			previewAspectRatioValue <= 0
+		) {
+			return;
+		}
+
+		const updatePreviewFrameSize = () => {
+			const availableWidth = Math.max(0, viewport.clientWidth - 8);
+			const availableHeight = viewport.clientHeight;
+			if (availableWidth <= 0 || availableHeight <= 0) return;
+
+			const width = Math.min(availableWidth, availableHeight * previewAspectRatioValue);
+			const height = width / previewAspectRatioValue;
+			setPreviewFrameSize((current) =>
+				current &&
+				Math.abs(current.width - width) < 0.5 &&
+				Math.abs(current.height - height) < 0.5
+					? current
+					: { width, height },
+			);
+		};
+
+		updatePreviewFrameSize();
+		const observer = new ResizeObserver(updatePreviewFrameSize);
+		observer.observe(viewport);
+		return () => observer.disconnect();
+	}, [previewAspectRatioValue]);
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col gap-0">
 			<div className="flex min-h-0 flex-1 flex-col">
 				<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
 					<div
+						ref={previewViewportRef}
 						className="flex min-h-0 w-full flex-1 items-stretch"
 						style={{ flex: "1 1 auto", margin: 0 }}
 					>
@@ -117,8 +162,8 @@ export function EditorPreviewPanel(props: Props) {
 							<div
 								className="relative"
 								style={{
-									width: "100%",
-									height: "auto",
+									width: previewFrameSize?.width ?? "100%",
+									height: previewFrameSize?.height ?? "auto",
 									aspectRatio: previewAspectRatioValue,
 									maxWidth: "100%",
 									maxHeight: "100%",
