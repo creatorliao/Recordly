@@ -122,7 +122,8 @@
 		"edit": "Edit(E)"
 	},
 	"layout": {
-		"toggleSideBar": "Toggle sidebar"
+		"toggleSideBar": "Toggle sidebar",
+		"toggleSettingsPanel": "Toggle settings panel"
 	},
 	"statusbar": {
 		"unsaved": "Unsaved",
@@ -206,6 +207,7 @@
 	"timeline": {
 		"expand": "Expand Timeline",
 		"collapse": "Collapse Timeline",
+		"resize": "Resize timeline height",
 		"noVideoLoaded": "No Video Loaded",
 		"dropToStart": "Drag and drop a video to start editing",
 		"loading": "Loading…",

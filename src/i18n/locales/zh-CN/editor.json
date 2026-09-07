@@ -122,7 +122,8 @@
 		"edit": "编辑(E)"
 	},
 	"layout": {
-		"toggleSideBar": "切换侧栏"
+		"toggleSideBar": "切换侧栏",
+		"toggleSettingsPanel": "切换设置面板"
 	},
 	"statusbar": {
 		"unsaved": "未保存",
@@ -206,6 +207,7 @@
 	"timeline": {
 		"expand": "展开时间轴",
 		"collapse": "折叠时间轴",
+		"resize": "调整时间轴高度",
 		"noVideoLoaded": "尚未加载视频",
 		"dropToStart": "拖放一段视频开始编辑",
 		"loading": "正在加载…",

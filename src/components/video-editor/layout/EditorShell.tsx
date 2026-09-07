@@ -98,22 +98,51 @@ export function EditorShell(props: Props) {
 		handleAutoSuggestZoomsConsumed,
 	} = editing;
 	const { dialogActions, status: exportStatus, exportMessage } = exportController;
-	const [timelineHeight, setTimelineHeight] = useState(200);
+	const defaultTimelineHeight = 200;
+	const minTimelineHeight = 108;
+	const maxTimelineHeight = 560;
+	const [timelineHeight, setTimelineHeight] = useState(defaultTimelineHeight);
+	const [timelineExpandedHeight, setTimelineExpandedHeight] = useState(defaultTimelineHeight);
+	const [isTimelineCollapsed, setIsTimelineCollapsed] = useState(false);
+	const [isTimelineResizing, setIsTimelineResizing] = useState(false);
 	const handleTimelineResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
+		if (isTimelineCollapsed) {
+			return;
+		}
 		event.currentTarget.setPointerCapture(event.pointerId);
 		const startY = event.clientY;
 		const startHeight = timelineHeight;
+		setIsTimelineResizing(true);
 		const handleMove = (moveEvent: PointerEvent) => {
 			setTimelineHeight(
-				Math.max(160, Math.min(560, startHeight - (moveEvent.clientY - startY))),
+				Math.max(
+					minTimelineHeight,
+					Math.min(maxTimelineHeight, startHeight - (moveEvent.clientY - startY)),
+				),
 			);
 		};
 		const handleUp = () => {
 			window.removeEventListener("pointermove", handleMove);
+			setIsTimelineResizing(false);
 			window.removeEventListener("pointerup", handleUp);
 		};
 		window.addEventListener("pointermove", handleMove);
 		window.addEventListener("pointerup", handleUp, { once: true });
+	};
+	const handleTimelineToggle = () => {
+		if (isTimelineCollapsed) {
+			setTimelineHeight(timelineExpandedHeight);
+			setIsTimelineCollapsed(false);
+			return;
+		}
+		setTimelineExpandedHeight(timelineHeight);
+		setIsTimelineCollapsed(true);
+		setTimelineHeight(minTimelineHeight);
+	};
+	const handleTimelineReset = () => {
+		setTimelineHeight(defaultTimelineHeight);
+		setTimelineExpandedHeight(defaultTimelineHeight);
+		setIsTimelineCollapsed(false);
 	};
 
 	// Project shortcuts. On macOS the native File menu owns Cmd+S / Cmd+Shift+S / Cmd+O and
@@ -323,6 +352,7 @@ export function EditorShell(props: Props) {
 					/>
 				</div>
 				<EditorTimelinePanel
+					t={t}
 					timelineRef={ui.timelineRef}
 					timeline={timeline}
 					projection={projection}
@@ -344,7 +374,10 @@ export function EditorShell(props: Props) {
 					handleSelectAnnotation={handleSelectAnnotation}
 					height={timelineHeight}
 					onResizeStart={handleTimelineResizeStart}
-					onResetHeight={() => setTimelineHeight(200)}
+					onResetHeight={handleTimelineReset}
+					onToggleCollapsed={handleTimelineToggle}
+					isCollapsed={isTimelineCollapsed}
+					isResizing={isTimelineResizing}
 				/>
 			</div>
 			<footer className="flex h-[22px] shrink-0 items-center justify-between border-t border-foreground/10 px-3 text-[12px] leading-[22px] text-muted-foreground">

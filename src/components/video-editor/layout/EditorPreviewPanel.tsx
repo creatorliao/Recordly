@@ -216,7 +216,7 @@ export function EditorPreviewPanel(props: Props) {
 							<Button
 								variant="ghost"
 								size="sm"
-								className="h-7 gap-1 rounded-full border border-foreground/[0.08] bg-foreground/[0.04] px-2.5 text-[11px] text-foreground/65 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)] transition-all hover:bg-foreground/[0.08] hover:text-foreground"
+								className="h-7 gap-1 rounded-[3px] border border-foreground/[0.08] bg-foreground/[0.04] px-2.5 text-[11px] text-foreground/65 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)] transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
 							>
 								<Plus className="h-3.5 w-3.5" />
 								<span className="font-medium">{t("editor.toolbar.addLayer")}</span>
@@ -266,7 +266,7 @@ export function EditorPreviewPanel(props: Props) {
 						onClick={() => timelineRef.current?.addZoom()}
 						variant="ghost"
 						size="icon"
-						className="h-7 w-7 rounded-full text-muted-foreground transition-all hover:bg-[#2563EB]/10 hover:text-[#2563EB]"
+						className="h-7 w-7 rounded-[3px] text-muted-foreground transition-colors hover:bg-[#2563EB]/10 hover:text-[#2563EB]"
 						title={t("timeline.zoom.addZoom")}
 					>
 						<MagnifyingGlassPlus className="h-4 w-4" />
@@ -275,7 +275,7 @@ export function EditorPreviewPanel(props: Props) {
 						onClick={() => timelineRef.current?.suggestZooms()}
 						variant="ghost"
 						size="icon"
-						className="h-7 w-7 rounded-full text-muted-foreground transition-all hover:bg-[#2563EB]/10 hover:text-[#2563EB]"
+						className="h-7 w-7 rounded-[3px] text-muted-foreground transition-colors hover:bg-[#2563EB]/10 hover:text-[#2563EB]"
 						title={t("timeline.zoom.suggestZooms")}
 					>
 						<MagicWand className="h-4 w-4" />
@@ -284,7 +284,7 @@ export function EditorPreviewPanel(props: Props) {
 						onClick={() => timelineRef.current?.splitClip()}
 						variant="ghost"
 						size="icon"
-						className="h-7 w-7 rounded-full text-muted-foreground transition-all hover:bg-foreground/10 hover:text-foreground"
+						className="h-7 w-7 rounded-[3px] text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
 						title={t("editor.toolbar.splitClip")}
 					>
 						<Scissors className="h-4 w-4" />
@@ -299,7 +299,7 @@ export function EditorPreviewPanel(props: Props) {
 						<Button
 							variant="ghost"
 							size="icon"
-							className="h-7 w-7 rounded-full text-muted-foreground transition-all hover:bg-foreground/10 hover:text-foreground"
+							className="h-7 w-7 rounded-[3px] text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
 							title={t("editor.playback.skipBack")}
 							onClick={playback.handlePreviewSkipBack}
 						>
@@ -308,7 +308,7 @@ export function EditorPreviewPanel(props: Props) {
 						<Button
 							variant="ghost"
 							size="icon"
-							className={`h-7 w-7 rounded-full border border-foreground/10 shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition-all ${isPlaying ? "bg-foreground/10 text-foreground hover:bg-foreground/20" : "bg-neutral-800 text-white hover:bg-neutral-700 dark:bg-white dark:text-black dark:hover:bg-white/90"}`}
+							className={`h-7 w-7 rounded-[3px] border border-foreground/10 shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition-colors ${isPlaying ? "bg-foreground/10 text-foreground hover:bg-foreground/20" : "bg-neutral-800 text-white hover:bg-neutral-700 dark:bg-white dark:text-black dark:hover:bg-white/90"}`}
 							onClick={playback.togglePlayPause}
 							title={
 								isPlaying ? t("editor.playback.pause") : t("editor.playback.play")

@@ -347,8 +347,8 @@ export function EditorHeader(props: Props) {
 					type="button"
 					onClick={onToggleSettingsPanel}
 					className="inline-flex h-6 w-6 items-center justify-center rounded-[5px] text-foreground/70 transition-colors hover:bg-foreground/10 hover:text-foreground"
-					title={t("editor.layout.toggleSideBar", "Toggle sidebar")}
-					aria-label={t("editor.layout.toggleSideBar", "Toggle sidebar")}
+					title={t("editor.layout.toggleSettingsPanel", "Toggle settings panel")}
+					aria-label={t("editor.layout.toggleSettingsPanel", "Toggle settings panel")}
 					aria-pressed={settingsPanelVisible}
 				>
 					<SidebarSimple size={16} weight={settingsPanelVisible ? "fill" : "regular"} />
