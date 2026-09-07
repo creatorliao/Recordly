@@ -16,10 +16,8 @@ import type { useExportDimensions } from "../export/useExportDimensions";
 import type { useExportSession } from "../export/useExportSession";
 import type { useExportSettings } from "../export/useExportSettings";
 import type { useExportStatusViewModel } from "../export/useExportStatusViewModel";
-import type { useVideoEditorPresets } from "../presets/useVideoEditorPresets";
 import type { useProjectState } from "../state/useProjectState";
 import { EditorExportMenu } from "./EditorExportMenu";
-import { EditorPresetMenu } from "./EditorPresetMenu";
 
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
@@ -44,7 +42,6 @@ type Props = {
 	closeProjectNameEditor: () => void;
 	settingsPanelVisible: boolean;
 	onToggleSettingsPanel: () => void;
-	presets: ReturnType<typeof useVideoEditorPresets>;
 	exportSettings: ReturnType<typeof useExportSettings>;
 	exportSession: ReturnType<typeof useExportSession>;
 	exportDimensions: ReturnType<typeof useExportDimensions>;
@@ -113,7 +110,6 @@ export function EditorHeader(props: Props) {
 		closeProjectNameEditor,
 		settingsPanelVisible,
 		onToggleSettingsPanel,
-		presets,
 		exportSettings,
 		exportSession,
 		exportDimensions,
@@ -178,7 +174,9 @@ export function EditorHeader(props: Props) {
 								recentProjects.map((entry) => (
 									<DropdownMenuItem
 										key={entry.path}
-										onSelect={() => void handleOpenProjectFromLibrary(entry.path)}
+										onSelect={() =>
+											void handleOpenProjectFromLibrary(entry.path)
+										}
 									>
 										<span className="truncate">{entry.name}</span>
 									</DropdownMenuItem>
@@ -206,9 +204,7 @@ export function EditorHeader(props: Props) {
 					</DropdownMenuItem>
 					<DropdownMenuItem onSelect={handleRedo} disabled={!canRedo}>
 						{t("common.actions.redo", "Redo")}
-						<DropdownMenuShortcut>
-							{isMac ? "⇧⌘Z" : "Ctrl+Y"}
-						</DropdownMenuShortcut>
+						<DropdownMenuShortcut>{isMac ? "⇧⌘Z" : "Ctrl+Y"}</DropdownMenuShortcut>
 					</DropdownMenuItem>
 				</MenubarMenu>
 			</div>
@@ -273,8 +269,6 @@ export function EditorHeader(props: Props) {
 				className="flex h-full items-center justify-self-end gap-1"
 				style={{ WebkitAppRegion: "no-drag" } as CSSProperties}
 			>
-				<EditorPresetMenu t={t} presets={presets} />
-				<div aria-hidden="true" className="mx-1.5 h-4 w-px shrink-0 bg-foreground/10" />
 				<EditorExportMenu
 					t={t}
 					exportSettings={exportSettings}

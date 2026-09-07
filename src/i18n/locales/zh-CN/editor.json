@@ -235,7 +235,19 @@
 		"tray": "最小化到托盘"
 	},
 	"presets": {
-		"label": "预设",
+		"label": "样式预设",
+		"blurb": "保存并套用画面、光标、缩放。不含导出、裁切、摄像头位置。",
+		"unused": "未使用预设",
+		"emptyHint": "调好画面后起个名字保存，下一节课就能套用。",
+		"saveAs": "另存为",
+		"updateNamed": "更新「{{name}}」",
+		"cancelApply": "取消应用",
+		"revertLastApply": "撤销刚才的套用",
+		"rename": "重命名",
+		"deleteTitle": "删除样式",
+		"deleteBody": "删除样式「{{name}}」？课里的画面不会变。",
+		"coincidentalMatch": "未使用预设。当前画面碰巧与「{{name}}」一样。",
+		"more": "更多操作",
 		"open": "打开预设",
 		"saveCurrentAs": "将当前设置另存为预设",
 		"namePlaceholder": "预设名称",
@@ -251,7 +263,8 @@
 		"toasts": {
 			"applied": "已应用预设「{{name}}」",
 			"saved": "已保存预设「{{name}}」",
-			"deleted": "已删除预设「{{name}}」"
+			"deleted": "已删除预设「{{name}}」",
+			"updated": "已更新样式「{{name}}」"
 		}
 	}
 }

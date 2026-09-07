@@ -235,7 +235,19 @@
 		"tray": "Minimize to tray"
 	},
 	"presets": {
-		"label": "Presets",
+		"label": "Style presets",
+		"blurb": "Saves look: scene, cursor, zoom. Not export, crop, or webcam layout.",
+		"unused": "No style preset",
+		"emptyHint": "Name the current look to reuse it in the next lesson.",
+		"saveAs": "Save as",
+		"updateNamed": "Update \"{{name}}\"",
+		"cancelApply": "Stop using preset",
+		"revertLastApply": "Undo last style apply",
+		"rename": "Rename",
+		"deleteTitle": "Delete style",
+		"deleteBody": "Delete style \"{{name}}\"? The current look stays.",
+		"coincidentalMatch": "No style preset. The current look happens to match \"{{name}}\".",
+		"more": "More actions",
 		"open": "Open presets",
 		"saveCurrentAs": "Save current preset as",
 		"namePlaceholder": "Preset name",
@@ -251,7 +263,8 @@
 		"toasts": {
 			"applied": "Applied preset \"{{name}}\"",
 			"saved": "Saved preset \"{{name}}\"",
-			"deleted": "Deleted preset \"{{name}}\""
+			"deleted": "Deleted preset \"{{name}}\"",
+			"updated": "Updated style \"{{name}}\""
 		}
 	}
 }

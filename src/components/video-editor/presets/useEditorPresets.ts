@@ -1,10 +1,18 @@
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo } from "react";
+import {
+	type Dispatch,
+	type SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import { toast } from "sonner";
 import {
 	type EditorPreset,
 	type EditorPresetSnapshot,
+	pickStyleLook,
 	saveEditorPresets,
-	serializeEditorPresetSnapshot,
+	serializeStyleLook,
 } from "../editorPreferences";
 
 type Translator = (
@@ -39,7 +47,7 @@ export function useEditorPresets({
 	setPresetNameDraft,
 }: UseEditorPresetsParams) {
 	const currentSignature = useMemo(
-		() => serializeEditorPresetSnapshot(currentSnapshot),
+		() => serializeStyleLook(pickStyleLook(currentSnapshot)),
 		[currentSnapshot],
 	);
 	const currentEditorPreset = useMemo(
@@ -47,21 +55,21 @@ export function useEditorPresets({
 		[activePresetId, editorPresets],
 	);
 
-	useEffect(() => {
-		if (
-			currentEditorPreset &&
-			serializeEditorPresetSnapshot(currentEditorPreset.snapshot) === currentSignature
-		) {
-			return;
-		}
-
-		const matchingPreset =
-			editorPresets.find(
-				(preset) => serializeEditorPresetSnapshot(preset.snapshot) === currentSignature,
-			) ?? null;
-		const nextActiveId = matchingPreset?.id ?? null;
-		if (nextActiveId !== activePresetId) setActivePresetId(nextActiveId);
-	}, [activePresetId, currentEditorPreset, currentSignature, editorPresets, setActivePresetId]);
+	const [revertSlot, setRevertSlot] = useState<{
+		look: EditorPresetSnapshot;
+		previousActiveId: string | null;
+	} | null>(null);
+	const isActivePresetDirty = Boolean(
+		currentEditorPreset &&
+			serializeStyleLook(pickStyleLook(currentEditorPreset.snapshot)) !== currentSignature,
+	);
+	const matchingUnusedHintName = useMemo(() => {
+		if (activePresetId !== null) return null;
+		const matches = editorPresets.filter(
+			(preset) => serializeStyleLook(pickStyleLook(preset.snapshot)) === currentSignature,
+		);
+		return matches.length === 1 ? matches[0].name : null;
+	}, [activePresetId, currentSignature, editorPresets]);
 
 	useEffect(() => {
 		if (!presetPopoverOpen) setPresetNameDraft("");
@@ -71,6 +79,8 @@ export function useEditorPresets({
 		(presetId: string) => {
 			const preset = editorPresets.find((item) => item.id === presetId);
 			if (!preset) return;
+			if (preset.id === activePresetId && !isActivePresetDirty) return;
+			setRevertSlot({ look: currentSnapshot, previousActiveId: activePresetId });
 			setActivePresetId(preset.id);
 			applySnapshot(preset.snapshot);
 			toast.success(
@@ -79,8 +89,23 @@ export function useEditorPresets({
 				}),
 			);
 		},
-		[applySnapshot, editorPresets, setActivePresetId, t],
+		[
+			activePresetId,
+			applySnapshot,
+			currentSnapshot,
+			editorPresets,
+			isActivePresetDirty,
+			setActivePresetId,
+			t,
+		],
 	);
+	const handleCancelApply = useCallback(() => setActivePresetId(null), [setActivePresetId]);
+	const handleRevertLastApply = useCallback(() => {
+		if (!revertSlot) return;
+		applySnapshot(revertSlot.look);
+		setActivePresetId(revertSlot.previousActiveId);
+		setRevertSlot(null);
+	}, [applySnapshot, revertSlot, setActivePresetId]);
 
 	const handleSaveEditorPreset = useCallback(
 		(name: string) => {
@@ -124,6 +149,7 @@ export function useEditorPresets({
 			}
 			setEditorPresets(nextPresets);
 			setActivePresetId(nextPreset.id);
+			setRevertSlot(null);
 			toast.success(
 				t("editor.presets.toasts.saved", 'Saved preset "{{name}}"', {
 					name: normalizedName,
@@ -132,6 +158,58 @@ export function useEditorPresets({
 			return true;
 		},
 		[currentSnapshot, editorPresets, setActivePresetId, setEditorPresets, t],
+	);
+	const handleUpdateActivePreset = useCallback(() => {
+		if (!currentEditorPreset) return false;
+		const nextPresets = editorPresets.map((preset) =>
+			preset.id === currentEditorPreset.id
+				? {
+						...preset,
+						snapshot: { ...preset.snapshot, ...pickStyleLook(currentSnapshot) },
+						updatedAt: new Date().toISOString(),
+					}
+				: preset,
+		);
+		if (!saveEditorPresets(nextPresets)) return false;
+		setEditorPresets(nextPresets);
+		setRevertSlot(null);
+		toast.success(
+			t("editor.presets.toasts.updated", 'Updated style "{{name}}"', {
+				name: currentEditorPreset.name,
+			}),
+		);
+		return true;
+	}, [currentEditorPreset, currentSnapshot, editorPresets, setEditorPresets, t]);
+	const handleRenameEditorPreset = useCallback(
+		(presetId: string, name: string) => {
+			const normalizedName = name.trim().replace(/\s+/g, " ").slice(0, 40);
+			const existing = editorPresets.find((preset) => preset.id === presetId);
+			if (!existing || !normalizedName) return false;
+			if (
+				editorPresets.some(
+					(preset) =>
+						preset.id !== presetId &&
+						preset.name.toLocaleLowerCase() === normalizedName.toLocaleLowerCase(),
+				)
+			) {
+				toast.error(
+					t(
+						"editor.presets.errors.duplicateName",
+						"A preset with that name already exists.",
+					),
+				);
+				return false;
+			}
+			const next = editorPresets.map((preset) =>
+				preset.id === presetId
+					? { ...preset, name: normalizedName, updatedAt: new Date().toISOString() }
+					: preset,
+			);
+			if (!saveEditorPresets(next)) return false;
+			setEditorPresets(next);
+			return true;
+		},
+		[editorPresets, setEditorPresets, t],
 	);
 
 	const handleDeleteEditorPreset = useCallback(
@@ -165,7 +243,15 @@ export function useEditorPresets({
 
 	return {
 		currentEditorPreset,
+		isActivePresetDirty,
+		matchingUnusedHintName,
+		canRevertLastApply: Boolean(revertSlot),
+		revertSlot,
 		handleApplyEditorPreset,
+		handleCancelApply,
+		handleRevertLastApply,
+		handleUpdateActivePreset,
+		handleRenameEditorPreset,
 		handleDeleteEditorPreset,
 		handleSavePresetSubmit,
 	};

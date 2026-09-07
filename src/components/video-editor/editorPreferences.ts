@@ -79,6 +79,142 @@ export interface EditorPresetSnapshot extends Omit<PersistedEditorControls, "web
 	whisperModelPath: string | null;
 }
 
+export type StyleLookSnapshot = Pick<
+	EditorPresetSnapshot,
+	| "wallpaper"
+	| "shadowIntensity"
+	| "backgroundBlur"
+	| "zoomMotionBlur"
+	| "zoomMotionBlurTuning"
+	| "zoomTemporalMotionBlur"
+	| "zoomMotionBlurSampleCount"
+	| "zoomMotionBlurShutterFraction"
+	| "connectZooms"
+	| "zoomInDurationMs"
+	| "zoomInOverlapMs"
+	| "zoomOutDurationMs"
+	| "connectedZoomGapMs"
+	| "connectedZoomDurationMs"
+	| "zoomInEasing"
+	| "zoomOutEasing"
+	| "connectedZoomEasing"
+	| "showCursor"
+	| "loopCursor"
+	| "cursorStyle"
+	| "cursorSize"
+	| "cursorSmoothing"
+	| "cursorSpringStiffnessMultiplier"
+	| "cursorSpringDampingMultiplier"
+	| "cursorSpringMassMultiplier"
+	| "cameraSpringStiffnessMultiplier"
+	| "cameraSpringDampingMultiplier"
+	| "cameraSpringMassMultiplier"
+	| "cursorMotionBlur"
+	| "cursorClickEffect"
+	| "cursorClickEffectColor"
+	| "cursorClickEffectScale"
+	| "cursorClickEffectOpacity"
+	| "cursorClickEffectDurationMs"
+	| "cursorClickBounce"
+	| "cursorClickBounceDuration"
+	| "cursorSway"
+	| "borderRadius"
+	| "padding"
+	| "aspectRatio"
+> & { borderRadiusUnit: "percent" };
+
+export function pickStyleLook(snapshot: EditorPresetSnapshot): StyleLookSnapshot {
+	const {
+		wallpaper,
+		shadowIntensity,
+		backgroundBlur,
+		zoomMotionBlur,
+		zoomMotionBlurTuning,
+		zoomTemporalMotionBlur,
+		zoomMotionBlurSampleCount,
+		zoomMotionBlurShutterFraction,
+		connectZooms,
+		zoomInDurationMs,
+		zoomInOverlapMs,
+		zoomOutDurationMs,
+		connectedZoomGapMs,
+		connectedZoomDurationMs,
+		zoomInEasing,
+		zoomOutEasing,
+		connectedZoomEasing,
+		showCursor,
+		loopCursor,
+		cursorStyle,
+		cursorSize,
+		cursorSmoothing,
+		cursorSpringStiffnessMultiplier,
+		cursorSpringDampingMultiplier,
+		cursorSpringMassMultiplier,
+		cameraSpringStiffnessMultiplier,
+		cameraSpringDampingMultiplier,
+		cameraSpringMassMultiplier,
+		cursorMotionBlur,
+		cursorClickEffect,
+		cursorClickEffectColor,
+		cursorClickEffectScale,
+		cursorClickEffectOpacity,
+		cursorClickEffectDurationMs,
+		cursorClickBounce,
+		cursorClickBounceDuration,
+		cursorSway,
+		borderRadius,
+		padding,
+		aspectRatio,
+	} = normalizeEditorPresetSnapshot(snapshot);
+	return {
+		wallpaper,
+		shadowIntensity,
+		backgroundBlur,
+		zoomMotionBlur,
+		zoomMotionBlurTuning,
+		zoomTemporalMotionBlur,
+		zoomMotionBlurSampleCount,
+		zoomMotionBlurShutterFraction,
+		connectZooms,
+		zoomInDurationMs,
+		zoomInOverlapMs,
+		zoomOutDurationMs,
+		connectedZoomGapMs,
+		connectedZoomDurationMs,
+		zoomInEasing,
+		zoomOutEasing,
+		connectedZoomEasing,
+		showCursor,
+		loopCursor,
+		cursorStyle,
+		cursorSize,
+		cursorSmoothing,
+		cursorSpringStiffnessMultiplier,
+		cursorSpringDampingMultiplier,
+		cursorSpringMassMultiplier,
+		cameraSpringStiffnessMultiplier,
+		cameraSpringDampingMultiplier,
+		cameraSpringMassMultiplier,
+		cursorMotionBlur,
+		cursorClickEffect,
+		cursorClickEffectColor,
+		cursorClickEffectScale,
+		cursorClickEffectOpacity,
+		cursorClickEffectDurationMs,
+		cursorClickBounce,
+		cursorClickBounceDuration,
+		cursorSway,
+		borderRadius,
+		borderRadiusUnit: "percent",
+		padding,
+		aspectRatio,
+	};
+}
+
+export function serializeStyleLook(look: StyleLookSnapshot): string {
+	return JSON.stringify(pickStyleLook(look as EditorPresetSnapshot));
+}
+
 export interface EditorPreset {
 	id: string;
 	name: string;

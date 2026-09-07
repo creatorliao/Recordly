@@ -7,7 +7,7 @@ import {
 	X,
 } from "@phosphor-icons/react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import minimalCursorUrl from "@/assets/cursors/custom/minimal-cursor.svg";
 import { Button } from "@/components/ui/button";
@@ -527,6 +527,7 @@ function CursorClickEffectCards({
 }
 
 interface SettingsPanelProps {
+	stylePresetSlot?: ReactNode;
 	panelMode?: "editor" | "background";
 	activeEffectSection?: EditorEffectSection;
 	selected: string;
@@ -1080,6 +1081,7 @@ export function SettingsPanel({
 	onCaptionDelete,
 	nativeCaptureUnavailableSession = false,
 	onOpenNativeCaptureUnavailableModal,
+	stylePresetSlot,
 }: SettingsPanelProps) {
 	const tSettings = useScopedT("settings");
 	const { locale, setLocale, t } = useI18n();
@@ -2400,9 +2402,7 @@ export function SettingsPanel({
 					</span>
 					<Select
 						value={autoCaptionSettings.fontFamily}
-						onValueChange={(value) =>
-							updateAutoCaptionSettings({ fontFamily: value })
-						}
+						onValueChange={(value) => updateAutoCaptionSettings({ fontFamily: value })}
 					>
 						<SelectTrigger className="h-8 w-full rounded-md border-foreground/10 bg-foreground/5 text-xs text-foreground">
 							<SelectValue />
@@ -2545,7 +2545,10 @@ export function SettingsPanel({
 							[
 								{
 									value: "recording",
-									label: t("editor.startup.recordingToolbar", "Recording toolbar"),
+									label: t(
+										"editor.startup.recordingToolbar",
+										"Recording toolbar",
+									),
 								},
 								{ value: "editor", label: t("editor.startup.editor", "Editor") },
 							] as const
@@ -2571,7 +2574,9 @@ export function SettingsPanel({
 				</section>
 
 				<section className="flex flex-col gap-2">
-					<SectionLabel>{t("editor.closeWindow.title", "When closing window")}</SectionLabel>
+					<SectionLabel>
+						{t("editor.closeWindow.title", "When closing window")}
+					</SectionLabel>
 					<div className="flex rounded-lg border border-foreground/10 bg-foreground/5 p-0.5">
 						{(
 							[
@@ -2631,7 +2636,9 @@ export function SettingsPanel({
 				</section>
 
 				<section className="flex flex-col gap-2">
-					<SectionLabel>{t("editor.windowsIntegration.title", "Windows integration")}</SectionLabel>
+					<SectionLabel>
+						{t("editor.windowsIntegration.title", "Windows integration")}
+					</SectionLabel>
 					<div className="flex items-center justify-between gap-3 rounded-lg bg-foreground/[0.03] px-2.5 py-2">
 						<div>
 							<div className="text-[11px] font-medium text-foreground">
@@ -2899,6 +2906,7 @@ export function SettingsPanel({
 
 		const sceneSectionContent = (
 			<div className="space-y-4">
+				{stylePresetSlot}
 				{backgroundSettingsContent}
 				{frameSectionContent}
 				{cropSectionContent}
@@ -3259,6 +3267,7 @@ export function SettingsPanel({
 			case "cursor":
 				return (
 					<section className="flex flex-col gap-2">
+						{stylePresetSlot}
 						<div className="flex items-center justify-between gap-3">
 							<div className="flex items-center gap-3">
 								<SectionLabel>

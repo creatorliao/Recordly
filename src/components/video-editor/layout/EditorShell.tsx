@@ -59,7 +59,6 @@ export function EditorShell(props: Props) {
 		appearance,
 		timeline,
 		ui,
-		presets,
 		projectController,
 		editing,
 		exportController,
@@ -240,7 +239,6 @@ export function EditorShell(props: Props) {
 				closeProjectNameEditor={saveActions.closeProjectNameEditor}
 				settingsPanelVisible={ui.settingsPanelVisible}
 				onToggleSettingsPanel={() => ui.setSettingsPanelVisible((v) => !v)}
-				presets={presets}
 				exportSettings={exportSettings}
 				exportSession={exportSession}
 				exportDimensions={exportDimensions}

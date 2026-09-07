@@ -1,6 +1,11 @@
 import { type Dispatch, type SetStateAction, useCallback, useMemo, useState } from "react";
 import type { AspectRatio } from "@/utils/aspectRatioUtils";
-import { type EditorPresetSnapshot, loadEditorPresets } from "../editorPreferences";
+import {
+	type EditorPresetSnapshot,
+	loadEditorPresets,
+	pickStyleLook,
+	type StyleLookSnapshot,
+} from "../editorPreferences";
 import type { useExportSettings } from "../export/useExportSettings";
 import type { useAppearanceState } from "../state/useAppearanceState";
 import type { useTimelineState } from "../state/useTimelineState";
@@ -14,9 +19,7 @@ type Input = {
 	aspectRatio: AspectRatio;
 	setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
 	whisperExecutablePath: string | null;
-	setWhisperExecutablePath: Dispatch<SetStateAction<string | null>>;
 	whisperModelPath: string | null;
-	setWhisperModelPath: Dispatch<SetStateAction<string | null>>;
 };
 
 export function useVideoEditorPresets({
@@ -27,9 +30,7 @@ export function useVideoEditorPresets({
 	aspectRatio,
 	setAspectRatio,
 	whisperExecutablePath,
-	setWhisperExecutablePath,
 	whisperModelPath,
-	setWhisperModelPath,
 }: Input) {
 	const [editorPresets, setEditorPresets] = useState(() => loadEditorPresets());
 	const [activeEditorPresetId, setActiveEditorPresetId] = useState<string | null>(null);
@@ -78,9 +79,9 @@ export function useVideoEditorPresets({
 			borderRadius: appearance.borderRadius,
 			borderRadiusUnit: "percent",
 			padding: { ...appearance.padding },
+			aspectRatio,
 			cropRegion: { ...appearance.cropRegion },
 			webcam: (({ sourcePath: _sourcePath, ...settings }) => settings)(appearance.webcam),
-			aspectRatio,
 			exportEncodingMode: exportSettings.exportEncodingMode,
 			exportBackendPreference: exportSettings.exportBackendPreference,
 			exportPipelineModel: exportSettings.exportPipelineModel,
@@ -106,72 +107,49 @@ export function useVideoEditorPresets({
 
 	const applySnapshot = useCallback(
 		(snapshot: EditorPresetSnapshot) => {
-			appearance.setWallpaper(snapshot.wallpaper);
-			appearance.setShadowIntensity(snapshot.shadowIntensity);
-			appearance.setBackgroundBlur(snapshot.backgroundBlur);
-			appearance.setZoomMotionBlur(snapshot.zoomMotionBlur);
-			appearance.setZoomMotionBlurTuning({ ...snapshot.zoomMotionBlurTuning });
-			appearance.setZoomTemporalMotionBlur(snapshot.zoomTemporalMotionBlur);
-			appearance.setZoomMotionBlurSampleCount(snapshot.zoomMotionBlurSampleCount);
-			appearance.setZoomMotionBlurShutterFraction(snapshot.zoomMotionBlurShutterFraction);
-			appearance.setConnectZooms(snapshot.connectZooms);
-			appearance.setZoomInDurationMs(snapshot.zoomInDurationMs);
-			appearance.setZoomInOverlapMs(snapshot.zoomInOverlapMs);
-			appearance.setZoomOutDurationMs(snapshot.zoomOutDurationMs);
-			appearance.setConnectedZoomGapMs(snapshot.connectedZoomGapMs);
-			appearance.setConnectedZoomDurationMs(snapshot.connectedZoomDurationMs);
-			appearance.setZoomInEasing(snapshot.zoomInEasing);
-			appearance.setZoomOutEasing(snapshot.zoomOutEasing);
-			appearance.setConnectedZoomEasing(snapshot.connectedZoomEasing);
-			appearance.setShowCursor(snapshot.showCursor);
-			appearance.setLoopCursor(snapshot.loopCursor);
-			appearance.setCursorStyle(snapshot.cursorStyle);
-			appearance.setCursorSize(snapshot.cursorSize);
-			appearance.setCursorSmoothing(snapshot.cursorSmoothing);
-			appearance.setCursorSpringStiffnessMultiplier(snapshot.cursorSpringStiffnessMultiplier);
-			appearance.setCursorSpringDampingMultiplier(snapshot.cursorSpringDampingMultiplier);
-			appearance.setCursorSpringMassMultiplier(snapshot.cursorSpringMassMultiplier);
-			appearance.setCameraSpringStiffnessMultiplier(snapshot.cameraSpringStiffnessMultiplier);
-			appearance.setCameraSpringDampingMultiplier(snapshot.cameraSpringDampingMultiplier);
-			appearance.setCameraSpringMassMultiplier(snapshot.cameraSpringMassMultiplier);
-			appearance.setCursorMotionBlur(snapshot.cursorMotionBlur);
-			appearance.setCursorClickEffect(snapshot.cursorClickEffect);
-			appearance.setCursorClickEffectColor(snapshot.cursorClickEffectColor);
-			appearance.setCursorClickEffectScale(snapshot.cursorClickEffectScale);
-			appearance.setCursorClickEffectOpacity(snapshot.cursorClickEffectOpacity);
-			appearance.setCursorClickEffectDurationMs(snapshot.cursorClickEffectDurationMs);
-			appearance.setCursorClickBounce(snapshot.cursorClickBounce);
-			appearance.setCursorClickBounceDuration(snapshot.cursorClickBounceDuration);
-			appearance.setCursorSway(snapshot.cursorSway);
-			appearance.setBorderRadius(snapshot.borderRadius);
-			appearance.setPadding({ ...snapshot.padding });
-			appearance.setCropRegion({ ...snapshot.cropRegion });
-			appearance.setWebcam((current) => ({
-				...snapshot.webcam,
-				sourcePath: current.sourcePath,
-			}));
-			setAspectRatio(snapshot.aspectRatio);
-			exportSettings.setExportEncodingMode(snapshot.exportEncodingMode);
-			exportSettings.setExportBackendPreference(snapshot.exportBackendPreference);
-			exportSettings.setExportPipelineModel(snapshot.exportPipelineModel);
-			exportSettings.setExportQuality(snapshot.exportQuality);
-			exportSettings.setMp4FrameRate(snapshot.mp4FrameRate);
-			exportSettings.setExportFormat(snapshot.exportFormat);
-			exportSettings.setGifFrameRate(snapshot.gifFrameRate);
-			exportSettings.setGifLoop(snapshot.gifLoop);
-			exportSettings.setGifSizePreset(snapshot.gifSizePreset);
-			timeline.setAutoCaptionSettings({ ...snapshot.autoCaptionSettings });
-			setWhisperExecutablePath(snapshot.whisperExecutablePath);
-			setWhisperModelPath(snapshot.whisperModelPath);
+			const look = pickStyleLook(snapshot) as StyleLookSnapshot;
+			appearance.setWallpaper(look.wallpaper);
+			appearance.setShadowIntensity(look.shadowIntensity);
+			appearance.setBackgroundBlur(look.backgroundBlur);
+			appearance.setZoomMotionBlur(look.zoomMotionBlur);
+			appearance.setZoomMotionBlurTuning({ ...look.zoomMotionBlurTuning });
+			appearance.setZoomTemporalMotionBlur(look.zoomTemporalMotionBlur);
+			appearance.setZoomMotionBlurSampleCount(look.zoomMotionBlurSampleCount);
+			appearance.setZoomMotionBlurShutterFraction(look.zoomMotionBlurShutterFraction);
+			appearance.setConnectZooms(look.connectZooms);
+			appearance.setZoomInDurationMs(look.zoomInDurationMs);
+			appearance.setZoomInOverlapMs(look.zoomInOverlapMs);
+			appearance.setZoomOutDurationMs(look.zoomOutDurationMs);
+			appearance.setConnectedZoomGapMs(look.connectedZoomGapMs);
+			appearance.setConnectedZoomDurationMs(look.connectedZoomDurationMs);
+			appearance.setZoomInEasing(look.zoomInEasing);
+			appearance.setZoomOutEasing(look.zoomOutEasing);
+			appearance.setConnectedZoomEasing(look.connectedZoomEasing);
+			appearance.setShowCursor(look.showCursor);
+			appearance.setLoopCursor(look.loopCursor);
+			appearance.setCursorStyle(look.cursorStyle);
+			appearance.setCursorSize(look.cursorSize);
+			appearance.setCursorSmoothing(look.cursorSmoothing);
+			appearance.setCursorSpringStiffnessMultiplier(look.cursorSpringStiffnessMultiplier);
+			appearance.setCursorSpringDampingMultiplier(look.cursorSpringDampingMultiplier);
+			appearance.setCursorSpringMassMultiplier(look.cursorSpringMassMultiplier);
+			appearance.setCameraSpringStiffnessMultiplier(look.cameraSpringStiffnessMultiplier);
+			appearance.setCameraSpringDampingMultiplier(look.cameraSpringDampingMultiplier);
+			appearance.setCameraSpringMassMultiplier(look.cameraSpringMassMultiplier);
+			appearance.setCursorMotionBlur(look.cursorMotionBlur);
+			appearance.setCursorClickEffect(look.cursorClickEffect);
+			appearance.setCursorClickEffectColor(look.cursorClickEffectColor);
+			appearance.setCursorClickEffectScale(look.cursorClickEffectScale);
+			appearance.setCursorClickEffectOpacity(look.cursorClickEffectOpacity);
+			appearance.setCursorClickEffectDurationMs(look.cursorClickEffectDurationMs);
+			appearance.setCursorClickBounce(look.cursorClickBounce);
+			appearance.setCursorClickBounceDuration(look.cursorClickBounceDuration);
+			appearance.setCursorSway(look.cursorSway);
+			appearance.setBorderRadius(look.borderRadius);
+			appearance.setPadding({ ...look.padding });
+			setAspectRatio(look.aspectRatio);
 		},
-		[
-			appearance,
-			exportSettings,
-			timeline,
-			setAspectRatio,
-			setWhisperExecutablePath,
-			setWhisperModelPath,
-		],
+		[appearance, setAspectRatio],
 	);
 
 	const actions = useEditorPresets({

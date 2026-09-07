@@ -12,6 +12,7 @@ import { useTimelineEditingController } from "./hooks/useTimelineEditingControll
 import { EditorShell } from "./layout/EditorShell";
 import { useEditorSettingsPanelProps } from "./layout/useEditorSettingsPanelProps";
 import { useVideoEditorPresets } from "./presets/useVideoEditorPresets";
+import { StylePresetCard } from "./presets/StylePresetCard";
 import { useEditorProjectController } from "./project/useEditorProjectController";
 import { useProjectLibraryController } from "./project/useProjectLibraryController";
 import { getDevOpenRecordingConfig, getSmokeExportConfig } from "./smokeExportConfig";
@@ -53,8 +54,8 @@ export default function VideoEditor() {
 		sessionNativeCaptureUnavailable,
 		setNativeCaptureUnavailableModalOpen,
 		whisperExecutablePath,
-		setWhisperExecutablePath,
 		whisperModelPath,
+		setWhisperExecutablePath,
 		setWhisperModelPath,
 		downloadedWhisperModelPath,
 		setDownloadedWhisperModelPath,
@@ -141,9 +142,7 @@ export default function VideoEditor() {
 		aspectRatio,
 		setAspectRatio,
 		whisperExecutablePath,
-		setWhisperExecutablePath,
 		whisperModelPath,
-		setWhisperModelPath,
 	});
 	const { refreshProjectLibrary, captureProjectThumbnail } = useProjectLibraryController({
 		project,
@@ -204,6 +203,7 @@ export default function VideoEditor() {
 		devConfig: devOpenRecordingConfig,
 		aspectRatio,
 		setAspectRatio,
+		appliedStylePresetId: presets.activeEditorPresetId,
 		videoPath,
 		setVideoPath,
 		videoSourcePath,
@@ -332,8 +332,7 @@ export default function VideoEditor() {
 		experimentalNvidiaCudaExport,
 		nvidiaCudaExportAvailable,
 		remountPreview,
-		projectName:
-			project.projectNameDraft.trim() || t("editor.project.untitled", "Untitled"),
+		projectName: project.projectNameDraft.trim() || t("editor.project.untitled", "Untitled"),
 	});
 	const previewAspectRatioValue = getAspectRatioValue(
 		aspectRatio,
@@ -368,6 +367,10 @@ export default function VideoEditor() {
 		handleUploadWebcam,
 		handleClearWebcam,
 	});
+	const settingsPanelPropsWithPresets = {
+		...settingsPanelProps,
+		stylePresetSlot: <StylePresetCard t={t} presets={presets} />,
+	};
 	return (
 		<EditorShell
 			t={t}
@@ -382,7 +385,7 @@ export default function VideoEditor() {
 			exportSettings={exportSettings}
 			exportSession={exportSession}
 			exportDimensions={exportDimensions}
-			settingsPanelProps={settingsPanelProps}
+			settingsPanelProps={settingsPanelPropsWithPresets}
 			headerLeftControlsPaddingClass={headerLeftControlsPaddingClass}
 			isMac={isMac}
 			hasCaptionsForSidecar={hasCaptionsForSidecar}

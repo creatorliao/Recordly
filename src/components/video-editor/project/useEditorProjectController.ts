@@ -30,6 +30,7 @@ type Input = {
 	smokeConfig: ReturnType<typeof getSmokeExportConfig>;
 	devConfig: ReturnType<typeof getDevOpenRecordingConfig>;
 	aspectRatio: AspectRatio;
+	appliedStylePresetId?: string | null;
 	setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
 	videoPath: string | null;
 	setVideoPath: Dispatch<SetStateAction<string | null>>;
@@ -92,6 +93,7 @@ export function useEditorProjectController(input: Input) {
 		timeline: input.timeline,
 		exportSettings: input.exportSettings,
 		aspectRatio: input.aspectRatio,
+		appliedStylePresetId: input.appliedStylePresetId,
 		projectNameInputRef: input.projectNameInputRef,
 		projectSaveDialogInputRef: input.projectSaveDialogInputRef,
 	});

@@ -99,6 +99,7 @@ export function legacyBorderRadiusPixelsToPercent(value: number): number {
 const DEFAULT_MOTION_PRESET = CURSOR_MOTION_PRESETS.focused;
 
 export interface ProjectEditorState {
+	appliedStylePresetId?: string | null;
 	wallpaper: string;
 	shadowIntensity: number;
 	backgroundBlur: number;
@@ -908,6 +909,10 @@ export function normalizeProjectEditor(editor: Partial<ProjectEditorState>): Pro
 		CURSOR_MOTION_PRESETS[resolveCursorMotionPresetId(normalizedMotionValues)];
 
 	return {
+		appliedStylePresetId:
+			typeof editor.appliedStylePresetId === "string" && editor.appliedStylePresetId.trim()
+				? editor.appliedStylePresetId.trim()
+				: null,
 		wallpaper: typeof editor.wallpaper === "string" ? editor.wallpaper : DEFAULT_WALLPAPER_PATH,
 		shadowIntensity: typeof editor.shadowIntensity === "number" ? editor.shadowIntensity : 0.67,
 		backgroundBlur: normalizedBackgroundBlur,

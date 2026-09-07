@@ -17,6 +17,7 @@ type Input = {
 	timeline: ReturnType<typeof useTimelineState>;
 	exportSettings: ReturnType<typeof useExportSettings>;
 	aspectRatio: AspectRatio;
+	appliedStylePresetId?: string | null;
 	projectNameInputRef: RefObject<HTMLInputElement | null>;
 	projectSaveDialogInputRef: RefObject<HTMLInputElement | null>;
 };
@@ -28,6 +29,7 @@ export function useProjectSnapshotModel({
 	timeline,
 	exportSettings,
 	aspectRatio,
+	appliedStylePresetId,
 	projectNameInputRef,
 	projectSaveDialogInputRef,
 }: Input) {
@@ -126,6 +128,7 @@ export function useProjectSnapshotModel({
 				autoCaptions: timeline.autoCaptions,
 				autoCaptionSettings: timeline.autoCaptionSettings,
 				aspectRatio,
+				appliedStylePresetId: appliedStylePresetId ?? null,
 				exportEncodingMode: exportSettings.exportEncodingMode,
 				exportBackendPreference: exportSettings.exportBackendPreference,
 				exportPipelineModel: exportSettings.exportPipelineModel,
@@ -191,6 +194,7 @@ export function useProjectSnapshotModel({
 			timeline.autoCaptions,
 			timeline.autoCaptionSettings,
 			aspectRatio,
+			appliedStylePresetId,
 			exportSettings.exportEncodingMode,
 			exportSettings.exportBackendPreference,
 			exportSettings.exportPipelineModel,
