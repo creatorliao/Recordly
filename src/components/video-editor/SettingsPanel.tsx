@@ -308,7 +308,7 @@ function MotionPresetCards({
 							type="button"
 							onClick={() => onApply(presetId)}
 							className={cn(
-								"rounded-xl border px-3 py-3 text-left transition-all",
+								"rounded-[3px] border px-2.5 py-2.5 text-left transition-colors",
 								"border-foreground/10 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.06]",
 								isActive &&
 									"border-[#2563EB]/70 bg-[#2563EB]/12 shadow-[inset_0_0_0_1px_rgba(37,99,235,0.15)]",
@@ -317,12 +317,12 @@ function MotionPresetCards({
 							<div className="flex items-start gap-3">
 								<div
 									className={cn(
-										"mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-foreground/10 bg-black/10 text-muted-foreground",
+										"mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-[3px] border border-foreground/10 bg-black/10 text-muted-foreground",
 										isActive &&
 											"border-[#2563EB]/30 bg-[#2563EB]/10 text-[#75A6FF]",
 									)}
 								>
-									<Icon className="h-4 w-4" />
+									<Icon className="h-3.5 w-3.5" />
 								</div>
 								<div className="min-w-0 flex-1">
 									<div className="text-[12px] font-medium text-foreground">
@@ -2075,7 +2075,7 @@ export function SettingsPanel({
 	if (isBackgroundPanel) {
 		return (
 			<div className="editor-drawer flex h-full w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-hidden border-r border-foreground/16 bg-editor-panel">
-				<div className="editor-scrollbar flex-1 min-h-0 overflow-y-auto p-2 pb-0">
+				<div className="editor-scrollbar flex-1 min-h-0 overflow-y-auto p-2 pb-3">
 					<div className="mb-4 flex items-center gap-2">
 						<Palette className="w-4 h-4 text-[#2563EB]" />
 						<span className="text-sm font-medium text-foreground">
@@ -3321,12 +3321,12 @@ export function SettingsPanel({
 											title={option.label}
 											aria-label={option.label}
 											className={cn(
-												"group aspect-square h-auto min-w-0 rounded-[10px] border border-foreground/10 bg-foreground/[0.03] p-3 text-left text-foreground shadow-none transition-all hover:border-foreground/20 hover:bg-foreground/[0.06]",
+												"group aspect-square h-auto min-w-0 rounded-[3px] border border-foreground/10 bg-foreground/[0.03] p-2 text-left text-foreground shadow-none transition-colors hover:border-foreground/20 hover:bg-foreground/[0.06]",
 												"data-[state=on]:border-[#2563EB]/70 data-[state=on]:bg-[#2563EB]/12 data-[state=on]:text-foreground",
 											)}
 										>
-											<div className="flex h-full flex-col items-center justify-between gap-3">
-												<div className="flex min-h-0 flex-1 items-center justify-center rounded-lg px-2 py-1.5">
+											<div className="flex h-full flex-col items-center justify-between gap-2">
+												<div className="flex min-h-0 flex-1 items-center justify-center rounded-[3px] px-1.5 py-1">
 													<CursorStylePreview
 														style={option.value}
 														previewUrls={cursorPreviewUrls}
@@ -3793,7 +3793,7 @@ export function SettingsPanel({
 
 	return (
 		<div className="editor-drawer flex h-full w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-hidden border-r border-foreground/16 bg-editor-panel [&_.rounded-lg]:rounded-[3px] [&_.rounded-xl]:rounded-[4px] [&_.rounded-md]:rounded-[3px]">
-			<div className="editor-scrollbar flex-1 min-h-0 overflow-y-auto p-2 pb-0">
+			<div className="editor-scrollbar flex-1 min-h-0 overflow-y-auto p-2 pb-3">
 				<AnimatePresence mode="wait" initial={false}>
 					<motion.div
 						key={activeEffectSection}

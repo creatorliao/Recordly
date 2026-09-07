@@ -150,7 +150,7 @@ export function EditorTimelinePanel(props: Props) {
 			<button
 				type="button"
 				onClick={onToggleCollapsed}
-				className="absolute right-1 top-1 z-20 inline-flex h-6 w-6 items-center justify-center border border-foreground/10 bg-editor-surface text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+				className="absolute right-1 top-0 z-20 inline-flex h-7 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
 				aria-label={
 					isCollapsed
 						? t("editor.timeline.expand", "Expand timeline")
@@ -163,11 +163,7 @@ export function EditorTimelinePanel(props: Props) {
 				}
 				aria-pressed={isCollapsed}
 			>
-				{isCollapsed ? (
-					<CaretUp className="h-3.5 w-3.5" />
-				) : (
-					<CaretDown className="h-3.5 w-3.5" />
-				)}
+				{isCollapsed ? <CaretUp className="h-4 w-4" /> : <CaretDown className="h-4 w-4" />}
 			</button>
 		</div>
 	);

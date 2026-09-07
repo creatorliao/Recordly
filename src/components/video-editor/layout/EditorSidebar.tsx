@@ -4,8 +4,8 @@ import {
 	Cursor,
 	Gear,
 	PuzzlePiece,
-	SquaresFour,
 	Sparkle,
+	SquaresFour,
 } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import type { ComponentProps, Dispatch, SetStateAction } from "react";
@@ -121,7 +121,7 @@ export function EditorSidebar({
 
 	return (
 		<div className="flex flex-shrink-0">
-			<div className="flex h-full w-12 flex-shrink-0 flex-col justify-between border-r border-foreground/16 py-2">
+			<div className="flex h-full w-12 flex-shrink-0 flex-col items-center justify-between border-r border-foreground/16 py-2">
 				<div className="flex flex-col items-center gap-1">
 					{toolSections.map((section) =>
 						renderItem(section, activeSection === section.id),

@@ -13,12 +13,12 @@ import {
 	SpeakerX,
 } from "@phosphor-icons/react";
 import {
-	useEffect,
-	useRef,
-	useState,
 	type Dispatch,
 	type RefObject,
 	type SetStateAction,
+	useEffect,
+	useRef,
+	useState,
 } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -351,21 +351,18 @@ export function EditorPreviewPanel(props: Props) {
 								<SpeakerHigh className="h-3.5 w-3.5" />
 							)}
 						</button>
-						<div className="relative flex h-7 w-24 select-none items-center overflow-hidden rounded-full border border-foreground/[0.06] bg-editor-bg/80 shadow-[inset_0_1px_0_hsl(var(--foreground)/0.06)]">
+						<div className="relative flex h-7 w-[104px] select-none items-center gap-2">
 							<div
-								className="absolute inset-y-[3px] left-[3px] right-auto rounded-[10px] bg-foreground/[0.08]"
+								className="absolute left-0 right-10 top-1/2 h-1 -translate-y-1/2 rounded-[2px] bg-foreground/10"
 								style={{
-									width:
-										previewVolume > 0
-											? `max(calc(${previewVolume * 100}% - 6px), 1.2rem)`
-											: 0,
+									background: `linear-gradient(to right, #2563eb ${previewVolume * 100}%, hsl(var(--foreground) / 0.1) 0)`,
 								}}
 							/>
 							<div
-								className="pointer-events-none absolute bottom-[18%] top-[18%] z-10 w-0.5 rounded-full bg-foreground/95 shadow-[0_0_10px_rgba(37,99,235,0.28)]"
-								style={{ left: `calc(${previewVolume * 100}% - 8px)` }}
+								className="pointer-events-none absolute left-0 top-1/2 z-10 h-3 w-1 -translate-y-1/2 rounded-[2px] bg-[#2563EB]"
+								style={{ left: `calc(${previewVolume * 100}% - 42px)` }}
 							/>
-							<span className="pointer-events-none relative z-10 pl-2 text-[10px] font-medium text-muted-foreground">
+							<span className="pointer-events-none absolute right-0 text-[10px] font-medium tabular-nums text-muted-foreground">
 								{Math.round(previewVolume * 100)}%
 							</span>
 							<input
@@ -376,7 +373,7 @@ export function EditorPreviewPanel(props: Props) {
 								step="0.01"
 								value={previewVolume}
 								onChange={(event) => setPreviewVolume(Number(event.target.value))}
-								className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
+								className="absolute inset-y-0 left-0 right-10 h-full cursor-ew-resize opacity-0"
 							/>
 						</div>
 					</div>

@@ -1,5 +1,5 @@
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { useCallback, useRef, memo, useEffect } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface SliderControlProps {
@@ -46,10 +46,7 @@ export const SliderControl = memo(function SliderControl({
 
 	const pct = Math.min(100, Math.max(0, ((value - min) / (max - min || 1)) * 100));
 
-	const dividerClass =
-		accentColor === "purple"
-			? "bg-foreground/95 shadow-[0_0_10px_rgba(139,92,246,0.28)]"
-			: "bg-foreground/95 shadow-[0_0_10px_rgba(37,99,235,0.28)]";
+	const dividerClass = accentColor === "purple" ? "bg-violet-500" : "bg-[#2563EB]";
 
 	// Sync initial and prop-driven changes to CSS variable
 	useEffect(() => {
@@ -163,7 +160,7 @@ export const SliderControl = memo(function SliderControl({
 					onChange(clamp(quantizeToStep(value + step, min, step), min, max));
 				}
 			}}
-			className="relative flex h-10 w-full select-none items-center overflow-hidden rounded-xl bg-editor-bg/80 px-1.5 outline-none focus-visible:ring-1 focus-visible:ring-[#2563EB]/40"
+			className="relative grid h-7 w-full select-none grid-cols-[72px_minmax(0,1fr)_44px] items-center gap-2 px-0.5 outline-none focus-visible:ring-1 focus-visible:ring-[#2563EB]/40"
 			style={
 				{
 					"--slider-pct": String(pct / 100),
@@ -171,26 +168,26 @@ export const SliderControl = memo(function SliderControl({
 			}
 		>
 			<div
-				className="pointer-events-none absolute inset-y-[3px] left-[3px] right-auto rounded-[10px] bg-foreground/[0.08] shadow-[0_4px_10px_0_rgba(0,0,0,0.18)] transition-none"
+				className="pointer-events-none absolute left-[74px] right-[46px] top-1/2 h-1 -translate-y-1/2 rounded-[2px] bg-foreground/10 transition-none"
 				style={{
-					width: "calc(var(--slider-pct) * (100% - 6px))",
+					background: `linear-gradient(to right, ${accentColor === "purple" ? "#8b5cf6" : "#2563eb"} calc(var(--slider-pct) * 100%), hsl(var(--foreground) / 0.1) 0)`,
 				}}
 			/>
 			<div
 				className={cn(
-					"pointer-events-none absolute bottom-[18%] top-[18%] z-10 w-[2px] rounded-full transition-none",
+					"pointer-events-none absolute top-1/2 z-10 h-3 w-1 -translate-y-1/2 rounded-[2px] transition-none",
 					dividerClass,
 				)}
 				style={{
-					left: "calc(var(--slider-pct) * (100% - 6px) - 6px)",
+					left: "calc(74px + var(--slider-pct) * (100% - 120px) - 2px)",
 				}}
 			/>
-			<span className="pointer-events-none relative z-10 flex-1 pl-3 text-[12px] font-medium text-muted-foreground">
+			<span className="pointer-events-none relative z-10 truncate text-[11px] font-medium text-muted-foreground">
 				{label}
 			</span>
 			<span
 				ref={valueTextRef}
-				className="pointer-events-none relative z-10 pr-3 text-[12px] font-medium tabular-nums text-foreground"
+				className="pointer-events-none relative z-10 truncate text-right text-[11px] font-medium tabular-nums text-foreground"
 			>
 				{formatValue(value)}
 			</span>

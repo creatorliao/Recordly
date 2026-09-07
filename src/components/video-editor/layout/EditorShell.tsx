@@ -320,7 +320,7 @@ export function EditorShell(props: Props) {
 						handleReturnToRecording={openActions.handleReturnToRecording}
 						isEmptyWorkspace={!project.videoPath}
 					/>
-					<div className="flex min-w-0 min-h-0 flex-1 flex-col gap-1 pr-3">
+					<div className="flex min-w-0 min-h-0 flex-1 flex-col gap-1 border-r border-foreground/10">
 						<EditorPreviewPanel
 							t={t}
 							videoPath={project.videoPath}

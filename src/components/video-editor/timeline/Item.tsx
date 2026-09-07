@@ -1,13 +1,4 @@
-import {
-	FilmSlate as Film,
-	Gauge,
-	ChatCircle as MessageSquare,
-	MusicNotes as Music,
-	MouseLeftClickIcon as PhMouseLeftClick,
-	Scissors,
-	SpeakerX,
-	MagnifyingGlassPlus as ZoomIn,
-} from "@phosphor-icons/react";
+import { SpeakerX } from "@phosphor-icons/react";
 import type { Span } from "dnd-timeline";
 import { useItem } from "dnd-timeline";
 import { useMemo } from "react";
@@ -29,7 +20,6 @@ interface ItemProps {
 	onSelect?: () => void;
 	onSelectId?: (id: string) => void;
 	zoomDepth?: number;
-	zoomMode?: "auto" | "manual";
 	speedValue?: number;
 	waveformPeaks?: AudioPeaksData | null;
 	waveformSegmentSpan?: Span;
@@ -70,7 +60,6 @@ export default function Item({
 	onSelect,
 	onSelectId,
 	zoomDepth = 1,
-	zoomMode = "auto",
 	speedValue,
 	waveformPeaks = null,
 	waveformSegmentSpan,
@@ -220,136 +209,27 @@ export default function Item({
 							<SpeakerX className="w-3 h-3 text-red-300/90 shrink-0" />
 						</div>
 					)}
-					{/* Content */}
-					<div className="relative z-10 flex min-w-0 max-w-full flex-col items-center justify-center text-black/70 dark:text-white/90 opacity-80 group-hover:opacity-100 transition-opacity select-none overflow-hidden text-center">
-						<div className="flex min-w-0 max-w-full items-center justify-center gap-[1cqi]">
-							{isZoom ? (
-								<>
-									<ZoomIn
-										style={{
-											width: "clamp(8px, 2.5cqi, 14px)",
-											height: "clamp(8px, 2.5cqi, 14px)",
-										}}
-										className="shrink-0"
-									/>
-									<span
-										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
-										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
-									>
-										{ZOOM_LABELS[zoomDepth] || `${zoomDepth}×`}
-									</span>
-								</>
-							) : isTrim ? (
-								<>
-									<Scissors
-										style={{
-											width: "clamp(8px, 2.5cqi, 14px)",
-											height: "clamp(8px, 2.5cqi, 14px)",
-										}}
-										className="shrink-0"
-									/>
-									<span
-										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
-										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
-									>
-										Trim
-									</span>
-								</>
-							) : isClip ? (
-								<>
-									<Film
-										style={{
-											width: "clamp(8px, 2.5cqi, 14px)",
-											height: "clamp(8px, 2.5cqi, 14px)",
-										}}
-										className="shrink-0"
-									/>
-									<span
-										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
-										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
-									>
-										Clip
-									</span>
-									{clipSpeedLabel && (
-										<span
-											style={{ fontSize: "clamp(6px, 1.7cqi, 9px)" }}
-											className="rounded-[4px] bg-black/10 px-1 font-bold tabular-nums text-black/65 dark:bg-white/15 dark:text-white/80"
-										>
-											{clipSpeedLabel}
-										</span>
-									)}
-								</>
-							) : isSpeed ? (
-								<>
-									<Gauge
-										style={{
-											width: "clamp(8px, 2.5cqi, 14px)",
-											height: "clamp(8px, 2.5cqi, 14px)",
-										}}
-										className="shrink-0"
-									/>
-									<span
-										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
-										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
-									>
-										{speedValue !== undefined ? `${speedValue}×` : "Speed"}
-									</span>
-								</>
-							) : isAudio ? (
-								<>
-									<Music
-										style={{
-											width: "clamp(8px, 2.5cqi, 14px)",
-											height: "clamp(8px, 2.5cqi, 14px)",
-										}}
-										className="shrink-0"
-									/>
-									<span
-										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
-										className="max-w-full truncate font-semibold tracking-tight"
-									>
-										{children}
-									</span>
-								</>
-							) : (
-								<>
-									<MessageSquare
-										style={{
-											width: "clamp(8px, 2.5cqi, 14px)",
-											height: "clamp(8px, 2.5cqi, 14px)",
-										}}
-										className="shrink-0"
-									/>
-									<span
-										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
-										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
-									>
-										{children}
-									</span>
-								</>
-							)}
-						</div>
-						{isZoom ? (
-							<div
-								className={`flex items-center gap-0.5 transition-opacity ${isSelected ? "opacity-70" : "opacity-0 group-hover:opacity-50"}`}
-							>
-								<PhMouseLeftClick
-									className="w-2.5 h-2.5 shrink-0"
-									weight={zoomMode === "manual" ? "regular" : "fill"}
-								/>
-								<span className="text-[9px] font-medium tracking-tight whitespace-nowrap">
-									{zoomMode === "manual" ? "Manual" : "Auto"}
-								</span>
-							</div>
-						) : (
-							<span
-								className={`text-[9px] tabular-nums tracking-tight whitespace-nowrap transition-opacity ${
-									isSelected ? "opacity-60" : "opacity-0 group-hover:opacity-40"
-								}`}
-							>
-								{timeLabel}
-							</span>
-						)}
+					<div
+						className="relative z-10 max-w-full truncate px-1.5 text-center text-[11px] font-medium tabular-nums leading-none text-black/70 dark:text-white/90 opacity-80 transition-opacity group-hover:opacity-100"
+						data-tooltip={
+							isZoom
+								? `${ZOOM_LABELS[zoomDepth] || `${zoomDepth}×`} · ${timeLabel}`
+								: timeLabel
+						}
+					>
+						{isZoom
+							? ZOOM_LABELS[zoomDepth] || `${zoomDepth}×`
+							: isTrim
+								? "Trim"
+								: isClip
+									? clipSpeedLabel && clipSpeedLabel !== "1×"
+										? `Clip · ${clipSpeedLabel}`
+										: "Clip"
+									: isSpeed
+										? speedValue !== undefined
+											? `${speedValue}×`
+											: "Speed"
+										: children}
 					</div>
 				</div>
 			</div>
