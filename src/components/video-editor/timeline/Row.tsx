@@ -31,12 +31,12 @@ export default function Row({
 
 	return (
 		<div
-			className="bg-transparent relative flex-1 min-h-[26px]"
+			className="bg-transparent relative min-h-6"
 			style={{ ...rowWrapperStyle, marginBottom: 2 }}
 		>
 			{label && (
 				<div
-					className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[9px] font-semibold uppercase tracking-widest z-20 pointer-events-none select-none"
+					className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[11px] font-medium z-20 pointer-events-none select-none"
 					style={{ color: labelColor, writingMode: "horizontal-tb" }}
 				>
 					{label}
@@ -49,7 +49,7 @@ export default function Row({
 			)}
 			<div
 				ref={setNodeRef}
-				className="relative h-full min-h-[26px] overflow-hidden"
+				className="relative h-6 min-h-6 overflow-hidden"
 				style={rowStyle}
 				onMouseEnter={onMouseEnter}
 				onMouseMove={onMouseMove}

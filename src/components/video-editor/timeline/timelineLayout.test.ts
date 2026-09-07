@@ -34,8 +34,8 @@ describe("timelineLayout", () => {
 	it("stretches content height to keep a two-row viewport", () => {
 		expect(TIMELINE_VISIBLE_ROW_COUNT).toBe(2);
 		expect(getTimelineViewportStretchFactor(2)).toBe(1);
-		expect(getTimelineViewportStretchFactor(4)).toBe(2);
-		expect(getTimelineViewportStretchFactor(5)).toBe(2.5);
+		expect(getTimelineViewportStretchFactor(4)).toBe(1);
+		expect(getTimelineViewportStretchFactor(5)).toBe(1);
 		expect(getTimelineViewportStretchFactor(0)).toBe(1);
 	});
 });

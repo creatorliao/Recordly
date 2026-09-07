@@ -1,0 +1,39 @@
+.editor-root {
+	--ed-radius-chrome: 0px;
+	--ed-radius-control: 2px;
+	--ed-radius-media: 3px;
+	--ed-space-1: 4px;
+	--ed-space-2: 8px;
+	--ed-space-3: 12px;
+	--ed-row-h: 28px;
+	--ed-row-h-header: 32px;
+	--ed-rail: 48px;
+	--ed-drawer: 280px;
+	--ed-split: 1px solid hsl(var(--foreground) / 0.16);
+	--ed-accent: #2563eb;
+	--ed-scroll-size: 6px;
+	--ed-shadow-chrome: none;
+}
+
+.editor-scrollbar {
+	scrollbar-width: thin;
+	scrollbar-color: hsl(var(--foreground) / 0.28) transparent;
+}
+
+.editor-scrollbar::-webkit-scrollbar {
+	width: var(--ed-scroll-size);
+	height: var(--ed-scroll-size);
+}
+
+.editor-scrollbar::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.editor-scrollbar::-webkit-scrollbar-thumb {
+	border-radius: 2px;
+	background: hsl(var(--foreground) / 0.28);
+}
+
+.editor-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: hsl(var(--foreground) / 0.42);
+}

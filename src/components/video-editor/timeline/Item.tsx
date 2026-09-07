@@ -184,8 +184,8 @@ export default function Item({
 						isSelected && glassStyles.selected,
 					)}
 					style={{
-						height: "85%",
-						minHeight: 22,
+						height: isClip ? 52 : 22,
+						minHeight: isClip ? 52 : 22,
 						minWidth: MIN_ITEM_PX,
 					}}
 					onClick={(event) => {

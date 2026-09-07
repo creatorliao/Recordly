@@ -2,7 +2,7 @@ import { PuzzlePiece } from "@phosphor-icons/react";
 
 export default function ExtensionManager() {
 	return (
-		<div className="flex h-full w-[332px] min-w-[280px] max-w-[332px] flex-[2] flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-editor-panel shadow-xl">
+		<div className="editor-drawer flex h-full w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-hidden border-r border-foreground/16 bg-editor-panel">
 			<div className="flex h-12 shrink-0 items-center border-b border-foreground/10 px-4">
 				<h2 className="text-sm font-semibold text-foreground">Extensions</h2>
 			</div>

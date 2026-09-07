@@ -35,12 +35,7 @@ import { useTimelineAudioPeaks } from "../../hooks/useTimelineAudioPeaks";
 import Item from "../../Item";
 import glassStyles from "../../ItemGlass.module.css";
 import Row from "../../Row";
-import {
-	getTimelineContentMinHeightPx,
-	getTimelineRowsMinHeightPx,
-	getTimelineViewportStretchFactor,
-	TIMELINE_AXIS_HEIGHT_PX,
-} from "../../timelineLayout";
+import { getTimelineContentMinHeightPx, getTimelineRowsMinHeightPx } from "../../timelineLayout";
 import TimelineAxis from "../axis/TimelineAxis";
 import ClipMarkerOverlay from "../overlays/ClipMarkerOverlay";
 import PlaybackCursor from "../playhead/PlaybackCursor";
@@ -946,7 +941,6 @@ export default function TimelineCanvas({
 	}, [items, showSourceAudioTrack, sourceAudioTracks.length, captionsEnabled]);
 	const timelineRowsMinHeightPx = getTimelineRowsMinHeightPx(timelineRowCount);
 	const timelineContentMinHeightPx = getTimelineContentMinHeightPx(timelineRowCount);
-	const timelineViewportStretchFactor = getTimelineViewportStretchFactor(timelineRowCount);
 	const sideProperty = direction === "rtl" ? "right" : "left";
 	const {
 		canShowGhostPlayhead,
@@ -994,7 +988,7 @@ export default function TimelineCanvas({
 			ref={setRefs}
 			style={{
 				...style,
-				height: `max(100%, ${timelineContentMinHeightPx}px, calc(${TIMELINE_AXIS_HEIGHT_PX}px + (100% - ${TIMELINE_AXIS_HEIGHT_PX}px) * ${timelineViewportStretchFactor}))`,
+				height: `max(100%, ${timelineContentMinHeightPx}px)`,
 			}}
 			className="select-none bg-editor-bg relative cursor-pointer group flex flex-col"
 			onMouseDown={handleTimelineMouseDown}
@@ -1028,7 +1022,7 @@ export default function TimelineCanvas({
 			)}
 
 			<div
-				className="relative z-10 flex flex-1 min-h-0 flex-col"
+				className="relative z-10 flex min-h-0 flex-col"
 				style={{ minHeight: timelineRowsMinHeightPx }}
 			>
 				<TimelineCanvasRows

@@ -247,9 +247,6 @@ export default function VideoEditor() {
 			setActiveEffectSection("projects");
 			setSettingsPanelVisible(true);
 		},
-		onSourceReady: () => {
-			setActiveEffectSection("scene");
-		},
 	});
 	const {
 		snapshot: { currentSourcePath },

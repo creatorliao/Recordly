@@ -44,7 +44,11 @@ export function EditorSidebar({
 }: Props) {
 	const toolSections = useMemo(
 		() => [
-			{ id: "projects" as const, label: t("editor.project.browserTitle", "Projects"), icon: SquaresFour },
+			{
+				id: "projects" as const,
+				label: t("editor.project.browserTitle", "Projects"),
+				icon: SquaresFour,
+			},
 			{ id: "scene" as const, label: t("settings.sections.scene", "Scene"), icon: Sparkle },
 			{ id: "cursor" as const, label: t("settings.sections.cursor", "Cursor"), icon: Cursor },
 			{ id: "webcam" as const, label: t("settings.sections.webcam", "Webcam"), icon: Camera },
@@ -70,22 +74,19 @@ export function EditorSidebar({
 			onClick={() => setActiveSection(section.id)}
 			data-tooltip={section.label}
 			data-tooltip-side="right"
-			className="group relative flex h-9 w-9 items-center justify-center rounded-lg outline-none focus-visible:outline-none"
+			className="group relative flex h-9 w-9 items-center justify-center outline-none focus-visible:outline-none"
 			animate={{ opacity: isActive ? 1 : 0.55 }}
 			transition={{ duration: 0.14 }}
 		>
 			{isActive ? (
-				<span className="absolute left-0 top-1/2 h-[22px] w-[2px] -translate-y-1/2 rounded-full bg-[#2563EB]" />
+				<span className="absolute left-0 top-1/2 h-9 w-[2px] -translate-y-1/2 bg-[#2563EB]" />
 			) : null}
 			<motion.span
 				className="relative z-10"
 				animate={{ color: isActive ? "#2563EB" : "hsl(var(--foreground))" }}
 				transition={{ duration: 0.14 }}
 			>
-				<section.icon
-					className="h-6 w-6"
-					weight={isActive ? "fill" : "regular"}
-				/>
+				<section.icon className="h-6 w-6" weight={isActive ? "fill" : "regular"} />
 			</motion.span>
 		</motion.button>
 	);
@@ -96,12 +97,12 @@ export function EditorSidebar({
 			onClick={() => setActiveSection("settings")}
 			data-tooltip={settingsLabel}
 			data-tooltip-side="right"
-			className="group relative flex h-9 w-9 items-center justify-center rounded-lg outline-none focus-visible:outline-none"
+			className="group relative flex h-9 w-9 items-center justify-center outline-none focus-visible:outline-none"
 			animate={{ opacity: activeSection === "settings" ? 1 : 0.55 }}
 			transition={{ duration: 0.14 }}
 		>
 			{activeSection === "settings" ? (
-				<span className="absolute left-0 top-1/2 h-[22px] w-[2px] -translate-y-1/2 rounded-full bg-[#2563EB]" />
+				<span className="absolute left-0 top-1/2 h-9 w-[2px] -translate-y-1/2 bg-[#2563EB]" />
 			) : null}
 			<motion.span
 				className="relative z-10"
@@ -110,14 +111,17 @@ export function EditorSidebar({
 				}}
 				transition={{ duration: 0.14 }}
 			>
-				<Gear className="h-6 w-6" weight={activeSection === "settings" ? "fill" : "regular"} />
+				<Gear
+					className="h-6 w-6"
+					weight={activeSection === "settings" ? "fill" : "regular"}
+				/>
 			</motion.span>
 		</motion.button>
 	);
 
 	return (
 		<div className="flex flex-shrink-0">
-			<div className="flex h-full w-12 flex-shrink-0 flex-col justify-between border-r border-foreground/10 py-2">
+			<div className="flex h-full w-12 flex-shrink-0 flex-col justify-between border-r border-foreground/16 py-2">
 				<div className="flex flex-col items-center gap-1">
 					{toolSections.map((section) =>
 						renderItem(section, activeSection === section.id),

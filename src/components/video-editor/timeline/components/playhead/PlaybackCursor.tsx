@@ -87,7 +87,7 @@ export default function PlaybackCursor({
 			}}
 		>
 			<div
-				className="absolute top-0 bottom-0 w-[2px] bg-[#2563EB] shadow-[0_0_10px_rgba(37,99,235,0.5)] cursor-ew-resize pointer-events-auto hover:shadow-[0_0_15px_rgba(37,99,235,0.7)] transition-shadow"
+				className="absolute top-0 bottom-0 w-[2px] bg-[#2563EB] cursor-ew-resize pointer-events-auto"
 				style={{ [sideProperty]: `${offset}px` }}
 				onMouseDown={(e) => {
 					e.stopPropagation();

@@ -56,7 +56,7 @@ export function EditorTimelinePanel(props: Props) {
 	} = props;
 
 	return (
-		<div className="flex flex-shrink-0 flex-col" style={{ height: "15%", minHeight: 160 }}>
+		<div className="flex min-h-[108px] max-h-[220px] flex-shrink-0 flex-col">
 			<TimelineEditor
 				ref={timelineRef}
 				videoDuration={projection.timelineDuration}

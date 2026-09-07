@@ -5,6 +5,7 @@ import { AnnouncementDialog } from "../announcements/AnnouncementDialog";
 import { LiveAnnouncementNotifications } from "../announcements/LiveAnnouncementNotifications";
 import { ShortcutsConfigDialog } from "./ShortcutsConfigDialog";
 import VideoEditor from "./VideoEditor";
+import "./editorTheme.css";
 
 export default function EditorWindow() {
 	useEffect(() => {
@@ -16,7 +17,9 @@ export default function EditorWindow() {
 	return (
 		<>
 			<ShortcutsProvider>
-				<VideoEditor />
+				<div className="editor-root h-full min-h-0">
+					<VideoEditor />
+				</div>
 				<ShortcutsConfigDialog />
 			</ShortcutsProvider>
 			<AnnouncementDialog audience="editor" />

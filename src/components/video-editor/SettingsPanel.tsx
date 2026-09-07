@@ -2074,11 +2074,8 @@ export function SettingsPanel({
 
 	if (isBackgroundPanel) {
 		return (
-			<div className="flex-[2] w-[332px] min-w-[280px] max-w-[332px] bg-editor-panel rounded-2xl flex flex-col shadow-xl h-full overflow-hidden">
-				<div
-					className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 pb-0"
-					style={{ scrollbarGutter: "stable" }}
-				>
+			<div className="editor-drawer flex h-full w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-hidden border-r border-foreground/16 bg-editor-panel">
+				<div className="editor-scrollbar flex-1 min-h-0 overflow-y-auto p-2 pb-0">
 					<div className="mb-4 flex items-center gap-2">
 						<Palette className="w-4 h-4 text-[#2563EB]" />
 						<span className="text-sm font-medium text-foreground">
@@ -3791,11 +3788,8 @@ export function SettingsPanel({
 	})();
 
 	return (
-		<div className="flex-[2] w-[332px] min-w-[280px] max-w-[332px] bg-editor-panel rounded-2xl flex flex-col shadow-xl h-full overflow-hidden">
-			<div
-				className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4 pb-0"
-				style={{ scrollbarGutter: "stable" }}
-			>
+		<div className="editor-drawer flex h-full w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-hidden border-r border-foreground/16 bg-editor-panel">
+			<div className="editor-scrollbar flex-1 min-h-0 overflow-y-auto p-2 pb-0">
 				<AnimatePresence mode="wait" initial={false}>
 					<motion.div
 						key={activeEffectSection}

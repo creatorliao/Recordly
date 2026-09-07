@@ -140,8 +140,8 @@ export function AnnotationSettingsPanel({
 	};
 
 	return (
-		<div className="flex-[2] min-w-0 bg-editor-panel border border-foreground/10 rounded-2xl flex flex-col shadow-xl h-full overflow-hidden">
-			<div className="flex-1 min-h-0 p-4 overflow-y-auto custom-scrollbar">
+		<div className="editor-drawer flex h-full w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-hidden border-r border-foreground/16 bg-editor-panel">
+			<div className="editor-scrollbar flex-1 min-h-0 overflow-y-auto p-2">
 				<div className="mb-6">
 					<div className="flex items-center justify-between mb-4">
 						<span className="text-sm font-medium text-foreground">

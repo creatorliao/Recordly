@@ -256,8 +256,8 @@ export function EditorShell(props: Props) {
 				exportMessage={exportMessage}
 			/>
 			<EditorAnnouncementBanner />
-			<div className="relative flex min-h-0 flex-1 flex-col gap-3 p-4">
-				<div className="relative z-10 flex min-h-0 flex-1 gap-3">
+			<div className="relative flex min-h-0 flex-1 flex-col">
+				<div className="relative z-10 flex min-h-0 flex-1">
 					<EditorSidebar
 						t={t}
 						activeSection={ui.activeEffectSection}

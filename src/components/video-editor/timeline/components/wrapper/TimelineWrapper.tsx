@@ -264,7 +264,7 @@ export default function TimelineWrapper({
 				interval: 16,
 				layoutShiftCompensation: { x: false, y: false },
 			}}
-			resizeHandleWidth={28}
+			resizeHandleWidth={6}
 		>
 			<div className="relative h-full min-h-0">
 				{children}
