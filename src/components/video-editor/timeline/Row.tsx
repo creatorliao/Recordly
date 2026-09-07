@@ -31,7 +31,7 @@ export default function Row({
 
 	return (
 		<div
-			className="bg-transparent relative min-h-6"
+			className="relative min-h-6 bg-transparent"
 			style={{ ...rowWrapperStyle, marginBottom: 2 }}
 		>
 			{label && (

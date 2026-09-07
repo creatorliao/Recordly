@@ -187,6 +187,7 @@ export default function Item({
 						height: isClip ? 52 : 22,
 						minHeight: isClip ? 52 : 22,
 						minWidth: MIN_ITEM_PX,
+						containerType: "inline-size",
 					}}
 					onClick={(event) => {
 						event.stopPropagation();
@@ -219,52 +220,109 @@ export default function Item({
 						</div>
 					)}
 					{/* Content */}
-					<div className="relative z-10 flex flex-col items-center justify-center text-black/70 dark:text-white/90 opacity-80 group-hover:opacity-100 transition-opacity select-none overflow-hidden">
-						<div className="flex items-center gap-1.5">
+					<div className="relative z-10 flex min-w-0 max-w-full flex-col items-center justify-center text-black/70 dark:text-white/90 opacity-80 group-hover:opacity-100 transition-opacity select-none overflow-hidden text-center">
+						<div className="flex min-w-0 max-w-full items-center justify-center gap-[1cqi]">
 							{isZoom ? (
 								<>
-									<ZoomIn className="w-3.5 h-3.5 shrink-0" />
-									<span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
+									<ZoomIn
+										style={{
+											width: "clamp(8px, 2.5cqi, 14px)",
+											height: "clamp(8px, 2.5cqi, 14px)",
+										}}
+										className="shrink-0"
+									/>
+									<span
+										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
+										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
+									>
 										{ZOOM_LABELS[zoomDepth] || `${zoomDepth}×`}
 									</span>
 								</>
 							) : isTrim ? (
 								<>
-									<Scissors className="w-3.5 h-3.5 shrink-0" />
-									<span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
+									<Scissors
+										style={{
+											width: "clamp(8px, 2.5cqi, 14px)",
+											height: "clamp(8px, 2.5cqi, 14px)",
+										}}
+										className="shrink-0"
+									/>
+									<span
+										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
+										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
+									>
 										Trim
 									</span>
 								</>
 							) : isClip ? (
 								<>
-									<Film className="w-3.5 h-3.5 shrink-0" />
-									<span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
+									<Film
+										style={{
+											width: "clamp(8px, 2.5cqi, 14px)",
+											height: "clamp(8px, 2.5cqi, 14px)",
+										}}
+										className="shrink-0"
+									/>
+									<span
+										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
+										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
+									>
 										Clip
 									</span>
 									{clipSpeedLabel && (
-										<span className="rounded-[4px] bg-black/10 px-1 text-[9px] font-bold tabular-nums text-black/65 dark:bg-white/15 dark:text-white/80">
+										<span
+											style={{ fontSize: "clamp(6px, 1.7cqi, 9px)" }}
+											className="rounded-[4px] bg-black/10 px-1 font-bold tabular-nums text-black/65 dark:bg-white/15 dark:text-white/80"
+										>
 											{clipSpeedLabel}
 										</span>
 									)}
 								</>
 							) : isSpeed ? (
 								<>
-									<Gauge className="w-3.5 h-3.5 shrink-0" />
-									<span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
+									<Gauge
+										style={{
+											width: "clamp(8px, 2.5cqi, 14px)",
+											height: "clamp(8px, 2.5cqi, 14px)",
+										}}
+										className="shrink-0"
+									/>
+									<span
+										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
+										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
+									>
 										{speedValue !== undefined ? `${speedValue}×` : "Speed"}
 									</span>
 								</>
 							) : isAudio ? (
 								<>
-									<Music className="w-3.5 h-3.5 shrink-0" />
-									<span className="text-[11px] font-semibold tracking-tight truncate max-w-full">
+									<Music
+										style={{
+											width: "clamp(8px, 2.5cqi, 14px)",
+											height: "clamp(8px, 2.5cqi, 14px)",
+										}}
+										className="shrink-0"
+									/>
+									<span
+										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
+										className="max-w-full truncate font-semibold tracking-tight"
+									>
 										{children}
 									</span>
 								</>
 							) : (
 								<>
-									<MessageSquare className="w-3.5 h-3.5 shrink-0" />
-									<span className="text-[11px] font-semibold tracking-tight whitespace-nowrap">
+									<MessageSquare
+										style={{
+											width: "clamp(8px, 2.5cqi, 14px)",
+											height: "clamp(8px, 2.5cqi, 14px)",
+										}}
+										className="shrink-0"
+									/>
+									<span
+										style={{ fontSize: "clamp(7px, 2cqi, 11px)" }}
+										className="max-w-full truncate font-semibold tracking-tight whitespace-nowrap"
+									>
 										{children}
 									</span>
 								</>

@@ -30,6 +30,9 @@ type Props = {
 	disableSuggestedZooms: boolean;
 	currentTime: number;
 	handleSelectAnnotation: (id: string | null) => void;
+	height: number;
+	onResizeStart: (event: React.PointerEvent<HTMLDivElement>) => void;
+	onResetHeight: () => void;
 };
 
 export function EditorTimelinePanel(props: Props) {
@@ -53,10 +56,21 @@ export function EditorTimelinePanel(props: Props) {
 		disableSuggestedZooms,
 		currentTime,
 		handleSelectAnnotation,
+		height,
+		onResizeStart,
+		onResetHeight,
 	} = props;
 
 	return (
-		<div className="flex min-h-[108px] max-h-[220px] flex-shrink-0 flex-col">
+		<div className="relative flex min-h-[108px] flex-shrink-0 flex-col" style={{ height }}>
+			<div
+				className="absolute -top-1 left-0 right-0 z-30 h-2 cursor-row-resize"
+				onPointerDown={onResizeStart}
+				onDoubleClick={onResetHeight}
+				role="separator"
+				aria-orientation="horizontal"
+				aria-label="Resize timeline"
+			/>
 			<TimelineEditor
 				ref={timelineRef}
 				videoDuration={projection.timelineDuration}

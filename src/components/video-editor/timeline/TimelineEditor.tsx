@@ -29,6 +29,7 @@ import { useTimelineRange } from "./hooks/useTimelineRange";
 import {
 	buildSourceSidecarPathCandidates,
 	buildTimelineSourceAudioTracks,
+	selectDefaultSourceAudioTracks,
 } from "./sourceAudioTracks";
 
 export interface TimelineEditorProps {
@@ -301,6 +302,10 @@ const TimelineEditor = forwardRef<TimelineEditorHandle, TimelineEditorProps>(
 				}),
 			[micSidecarPeaks, sourceAudioPeaks, systemSidecarPeaks, t],
 		);
+		const defaultSourceAudioTracks = useMemo(
+			() => selectDefaultSourceAudioTracks(sourceAudioTracks),
+			[sourceAudioTracks],
+		);
 
 		const isLoading = useMemo(() => {
 			// If we are still actively trying to load audio peaks (main or sidecars)
@@ -508,6 +513,7 @@ const TimelineEditor = forwardRef<TimelineEditorHandle, TimelineEditorProps>(
 							onClearBlockSelection={clearSelectedBlocks}
 							keyframes={keyframes}
 							sourceAudioTracks={sourceAudioTracks}
+							visibleSourceAudioTracks={defaultSourceAudioTracks}
 							getSourceAudioTrackSettingsForClip={getSourceAudioTrackSettingsForClip}
 							showSourceAudioTrack={showSourceAudioTrack}
 							liveSpanPreviewById={liveZoomPreview.previewSpans}

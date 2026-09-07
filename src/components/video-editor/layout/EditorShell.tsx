@@ -1,4 +1,4 @@
-import { useEffect, type ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import { EditorAnnouncementBanner } from "@/components/announcements/EditorAnnouncementBanner";
 import { Toaster } from "@/components/ui/sonner";
 import type { useI18n } from "@/contexts/I18nContext";
@@ -98,6 +98,23 @@ export function EditorShell(props: Props) {
 		handleAutoSuggestZoomsConsumed,
 	} = editing;
 	const { dialogActions, status: exportStatus, exportMessage } = exportController;
+	const [timelineHeight, setTimelineHeight] = useState(200);
+	const handleTimelineResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
+		event.currentTarget.setPointerCapture(event.pointerId);
+		const startY = event.clientY;
+		const startHeight = timelineHeight;
+		const handleMove = (moveEvent: PointerEvent) => {
+			setTimelineHeight(
+				Math.max(160, Math.min(560, startHeight - (moveEvent.clientY - startY))),
+			);
+		};
+		const handleUp = () => {
+			window.removeEventListener("pointermove", handleMove);
+			window.removeEventListener("pointerup", handleUp);
+		};
+		window.addEventListener("pointermove", handleMove);
+		window.addEventListener("pointerup", handleUp, { once: true });
+	};
 
 	// Project shortcuts. On macOS the native File menu owns Cmd+S / Cmd+Shift+S / Cmd+O and
 	// swallows those keystrokes before they reach the renderer; every other platform runs
@@ -324,6 +341,9 @@ export function EditorShell(props: Props) {
 					disableSuggestedZooms={!appearance.autoApplyFreshRecordingAutoZooms}
 					currentTime={ui.currentTime}
 					handleSelectAnnotation={handleSelectAnnotation}
+					height={timelineHeight}
+					onResizeStart={handleTimelineResizeStart}
+					onResetHeight={() => setTimelineHeight(200)}
 				/>
 			</div>
 			<footer className="flex h-[22px] shrink-0 items-center justify-between border-t border-foreground/10 px-3 text-[12px] leading-[22px] text-muted-foreground">

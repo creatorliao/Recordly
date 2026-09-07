@@ -66,3 +66,11 @@ export function buildTimelineSourceAudioTracks({
 			]
 		: [];
 }
+
+export function selectDefaultSourceAudioTracks(
+	tracks: SourceAudioTrackWithPeaks[],
+): SourceAudioTrackWithPeaks[] {
+	const preferred =
+		tracks.find((track) => track.id === "mixed") ?? tracks.find((track) => track.id === "mic");
+	return preferred ? [preferred] : tracks.slice(0, 1);
+}

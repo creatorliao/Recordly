@@ -114,10 +114,10 @@ export function EditorPreviewPanel(props: Props) {
 	} = props;
 
 	return (
-		<div className="flex min-h-0 flex-1 flex-col gap-3">
+		<div className="flex min-h-0 flex-1 flex-col gap-0">
 			<div className="flex min-h-0 flex-1 flex-col">
 				<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-					<div className="flex flex-shrink-0 items-center justify-center gap-2 py-1.5">
+					<div className="flex h-7 flex-shrink-0 items-center justify-center gap-1">
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<Button
@@ -165,7 +165,7 @@ export function EditorPreviewPanel(props: Props) {
 					</div>
 					<div
 						className="flex min-h-0 w-full flex-1 items-stretch"
-						style={{ flex: "1 1 auto", margin: "6px 0 0" }}
+						style={{ flex: "1 1 auto", margin: 0 }}
 					>
 						<div className="flex min-w-0 flex-1 items-center justify-center px-1">
 							<div
@@ -217,7 +217,7 @@ export function EditorPreviewPanel(props: Props) {
 				</div>
 			</div>
 
-			<div className="relative flex flex-shrink-0 items-center px-1 py-1">
+			<div className="relative flex h-8 flex-shrink-0 items-center px-1 py-0">
 				<div className="z-10 flex min-w-0 flex-1 items-center gap-1.5">
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
@@ -319,9 +319,7 @@ export function EditorPreviewPanel(props: Props) {
 							className={`h-7 w-7 rounded-full border border-foreground/10 shadow-[0_8px_18px_rgba(0,0,0,0.18)] transition-all ${isPlaying ? "bg-foreground/10 text-foreground hover:bg-foreground/20" : "bg-neutral-800 text-white hover:bg-neutral-700 dark:bg-white dark:text-black dark:hover:bg-white/90"}`}
 							onClick={playback.togglePlayPause}
 							title={
-								isPlaying
-									? t("editor.playback.pause")
-									: t("editor.playback.play")
+								isPlaying ? t("editor.playback.pause") : t("editor.playback.play")
 							}
 						>
 							{isPlaying ? (

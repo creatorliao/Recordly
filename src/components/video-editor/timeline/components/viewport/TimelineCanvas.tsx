@@ -70,6 +70,7 @@ interface TimelineCanvasProps {
 	onClearBlockSelection?: () => void;
 	keyframes?: { id: string; time: number }[];
 	sourceAudioTracks?: SourceAudioTrackWithPeaks[];
+	visibleSourceAudioTracks?: SourceAudioTrackWithPeaks[];
 	getSourceAudioTrackSettingsForClip?: (clipId: string | null) => SourceAudioTrackSettings;
 	showSourceAudioTrack?: boolean;
 	liveSpanPreviewById?: Record<string, { start: number; end: number }>;
@@ -368,6 +369,7 @@ interface TimelineCanvasRowsProps {
 	onSelectAudio?: (id: string | null) => void;
 	onSelectCaption?: (id: string | null) => void;
 	sourceAudioTracks?: SourceAudioTrackWithPeaks[];
+	visibleSourceAudioTracks?: SourceAudioTrackWithPeaks[];
 	getSourceAudioTrackSettingsForClip?: (clipId: string | null) => SourceAudioTrackSettings;
 	showSourceAudioTrack?: boolean;
 	liveSpanPreviewById?: Record<string, { start: number; end: number }>;
@@ -447,6 +449,7 @@ const TimelineCanvasRows = memo(function TimelineCanvasRows({
 	onSelectAudio,
 	onSelectCaption,
 	sourceAudioTracks = [],
+	visibleSourceAudioTracks = sourceAudioTracks,
 	getSourceAudioTrackSettingsForClip,
 	showSourceAudioTrack = false,
 	liveSpanPreviewById,
@@ -550,7 +553,7 @@ const TimelineCanvasRows = memo(function TimelineCanvasRows({
 				))}
 			</Row>
 			{showSourceAudioTrack &&
-				sourceAudioTracks.map((track) => (
+				visibleSourceAudioTracks.map((track) => (
 					<Row key={track.id} id={`${SOURCE_AUDIO_ROW_ID}-${track.id}`}>
 						{clipItems
 							.filter((item) => item.showSourceAudio)
@@ -767,6 +770,7 @@ export default function TimelineCanvas({
 	onClearBlockSelection,
 	keyframes = [],
 	sourceAudioTracks = [],
+	visibleSourceAudioTracks = sourceAudioTracks,
 	getSourceAudioTrackSettingsForClip,
 	showSourceAudioTrack = false,
 	liveSpanPreviewById,
@@ -932,13 +936,13 @@ export default function TimelineCanvas({
 			if (isAudioTrackRowId(item.rowId)) audioRowIds.add(item.rowId);
 			if (item.rowId === CAPTION_ROW_ID) hasCaptionRow = true;
 		}
-		const sourceAudioRows = showSourceAudioTrack ? sourceAudioTracks.length : 0;
+		const sourceAudioRows = showSourceAudioTrack ? visibleSourceAudioTracks.length : 0;
 		// The caption lane is always shown when captions are enabled (even before any cue
 		// exists), so count it whenever captionsEnabled — not only when a caption item is
 		// present — or the min-height/stretch math undersizes the empty lane.
 		const captionRows = hasCaptionRow || captionsEnabled ? 1 : 0;
 		return 2 + sourceAudioRows + annotationRowIds.size + audioRowIds.size + captionRows;
-	}, [items, showSourceAudioTrack, sourceAudioTracks.length, captionsEnabled]);
+	}, [items, showSourceAudioTrack, visibleSourceAudioTracks.length, captionsEnabled]);
 	const timelineRowsMinHeightPx = getTimelineRowsMinHeightPx(timelineRowCount);
 	const timelineContentMinHeightPx = getTimelineContentMinHeightPx(timelineRowCount);
 	const sideProperty = direction === "rtl" ? "right" : "left";
@@ -1040,6 +1044,7 @@ export default function TimelineCanvas({
 					onSelectAudio={onSelectAudio}
 					onSelectCaption={onSelectCaption}
 					sourceAudioTracks={sourceAudioTracks}
+					visibleSourceAudioTracks={visibleSourceAudioTracks}
 					getSourceAudioTrackSettingsForClip={getSourceAudioTrackSettingsForClip}
 					showSourceAudioTrack={showSourceAudioTrack}
 					liveSpanPreviewById={liveSpanPreviewById}

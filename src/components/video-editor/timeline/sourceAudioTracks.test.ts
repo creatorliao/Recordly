@@ -3,6 +3,7 @@ import type { AudioPeaksData } from "./core/timelineTypes";
 import {
 	buildSourceSidecarPathCandidates,
 	buildTimelineSourceAudioTracks,
+	selectDefaultSourceAudioTracks,
 } from "./sourceAudioTracks";
 
 function peaks(id: number): AudioPeaksData {
@@ -86,5 +87,14 @@ describe("timeline source audio tracks", () => {
 				labels,
 			}),
 		).toEqual([{ id: "mixed", label: "Source", peaks: source }]);
+	});
+
+	it("shows mixed first, then mic, while keeping system available on demand", () => {
+		const system = { id: "system", label: "System", peaks: peaks(1) };
+		const mic = { id: "mic", label: "Mic", peaks: peaks(2) };
+		const mixed = { id: "mixed", label: "Mixed", peaks: peaks(3) };
+
+		expect(selectDefaultSourceAudioTracks([system, mic])).toEqual([mic]);
+		expect(selectDefaultSourceAudioTracks([system, mic, mixed])).toEqual([mixed]);
 	});
 });

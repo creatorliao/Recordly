@@ -2309,7 +2309,7 @@ export function SettingsPanel({
 						variant="outline"
 						onClick={onClearAutoCaptions}
 						disabled={captionCueCount === 0}
-						className="h-10 w-full rounded-xl border-foreground/10 bg-foreground/5 px-4 text-sm text-foreground hover:bg-foreground/10 hover:text-foreground disabled:opacity-50"
+						className="h-7 w-full rounded-[2px] border-foreground/10 bg-foreground/5 px-3 text-xs text-foreground hover:bg-foreground/10 hover:text-foreground disabled:opacity-50"
 					>
 						{tSettings("captions.clearFull", "Clear Captions")}
 					</Button>
@@ -2317,7 +2317,7 @@ export function SettingsPanel({
 						type="button"
 						onClick={onGenerateAutoCaptions}
 						disabled={isGeneratingCaptions}
-						className="h-10 w-full rounded-xl bg-[#2563EB] px-4 text-sm font-medium text-white hover:bg-[#2563EB]/90 disabled:opacity-60"
+						className="h-7 w-full rounded-[2px] bg-[#2563EB] px-3 text-xs font-medium text-white hover:bg-[#2563EB]/90 disabled:opacity-60"
 					>
 						{isGeneratingCaptions
 							? tSettings("captions.generating", "Generating...")
@@ -2349,7 +2349,7 @@ export function SettingsPanel({
 							})
 						}
 					>
-						<SelectTrigger className="h-9 w-[160px] rounded-xl border-foreground/10 bg-foreground/5 text-sm text-foreground hover:bg-foreground/10">
+						<SelectTrigger className="h-7 w-[160px] rounded-[2px] border-foreground/10 bg-foreground/5 text-xs text-foreground hover:bg-foreground/10">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent className="border-foreground/10 bg-editor-surface-alt text-foreground">
@@ -2522,7 +2522,7 @@ export function SettingsPanel({
 				<section className="flex flex-col gap-2">
 					<SectionLabel>{t("common.app.language", "Language")}</SectionLabel>
 					<Select value={locale} onValueChange={(value) => setLocale(value as AppLocale)}>
-						<SelectTrigger className="h-10 w-full rounded-xl border-foreground/10 bg-foreground/5 text-sm text-foreground hover:bg-foreground/10">
+						<SelectTrigger className="h-7 w-full rounded-[2px] border-foreground/10 bg-foreground/5 text-xs text-foreground hover:bg-foreground/10">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent className="border-foreground/10 bg-editor-surface-alt text-foreground">
@@ -2717,7 +2717,7 @@ export function SettingsPanel({
 					<SectionLabel>{t("editor.keyboardShortcuts.title")}</SectionLabel>
 					<KeyboardShortcutsDialog
 						triggerLabel={t("editor.keyboardShortcuts.customize")}
-						triggerClassName="h-10 w-full justify-start rounded-xl border border-foreground/10 bg-foreground/5 px-3 text-sm text-foreground hover:bg-foreground/10 hover:text-foreground"
+						triggerClassName="h-7 w-full justify-start rounded-[2px] border border-foreground/10 bg-foreground/5 px-3 text-xs text-foreground hover:bg-foreground/10 hover:text-foreground"
 					/>
 				</section>
 
