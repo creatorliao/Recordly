@@ -1,5 +1,5 @@
 import { useTimelineContext } from "dnd-timeline";
-import { useMemo, type CSSProperties } from "react";
+import { type CSSProperties, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { calculateAxisScale, formatTimeLabel } from "../../core/time";
 
@@ -54,7 +54,7 @@ export default function TimelineAxis({ videoDurationMs, currentTimeMs }: Timelin
 
 	return (
 		<div
-			className="h-8 bg-editor-bg border-b border-foreground/10 relative overflow-hidden select-none"
+			className="relative h-7 overflow-hidden border-b border-foreground/10 bg-editor-bg select-none"
 			style={{
 				[sideProperty === "right" ? "marginRight" : "marginLeft"]: `${sidebarWidth}px`,
 			}}
@@ -64,7 +64,7 @@ export default function TimelineAxis({ videoDurationMs, currentTimeMs }: Timelin
 				return (
 					<div
 						key={`minor-${time}`}
-						className="absolute bottom-1 h-1 w-[1px] bg-foreground/5"
+						className="absolute bottom-0 h-1 w-[1px] bg-foreground/5"
 						style={{ [sideProperty]: `${offset}px` }}
 					/>
 				);
@@ -85,11 +85,10 @@ export default function TimelineAxis({ videoDurationMs, currentTimeMs }: Timelin
 
 				return (
 					<div key={marker.time} style={markerStyle}>
-						<div className="flex flex-col items-center pb-1">
-							<div className="mb-1.5 h-[5px] w-[5px] rounded-full bg-foreground/30" />
+						<div className="flex items-end pb-1">
 							<span
 								className={cn(
-									"text-[10px] font-medium tabular-nums tracking-tight",
+									"text-[10px] font-medium tabular-nums tracking-tight leading-none",
 									Math.abs(marker.time - currentTimeMs) < 1
 										? "text-[#2563EB]"
 										: "text-foreground/40",

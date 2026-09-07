@@ -7,7 +7,7 @@ import {
 	X,
 } from "@phosphor-icons/react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import minimalCursorUrl from "@/assets/cursors/custom/minimal-cursor.svg";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTheme } from "@/contexts/ThemeContext";
+import { loadAppSetting, saveAppSetting } from "@/lib/appSettings";
 import {
 	getAssetPath,
 	getRenderableVideoUrl,
@@ -28,13 +29,12 @@ import {
 	isRootRelativeBundledAssetUrl,
 	shouldUseRootRelativeAssetImg,
 } from "@/lib/assetPath";
-import { cn } from "@/lib/utils";
-import { loadAppSetting, saveAppSetting } from "@/lib/appSettings";
 import {
 	CAPTURE_PRESET_VALUES,
 	type CapturePreset,
 	DEFAULT_CAPTURE_PRESET,
 } from "@/lib/capturePreset";
+import { cn } from "@/lib/utils";
 import type { BuiltInWallpaper } from "@/lib/wallpapers";
 import {
 	BUILT_IN_WALLPAPERS,
@@ -2905,6 +2905,11 @@ export function SettingsPanel({
 			<div className="space-y-4">
 				{stylePresetSlot}
 				{backgroundSettingsContent}
+			</div>
+		);
+
+		const frameCropSectionContent = (
+			<div className="space-y-4">
 				{frameSectionContent}
 				{cropSectionContent}
 			</div>
@@ -3254,9 +3259,9 @@ export function SettingsPanel({
 			case "audio":
 				return audioSectionContent;
 			case "frame":
-				return sceneSectionContent;
+				return frameCropSectionContent;
 			case "crop":
-				return sceneSectionContent;
+				return frameCropSectionContent;
 			case "captions":
 				return captionsSectionContent;
 			case "caption":
@@ -3264,7 +3269,6 @@ export function SettingsPanel({
 			case "cursor":
 				return (
 					<section className="flex flex-col gap-2">
-						{stylePresetSlot}
 						<div className="flex items-center justify-between gap-3">
 							<div className="flex items-center gap-3">
 								<SectionLabel>

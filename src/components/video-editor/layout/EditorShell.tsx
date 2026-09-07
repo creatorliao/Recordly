@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentProps } from "react";
+import { type ComponentProps, useEffect, useState } from "react";
 import { EditorAnnouncementBanner } from "@/components/announcements/EditorAnnouncementBanner";
 import { Toaster } from "@/components/ui/sonner";
 import type { useI18n } from "@/contexts/I18nContext";
@@ -306,7 +306,7 @@ export function EditorShell(props: Props) {
 				handleOpenCropEditor={ui.handleOpenCropEditor}
 			/>
 			<EditorAnnouncementBanner />
-			<div className="relative flex min-h-0 flex-1 flex-col">
+			<div className="relative flex min-h-0 flex-1">
 				<div className="relative z-10 flex min-h-0 flex-1">
 					<EditorSidebar
 						t={t}
@@ -320,76 +320,78 @@ export function EditorShell(props: Props) {
 						handleReturnToRecording={openActions.handleReturnToRecording}
 						isEmptyWorkspace={!project.videoPath}
 					/>
-					<EditorPreviewPanel
-						t={t}
-						videoPath={project.videoPath}
-						previewVersion={ui.previewVersion}
-						aspectRatio={ui.aspectRatio}
-						previewAspectRatioValue={previewAspectRatioValue}
-						videoPlaybackRef={ui.videoPlaybackRef}
-						timelineRef={ui.timelineRef}
-						currentTime={ui.currentTime}
-						isPlaying={ui.isPlaying}
-						previewVolume={ui.previewVolume}
-						setPreviewVolume={ui.setPreviewVolume}
-						suspendRendering={exportStatus.shouldSuspendPreviewRendering}
-						appearance={appearance}
-						timeline={timeline}
-						audio={audio}
-						projection={projection}
-						playback={playback}
-						zoomCommands={zoomCommands}
-						annotationCommands={annotationCommands}
-						effectiveCursorTelemetry={cursor.effectiveCursorTelemetry}
-						effectiveShowCursor={effectiveShowCursor}
-						handleSaveAutoCaptionEdit={autoCaption.handleSaveAutoCaptionEdit}
-						handleSelectAnnotation={handleSelectAnnotation}
-						setDuration={ui.setDuration}
-						setIsPreviewReady={ui.setIsPreviewReady}
-						setCurrentTime={ui.setCurrentTime}
-						setIsPlaying={ui.setIsPlaying}
-						setError={project.setError}
-					/>
+					<div className="flex min-w-0 min-h-0 flex-1 flex-col gap-1 pr-3">
+						<EditorPreviewPanel
+							t={t}
+							videoPath={project.videoPath}
+							previewVersion={ui.previewVersion}
+							aspectRatio={ui.aspectRatio}
+							previewAspectRatioValue={previewAspectRatioValue}
+							videoPlaybackRef={ui.videoPlaybackRef}
+							timelineRef={ui.timelineRef}
+							currentTime={ui.currentTime}
+							isPlaying={ui.isPlaying}
+							previewVolume={ui.previewVolume}
+							setPreviewVolume={ui.setPreviewVolume}
+							suspendRendering={exportStatus.shouldSuspendPreviewRendering}
+							appearance={appearance}
+							timeline={timeline}
+							audio={audio}
+							projection={projection}
+							playback={playback}
+							zoomCommands={zoomCommands}
+							annotationCommands={annotationCommands}
+							effectiveCursorTelemetry={cursor.effectiveCursorTelemetry}
+							effectiveShowCursor={effectiveShowCursor}
+							handleSaveAutoCaptionEdit={autoCaption.handleSaveAutoCaptionEdit}
+							handleSelectAnnotation={handleSelectAnnotation}
+							setDuration={ui.setDuration}
+							setIsPreviewReady={ui.setIsPreviewReady}
+							setCurrentTime={ui.setCurrentTime}
+							setIsPlaying={ui.setIsPlaying}
+							setError={project.setError}
+						/>
+						<EditorTimelinePanel
+							t={t}
+							timelineRef={ui.timelineRef}
+							timeline={timeline}
+							projection={projection}
+							playback={playback}
+							audio={audio}
+							zoomCommands={zoomCommands}
+							clipCommands={clipCommands}
+							audioCommands={audioCommands}
+							captionCommands={captionCommands}
+							annotationCommands={annotationCommands}
+							videoPath={project.videoPath}
+							videoSourcePath={project.videoSourcePath}
+							cursorTelemetrySourcePath={timeline.cursorTelemetrySourcePath}
+							normalizedCursorTelemetry={cursor.normalizedCursorTelemetry}
+							autoSuggestZoomsTrigger={ui.autoSuggestZoomsTrigger}
+							handleAutoSuggestZoomsConsumed={handleAutoSuggestZoomsConsumed}
+							disableSuggestedZooms={!appearance.autoApplyFreshRecordingAutoZooms}
+							currentTime={ui.currentTime}
+							handleSelectAnnotation={handleSelectAnnotation}
+							height={timelineHeight}
+							onResizeStart={handleTimelineResizeStart}
+							onResetHeight={handleTimelineReset}
+							onToggleCollapsed={handleTimelineToggle}
+							isCollapsed={isTimelineCollapsed}
+							isResizing={isTimelineResizing}
+						/>
+					</div>
+					<footer className="flex h-[22px] shrink-0 items-center justify-between border-t border-foreground/10 px-3 text-[12px] leading-[22px] text-muted-foreground">
+						<span>
+							{hasUnsavedChanges
+								? t("editor.statusbar.unsaved", "Unsaved")
+								: t("editor.statusbar.saved", "Saved")}
+						</span>
+						<span className="font-mono tabular-nums">
+							{formatStatusTime(ui.currentTime)} / {formatStatusTime(ui.duration)}
+						</span>
+					</footer>
 				</div>
-				<EditorTimelinePanel
-					t={t}
-					timelineRef={ui.timelineRef}
-					timeline={timeline}
-					projection={projection}
-					playback={playback}
-					audio={audio}
-					zoomCommands={zoomCommands}
-					clipCommands={clipCommands}
-					audioCommands={audioCommands}
-					captionCommands={captionCommands}
-					annotationCommands={annotationCommands}
-					videoPath={project.videoPath}
-					videoSourcePath={project.videoSourcePath}
-					cursorTelemetrySourcePath={timeline.cursorTelemetrySourcePath}
-					normalizedCursorTelemetry={cursor.normalizedCursorTelemetry}
-					autoSuggestZoomsTrigger={ui.autoSuggestZoomsTrigger}
-					handleAutoSuggestZoomsConsumed={handleAutoSuggestZoomsConsumed}
-					disableSuggestedZooms={!appearance.autoApplyFreshRecordingAutoZooms}
-					currentTime={ui.currentTime}
-					handleSelectAnnotation={handleSelectAnnotation}
-					height={timelineHeight}
-					onResizeStart={handleTimelineResizeStart}
-					onResetHeight={handleTimelineReset}
-					onToggleCollapsed={handleTimelineToggle}
-					isCollapsed={isTimelineCollapsed}
-					isResizing={isTimelineResizing}
-				/>
 			</div>
-			<footer className="flex h-[22px] shrink-0 items-center justify-between border-t border-foreground/10 px-3 text-[12px] leading-[22px] text-muted-foreground">
-				<span>
-					{hasUnsavedChanges
-						? t("editor.statusbar.unsaved", "Unsaved")
-						: t("editor.statusbar.saved", "Saved")}
-				</span>
-				<span className="font-mono tabular-nums">
-					{formatStatusTime(ui.currentTime)} / {formatStatusTime(ui.duration)}
-				</span>
-			</footer>
 			{editorDialogs}
 			<CropEditorDialog
 				open={ui.showCropModal}

@@ -1,5 +1,5 @@
-import type { RefObject } from "react";
 import { CaretDown, CaretUp, DotsSixVertical } from "@phosphor-icons/react";
+import type { RefObject } from "react";
 import type { useI18n } from "@/contexts/I18nContext";
 import type { useVideoEditorAudio } from "../audio/useVideoEditorAudio";
 import type { useAnnotationRegionCommands } from "../hooks/useAnnotationRegionCommands";
@@ -77,7 +77,7 @@ export function EditorTimelinePanel(props: Props) {
 			style={{ height }}
 		>
 			<div
-				className="absolute -top-2 left-0 right-0 z-30 flex h-4 cursor-row-resize items-center justify-center border-t border-foreground/15 bg-editor-bg/95"
+				className="absolute left-0 right-0 top-0 z-30 flex h-1 cursor-row-resize items-center justify-center border-t border-foreground/15 bg-editor-bg/95"
 				onPointerDown={onResizeStart}
 				onDoubleClick={onResetHeight}
 				role="separator"
@@ -87,7 +87,7 @@ export function EditorTimelinePanel(props: Props) {
 				aria-valuemax={560}
 				aria-valuenow={height}
 			>
-				<DotsSixVertical className="h-3.5 w-3.5 rotate-90 text-muted-foreground/70" />
+				<DotsSixVertical className="h-3.5 w-3.5 rotate-90 text-muted-foreground/70 opacity-0 hover:opacity-70" />
 			</div>
 			<TimelineEditor
 				ref={timelineRef}
@@ -150,7 +150,7 @@ export function EditorTimelinePanel(props: Props) {
 			<button
 				type="button"
 				onClick={onToggleCollapsed}
-				className="absolute right-2 top-1 z-20 inline-flex h-6 w-6 items-center justify-center border border-foreground/10 bg-editor-surface text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+				className="absolute right-1 top-1 z-20 inline-flex h-6 w-6 items-center justify-center border border-foreground/10 bg-editor-surface text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
 				aria-label={
 					isCollapsed
 						? t("editor.timeline.expand", "Expand timeline")
