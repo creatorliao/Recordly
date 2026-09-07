@@ -1,5 +1,12 @@
-import { SidebarSimple } from "@phosphor-icons/react";
-import type { CSSProperties, FormEvent, ReactNode, RefObject } from "react";
+import { CaretDown, Check, Crop, SidebarSimple } from "@phosphor-icons/react";
+import type {
+	CSSProperties,
+	Dispatch,
+	FormEvent,
+	ReactNode,
+	RefObject,
+	SetStateAction,
+} from "react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -18,6 +25,7 @@ import type { useExportSettings } from "../export/useExportSettings";
 import type { useExportStatusViewModel } from "../export/useExportStatusViewModel";
 import type { useProjectState } from "../state/useProjectState";
 import { EditorExportMenu } from "./EditorExportMenu";
+import { ASPECT_RATIOS, type AspectRatio, getAspectRatioLabel } from "@/utils/aspectRatioUtils";
 
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
@@ -57,6 +65,10 @@ type Props = {
 	handleStartExportFromDropdown: () => void;
 	revealExportedFile: () => void;
 	exportMessage: string | null;
+	aspectRatio: AspectRatio;
+	setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
+	isCropped: boolean;
+	handleOpenCropEditor: () => void;
 };
 
 function MenubarMenu({
@@ -125,6 +137,10 @@ export function EditorHeader(props: Props) {
 		handleStartExportFromDropdown,
 		revealExportedFile,
 		exportMessage,
+		aspectRatio,
+		setAspectRatio,
+		isCropped,
+		handleOpenCropEditor,
 	} = props;
 	const {
 		isEditingProjectName,
@@ -269,6 +285,46 @@ export function EditorHeader(props: Props) {
 				className="flex h-full items-center justify-self-end gap-1"
 				style={{ WebkitAppRegion: "no-drag" } as CSSProperties}
 			>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<button
+							type="button"
+							className="inline-flex h-6 items-center gap-1 px-1.5 text-[11px] text-foreground/70 transition-colors hover:bg-foreground/10 hover:text-foreground"
+							aria-label={t("editor.layout.aspectRatio", "Aspect ratio")}
+						>
+							<span>{getAspectRatioLabel(aspectRatio)}</span>
+							<CaretDown size={12} />
+						</button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent
+						align="end"
+						className="border-foreground/10 bg-editor-surface-alt"
+					>
+						{ASPECT_RATIOS.map((ratio) => (
+							<DropdownMenuItem
+								key={ratio}
+								onClick={() => setAspectRatio(ratio)}
+								className="flex items-center justify-between gap-3 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+							>
+								{getAspectRatioLabel(ratio)}
+								{aspectRatio === ratio ? (
+									<Check size={12} className="text-[#2563EB]" />
+								) : null}
+							</DropdownMenuItem>
+						))}
+					</DropdownMenuContent>
+				</DropdownMenu>
+				<button
+					type="button"
+					onClick={handleOpenCropEditor}
+					className="inline-flex h-6 items-center gap-1 px-1.5 text-[11px] text-foreground/70 transition-colors hover:bg-foreground/10 hover:text-foreground"
+					title={t("settings.crop.title")}
+					aria-label={t("settings.crop.title")}
+				>
+					<Crop size={13} />
+					{isCropped ? <span className="size-1 rounded-full bg-[#2563EB]" /> : null}
+				</button>
+				<div className="mx-1 h-4 w-px bg-foreground/15" />
 				<EditorExportMenu
 					t={t}
 					exportSettings={exportSettings}

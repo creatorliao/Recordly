@@ -271,6 +271,10 @@ export function EditorShell(props: Props) {
 				handleStartExportFromDropdown={dialogActions.handleStartExportFromDropdown}
 				revealExportedFile={dialogActions.revealExportedFile}
 				exportMessage={exportMessage}
+				aspectRatio={ui.aspectRatio}
+				setAspectRatio={ui.setAspectRatio}
+				isCropped={ui.isCropped}
+				handleOpenCropEditor={ui.handleOpenCropEditor}
 			/>
 			<EditorAnnouncementBanner />
 			<div className="relative flex min-h-0 flex-1 flex-col">
@@ -292,7 +296,6 @@ export function EditorShell(props: Props) {
 						videoPath={project.videoPath}
 						previewVersion={ui.previewVersion}
 						aspectRatio={ui.aspectRatio}
-						setAspectRatio={ui.setAspectRatio}
 						previewAspectRatioValue={previewAspectRatioValue}
 						videoPlaybackRef={ui.videoPlaybackRef}
 						timelineRef={ui.timelineRef}
@@ -310,8 +313,6 @@ export function EditorShell(props: Props) {
 						annotationCommands={annotationCommands}
 						effectiveCursorTelemetry={cursor.effectiveCursorTelemetry}
 						effectiveShowCursor={effectiveShowCursor}
-						isCropped={ui.isCropped}
-						handleOpenCropEditor={ui.handleOpenCropEditor}
 						handleSaveAutoCaptionEdit={autoCaption.handleSaveAutoCaptionEdit}
 						handleSelectAnnotation={handleSelectAnnotation}
 						setDuration={ui.setDuration}

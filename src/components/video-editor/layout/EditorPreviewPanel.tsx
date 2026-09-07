@@ -1,7 +1,5 @@
 import {
 	CaretDown,
-	Check,
-	Crop,
 	MagicWand,
 	MagnifyingGlassPlus,
 	Pause,
@@ -23,7 +21,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { useI18n } from "@/contexts/I18nContext";
-import { ASPECT_RATIOS, type AspectRatio, getAspectRatioLabel } from "@/utils/aspectRatioUtils";
+import type { AspectRatio } from "@/utils/aspectRatioUtils";
 import type { useVideoEditorAudio } from "../audio/useVideoEditorAudio";
 import type { CaptionEditTarget } from "../captionEditing";
 import type { useAnnotationRegionCommands } from "../hooks/useAnnotationRegionCommands";
@@ -41,7 +39,6 @@ type Props = {
 	videoPath: string | null;
 	previewVersion: number;
 	aspectRatio: AspectRatio;
-	setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
 	previewAspectRatioValue: number;
 	videoPlaybackRef: RefObject<VideoPlaybackRef>;
 	timelineRef: RefObject<TimelineEditorHandle>;
@@ -59,8 +56,6 @@ type Props = {
 	annotationCommands: ReturnType<typeof useAnnotationRegionCommands>;
 	effectiveCursorTelemetry: ReturnType<typeof useTimelineState>["cursorTelemetry"];
 	effectiveShowCursor: boolean;
-	isCropped: boolean;
-	handleOpenCropEditor: () => void;
 	handleSaveAutoCaptionEdit: (target: CaptionEditTarget, text: string) => void;
 	handleSelectAnnotation: (id: string | null) => void;
 	setDuration: Dispatch<SetStateAction<number>>;
@@ -84,7 +79,6 @@ export function EditorPreviewPanel(props: Props) {
 		videoPath,
 		previewVersion,
 		aspectRatio,
-		setAspectRatio,
 		previewAspectRatioValue,
 		videoPlaybackRef,
 		timelineRef,
@@ -102,8 +96,6 @@ export function EditorPreviewPanel(props: Props) {
 		annotationCommands,
 		effectiveCursorTelemetry,
 		effectiveShowCursor,
-		isCropped,
-		handleOpenCropEditor,
 		handleSaveAutoCaptionEdit,
 		handleSelectAnnotation,
 		setDuration,
@@ -117,52 +109,6 @@ export function EditorPreviewPanel(props: Props) {
 		<div className="flex min-h-0 flex-1 flex-col gap-0">
 			<div className="flex min-h-0 flex-1 flex-col">
 				<div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-					<div className="flex h-7 flex-shrink-0 items-center justify-center gap-1">
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button
-									variant="ghost"
-									size="sm"
-									className="h-7 gap-1 px-2 text-xs text-muted-foreground transition-all hover:bg-foreground/10 hover:text-foreground"
-								>
-									<span className="font-medium">
-										{getAspectRatioLabel(aspectRatio)}
-									</span>
-									<CaretDown className="h-3 w-3" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent
-								align="center"
-								className="border-foreground/10 bg-editor-surface-alt"
-							>
-								{ASPECT_RATIOS.map((ratio) => (
-									<DropdownMenuItem
-										key={ratio}
-										onClick={() => setAspectRatio(ratio)}
-										className="flex cursor-pointer items-center justify-between gap-3 text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
-									>
-										<span>{getAspectRatioLabel(ratio)}</span>
-										{aspectRatio === ratio ? (
-											<Check className="h-3 w-3 text-[#2563EB]" />
-										) : null}
-									</DropdownMenuItem>
-								))}
-							</DropdownMenuContent>
-						</DropdownMenu>
-						<div className="h-4 w-px bg-foreground/20" />
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={handleOpenCropEditor}
-							className="h-7 gap-1.5 px-2 text-xs text-muted-foreground transition-all hover:bg-foreground/10 hover:text-foreground"
-						>
-							<Crop className="h-3.5 w-3.5" />
-							<span className="font-medium">{t("settings.crop.title")}</span>
-							{isCropped ? (
-								<span className="h-1.5 w-1.5 rounded-full bg-[#2563EB]" />
-							) : null}
-						</Button>
-					</div>
 					<div
 						className="flex min-h-0 w-full flex-1 items-stretch"
 						style={{ flex: "1 1 auto", margin: 0 }}
@@ -171,10 +117,11 @@ export function EditorPreviewPanel(props: Props) {
 							<div
 								className="relative"
 								style={{
-									width: "auto",
-									height: "100%",
+									width: "100%",
+									height: "auto",
 									aspectRatio: previewAspectRatioValue,
 									maxWidth: "100%",
+									maxHeight: "100%",
 									margin: "0 auto",
 									boxSizing: "border-box",
 								}}

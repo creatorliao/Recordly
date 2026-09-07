@@ -3788,7 +3788,7 @@ export function SettingsPanel({
 	})();
 
 	return (
-		<div className="editor-drawer flex h-full w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-hidden border-r border-foreground/16 bg-editor-panel">
+		<div className="editor-drawer flex h-full w-[280px] min-w-[280px] max-w-[280px] flex-col overflow-hidden border-r border-foreground/16 bg-editor-panel [&_.rounded-lg]:rounded-[3px] [&_.rounded-xl]:rounded-[4px] [&_.rounded-md]:rounded-[3px]">
 			<div className="editor-scrollbar flex-1 min-h-0 overflow-y-auto p-2 pb-0">
 				<AnimatePresence mode="wait" initial={false}>
 					<motion.div

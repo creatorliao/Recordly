@@ -175,6 +175,7 @@ export default function Item({
 					height: "100%",
 					display: "flex",
 					alignItems: "center",
+					justifyContent: "center",
 				}}
 			>
 				<div
