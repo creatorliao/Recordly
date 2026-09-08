@@ -8,6 +8,7 @@
 		"disableWebcam": "Disable webcam overlay",
 		"enableWebcam": "Enable webcam overlay",
 		"countdownDelay": "Countdown delay",
+		"chooseMicrophone": "Choose microphone",
 		"deviceGear": "Device & countdown",
 		"noDelay": "No delay",
 		"record": "Record",

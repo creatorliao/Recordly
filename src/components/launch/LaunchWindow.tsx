@@ -2,7 +2,6 @@ import {
 	ArrowClockwiseIcon,
 	CaretUpIcon,
 	DotsThreeVerticalIcon,
-	GearSixIcon,
 	MinusIcon,
 	XIcon,
 } from "@phosphor-icons/react";
@@ -23,6 +22,7 @@ import { HudInteractionContext } from "./contexts/HudInteractionContext";
 import { canToggleFloatingWebcamPreview } from "./floatingWebcamPreview";
 import {
 	CameraIcon,
+	CountdownIcon,
 	MicIcon,
 	NotesIcon,
 	OpenInEditorIcon,
@@ -60,7 +60,7 @@ export function LaunchWindow() {
 
 function LaunchWindowContent() {
 	const t = useScopedT("launch");
-	const { openId, requestOpen } = useLaunchPopoverCoordinator();
+	const { openId, requestOpen, requestClose } = useLaunchPopoverCoordinator();
 
 	const {
 		recording,
@@ -329,34 +329,67 @@ function LaunchWindowContent() {
 				</>
 			)}
 
-			<MicPopover
-				disabled={recording}
-				microphoneEnabled={microphoneEnabled}
-				onDisableMicrophone={() => setMicrophoneEnabled(false)}
-				devices={devices}
-				microphoneDeviceId={microphoneDeviceId}
-				selectedDeviceId={selectedDeviceId}
-				onSelectDevice={(deviceId) => {
-					setMicrophoneEnabled(true);
-					setSelectedDeviceId(deviceId);
-					setMicrophoneDeviceId(deviceId === "default" ? undefined : deviceId);
-				}}
-				trigger={
-					<Button
-						variant="ghost"
-						size="icon"
-						iconSize="lg"
-						title={
-							microphoneEnabled
-								? t("recording.disableMicrophone")
-								: t("recording.enableMicrophone")
+			{/* 麦标=开关；箭头=选设备。对齐 Screen 的「主件 + caret」，避免点麦却只出菜单。 */}
+			<div
+				className={`${styles.hudSplit} ${styles.electronNoDrag} ${
+					openId === "mic" ? styles.hudSplitOpen : ""
+				}`}
+			>
+				<Button
+					variant="ghost"
+					size="icon"
+					iconSize="lg"
+					className={`h-8 w-8 ${microphoneEnabled ? styles.ibActive : ""}`}
+					title={
+						microphoneEnabled
+							? t("recording.disableMicrophone")
+							: t("recording.enableMicrophone")
+					}
+					aria-label={
+						microphoneEnabled
+							? t("recording.disableMicrophone")
+							: t("recording.enableMicrophone")
+					}
+					onClick={() => {
+						const nextEnabled = !microphoneEnabled;
+						setMicrophoneEnabled(nextEnabled);
+						if (!nextEnabled) {
+							requestClose("mic");
 						}
-						className={microphoneEnabled ? styles.ibActive : ""}
-					>
-						<MicIcon muted={!microphoneEnabled} />
-					</Button>
-				}
-			/>
+					}}
+				>
+					<MicIcon muted={!microphoneEnabled} />
+				</Button>
+				<MicPopover
+					disabled={recording}
+					microphoneEnabled={microphoneEnabled}
+					onDisableMicrophone={() => setMicrophoneEnabled(false)}
+					devices={devices}
+					microphoneDeviceId={microphoneDeviceId}
+					selectedDeviceId={selectedDeviceId}
+					onSelectDevice={(deviceId) => {
+						setMicrophoneEnabled(true);
+						setSelectedDeviceId(deviceId);
+						setMicrophoneDeviceId(deviceId === "default" ? undefined : deviceId);
+					}}
+					trigger={
+						<Button
+							variant="ghost"
+							className="h-8 w-5 min-w-5 px-0"
+							title={t("recording.chooseMicrophone")}
+							aria-label={t("recording.chooseMicrophone")}
+							aria-expanded={openId === "mic"}
+						>
+							<CaretUpIcon
+								size={10}
+								className={`text-[#6b6b78] shrink-0 transition-transform duration-200 ${
+									openId === "mic" ? "" : "rotate-180"
+								}`}
+							/>
+						</Button>
+					}
+				/>
+			</div>
 
 			{/* 开录前麦电平：能判断麦在不在（E1） */}
 			<AudioLevelMeter level={micLevel} className="w-12 shrink-0" />
@@ -419,13 +452,18 @@ function LaunchWindowContent() {
 				trigger={
 					<Button
 						variant="ghost"
-						size="icon"
-						iconSize="lg"
-						title={t("recording.deviceGear")}
-						aria-label={t("recording.deviceGear")}
-						className={countdownDelay > 0 ? styles.ibActive : ""}
+						className={`h-8 min-w-8 gap-0.5 px-1.5 ${
+							countdownDelay > 0 || openId === "countdown" ? styles.ibActive : ""
+						}`}
+						title={t("recording.countdownDelay")}
+						aria-label={t("recording.countdownDelay")}
 					>
-						<GearSixIcon size={18} />
+						<CountdownIcon />
+						{countdownDelay > 0 ? (
+							<span className="text-[10px] font-semibold tabular-nums leading-none">
+								{countdownDelay}
+							</span>
+						) : null}
 					</Button>
 				}
 			/>

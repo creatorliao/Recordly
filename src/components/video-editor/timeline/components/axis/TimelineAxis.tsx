@@ -2,6 +2,7 @@ import { useTimelineContext } from "dnd-timeline";
 import { type CSSProperties, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { calculateAxisScale, formatTimeLabel } from "../../core/time";
+import { TIMELINE_CANVAS_PAD_X_PX } from "../../timelineLayout";
 
 interface TimelineAxisProps {
 	videoDurationMs: number;
@@ -52,6 +53,13 @@ export default function TimelineAxis({ videoDurationMs, currentTimeMs }: Timelin
 		};
 	}, [intervalMs, range.end, range.start, videoDurationMs]);
 
+	const firstTime = markers.markers[0]?.time;
+	const lastTime = markers.markers[markers.markers.length - 1]?.time;
+	const lastTickOffset =
+		lastTime === undefined
+			? 0
+			: TIMELINE_CANVAS_PAD_X_PX + valueToPixels(lastTime - range.start);
+
 	return (
 		<div
 			className="relative h-7 overflow-hidden border-b border-foreground/10 bg-editor-bg select-none"
@@ -60,7 +68,7 @@ export default function TimelineAxis({ videoDurationMs, currentTimeMs }: Timelin
 			}}
 		>
 			{markers.minorTicks.map((time) => {
-				const offset = valueToPixels(time - range.start);
+				const offset = TIMELINE_CANVAS_PAD_X_PX + valueToPixels(time - range.start);
 				return (
 					<div
 						key={`minor-${time}`}
@@ -71,7 +79,14 @@ export default function TimelineAxis({ videoDurationMs, currentTimeMs }: Timelin
 			})}
 
 			{markers.markers.map((marker) => {
-				const offset = valueToPixels(marker.time - range.start);
+				const offset = TIMELINE_CANVAS_PAD_X_PX + valueToPixels(marker.time - range.start);
+				const isFirst = marker.time === firstTime;
+				const isLast = marker.time === lastTime && !isFirst;
+				// 中间刻度若贴着片尾数字，不再画，避免 0:30 后再漏出半个 0。
+				if (!isFirst && !isLast && Math.abs(offset - lastTickOffset) < 28) {
+					return null;
+				}
+				const edgeShift = direction === "rtl" ? "translateX(50%)" : "translateX(-50%)";
 				const markerStyle: CSSProperties = {
 					position: "absolute",
 					bottom: 0,
@@ -79,8 +94,17 @@ export default function TimelineAxis({ videoDurationMs, currentTimeMs }: Timelin
 					display: "flex",
 					flexDirection: "row",
 					alignItems: "flex-end",
-					[sideProperty]: `${offset}px`,
-					transform: direction === "rtl" ? "translateX(50%)" : "translateX(-50%)",
+					...(isFirst
+						? { [sideProperty]: `${TIMELINE_CANVAS_PAD_X_PX}px` }
+						: isLast
+							? {
+									[sideProperty === "right" ? "left" : "right"]:
+										`${TIMELINE_CANVAS_PAD_X_PX}px`,
+								}
+							: {
+									[sideProperty]: `${offset}px`,
+									transform: edgeShift,
+								}),
 				};
 
 				return (

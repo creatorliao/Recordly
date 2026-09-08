@@ -8,6 +8,7 @@
 		"disableWebcam": "禁用摄像头叠加",
 		"enableWebcam": "启用摄像头叠加",
 		"countdownDelay": "倒计时延迟",
+		"chooseMicrophone": "选择麦克风",
 		"deviceGear": "设备与倒计时",
 		"noDelay": "无延迟",
 		"record": "录制",

@@ -70,6 +70,18 @@ export function VolumeIcon({ muted, className }: { muted: boolean; className?: s
 	);
 }
 
+/** 开录前倒计时：秒表，不用齿轮（齿轮表示设置，会让人点错）。 */
+export function CountdownIcon({ className }: { className?: string }) {
+	return (
+		<svg {...HUD_SVG_PROPS} className={className} aria-hidden="true">
+			<circle cx="12" cy="13.2" r="7.2" />
+			<path d="M12 13.2V9.6" />
+			<path d="M9.2 3.4h5.6" />
+			<path d="M16.6 5.1 18 6.5" />
+		</svg>
+	);
+}
+
 export function MicIcon({ muted, className }: { muted: boolean; className?: string }) {
 	return (
 		<svg {...HUD_SVG_PROPS} className={className} aria-hidden="true">

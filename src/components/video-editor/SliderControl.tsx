@@ -160,28 +160,30 @@ export const SliderControl = memo(function SliderControl({
 					onChange(clamp(quantizeToStep(value + step, min, step), min, max));
 				}
 			}}
-			className="relative grid h-7 w-full select-none grid-cols-[72px_minmax(0,1fr)_44px] items-center gap-2 px-0.5 outline-none focus-visible:ring-1 focus-visible:ring-[#2563EB]/40"
+			className="relative grid h-7 w-full select-none grid-cols-[88px_minmax(0,1fr)_52px] items-center gap-2 px-0.5 outline-none focus-visible:ring-1 focus-visible:ring-[#2563EB]/40"
 			style={
 				{
 					"--slider-pct": String(pct / 100),
 				} as React.CSSProperties
 			}
 		>
-			<div
-				className="pointer-events-none absolute left-[74px] right-[46px] top-1/2 h-1 -translate-y-1/2 rounded-[2px] bg-foreground/10 transition-none"
-				style={{
-					background: `linear-gradient(to right, ${accentColor === "purple" ? "#8b5cf6" : "#2563eb"} calc(var(--slider-pct) * 100%), hsl(var(--foreground) / 0.1) 0)`,
-				}}
-			/>
-			<div
-				className={cn(
-					"pointer-events-none absolute top-1/2 z-10 h-3 w-1 -translate-y-1/2 rounded-[2px] transition-none",
-					dividerClass,
-				)}
-				style={{
-					left: "calc(74px + var(--slider-pct) * (100% - 120px) - 2px)",
-				}}
-			/>
+			<div className="relative min-w-0 h-full">
+				<div
+					className="pointer-events-none absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-[2px] bg-foreground/10 transition-none"
+					style={{
+						background: `linear-gradient(to right, ${accentColor === "purple" ? "#8b5cf6" : "#2563eb"} calc(var(--slider-pct) * 100%), hsl(var(--foreground) / 0.1) 0)`,
+					}}
+				/>
+				<div
+					className={cn(
+						"pointer-events-none absolute top-1/2 z-10 h-3 w-1 -translate-y-1/2 rounded-[2px] transition-none",
+						dividerClass,
+					)}
+					style={{
+						left: "calc(var(--slider-pct) * 100% - 2px)",
+					}}
+				/>
+			</div>
 			<span className="pointer-events-none relative z-10 truncate text-[11px] font-medium text-muted-foreground">
 				{label}
 			</span>

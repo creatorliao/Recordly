@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
 	APP_TOOLTIP_CLASS,
+	adoptNativeTitle,
 	computeTooltipStyle,
+	findTooltipElement,
 	parseTooltipSide,
 	resolveTooltipSide,
 	type TooltipSide,
@@ -19,10 +21,11 @@ type TooltipState = {
 };
 
 function readTooltipTarget(node: EventTarget | null): HTMLElement | null {
-	if (!(node instanceof Element)) {
-		return null;
+	const el = findTooltipElement(node);
+	if (el) {
+		adoptNativeTitle(el);
 	}
-	return node.closest("[data-tooltip]");
+	return el;
 }
 
 /**

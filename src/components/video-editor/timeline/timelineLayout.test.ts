@@ -4,6 +4,7 @@ import {
 	getTimelineRowsMinHeightPx,
 	getTimelineViewportStretchFactor,
 	TIMELINE_AXIS_HEIGHT_PX,
+	TIMELINE_COLLAPSE_SLOT_PX,
 	TIMELINE_ROW_MIN_HEIGHT_PX,
 	TIMELINE_VISIBLE_ROW_COUNT,
 } from "./timelineLayout";
@@ -29,6 +30,11 @@ describe("timelineLayout", () => {
 		expect(getTimelineContentMinHeightPx(2.9)).toBe(
 			TIMELINE_AXIS_HEIGHT_PX + 2 * TIMELINE_ROW_MIN_HEIGHT_PX,
 		);
+	});
+
+	it("keeps the collapse slot beside the axis instead of over last tick", () => {
+		expect(TIMELINE_COLLAPSE_SLOT_PX).toBe(24);
+		expect(TIMELINE_AXIS_HEIGHT_PX).toBe(28);
 	});
 
 	it("stretches content height to keep a two-row viewport", () => {

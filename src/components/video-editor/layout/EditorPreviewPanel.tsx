@@ -158,7 +158,7 @@ export function EditorPreviewPanel(props: Props) {
 						className="flex min-h-0 w-full flex-1 items-stretch"
 						style={{ flex: "1 1 auto", margin: 0 }}
 					>
-						<div className="flex min-w-0 flex-1 items-center justify-center px-1">
+						<div className="flex min-w-0 flex-1 items-center justify-center">
 							<div
 								className="relative"
 								style={{

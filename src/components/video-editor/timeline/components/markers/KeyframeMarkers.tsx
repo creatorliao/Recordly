@@ -1,6 +1,7 @@
 import { useTimelineContext } from "dnd-timeline";
 import React, { useEffect, useState } from "react";
 import { useI18n } from "@/contexts/I18nContext";
+import { TIMELINE_CANVAS_PAD_X_PX } from "../../timelineLayout";
 
 interface Keyframe {
 	id: string;
@@ -35,7 +36,7 @@ const KeyframeMarkers: React.FC<KeyframeMarkersProps> = ({
 			if (!timelineRef.current) return;
 
 			const rect = timelineRef.current.getBoundingClientRect();
-			const clickX = e.clientX - rect.left - sidebarWidth;
+			const clickX = e.clientX - rect.left - sidebarWidth - TIMELINE_CANVAS_PAD_X_PX;
 			const relativeMs = pixelsToValue(clickX);
 			const absoluteMs = Math.max(0, Math.min(range.start + relativeMs, videoDurationMs));
 
@@ -79,7 +80,7 @@ const KeyframeMarkers: React.FC<KeyframeMarkersProps> = ({
 						key={kf.id}
 						className={`absolute top-8 cursor-grab active:cursor-grabbing ${isSelected ? "ring-2 ring-[#2563EB]" : ""}`}
 						style={{
-							left: `${sidebarWidth + offset - 8}px`,
+							left: `${sidebarWidth + TIMELINE_CANVAS_PAD_X_PX + offset - 8}px`,
 							zIndex: isDragging ? 50 : 40,
 							transition: isDragging ? "none" : "left 0.1s ease-out",
 						}}

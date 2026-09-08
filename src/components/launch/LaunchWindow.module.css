@@ -92,6 +92,19 @@
 	color: var(--launch-text);
 }
 
+/* Screen / 麦克风：主操作 + 展开箭头并排，避免整颗钮既像开关又像菜单。 */
+.hudSplit {
+	display: inline-flex;
+	align-items: center;
+	height: 32px;
+	border-radius: 8px;
+	flex-shrink: 0;
+}
+
+.hudSplitOpen {
+	background: var(--launch-hover);
+}
+
 .ibActive {
 	color: #3d8bff;
 }

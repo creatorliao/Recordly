@@ -1,5 +1,29 @@
 /** 全站图贴几何：暗色圆角浮层，避开系统原生 title 的黑框白底。 */
 
+export function adoptNativeTitle(el: HTMLElement): void {
+	const title = el.getAttribute("title");
+	if (!title?.trim()) {
+		return;
+	}
+	if (!el.getAttribute("data-tooltip")?.trim()) {
+		el.setAttribute("data-tooltip", title.trim());
+	}
+	// 立刻摘掉原生 title，否则 Windows 会再弹出黑框白底。
+	el.removeAttribute("title");
+}
+
+export function findTooltipElement(node: EventTarget | null): HTMLElement | null {
+	if (!(node instanceof Element)) {
+		return null;
+	}
+	const marked = node.closest("[data-tooltip]");
+	if (marked instanceof HTMLElement) {
+		return marked;
+	}
+	const titled = node.closest("[title]");
+	return titled instanceof HTMLElement ? titled : null;
+}
+
 export type TooltipSide = "top" | "bottom" | "left" | "right";
 
 export const APP_TOOLTIP_CLASS =

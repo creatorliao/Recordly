@@ -96,12 +96,13 @@ export function EditorExportMenu(props: Props) {
 	return (
 		<DropdownMenu open={showExportDropdown} onOpenChange={setShowExportDropdown} modal={false}>
 			<DropdownMenuTrigger asChild>
+				{/* 金路径终点：品牌蓝实心主按钮，对标 OpenScreen 醒目导出，不用幽灵文字链。 */}
 				<button
 					type="button"
 					onClick={handleOpenExportDropdown}
-					className="inline-flex items-center gap-1.5 bg-transparent p-0 text-xs font-medium tracking-tight text-foreground outline-none transition-opacity hover:opacity-80"
+					className="inline-flex h-6 items-center gap-1.5 rounded-[5px] bg-[#2563EB] px-2.5 text-[11px] font-semibold tracking-tight text-white outline-none transition-colors hover:bg-[#1d4ed8] focus-visible:ring-1 focus-visible:ring-[#2563EB]/50"
 				>
-					<Download className="h-3.5 w-3.5" />
+					<Download className="h-3.5 w-3.5" weight="bold" />
 					<span>{t("common.actions.export", "Export")}</span>
 				</button>
 			</DropdownMenuTrigger>

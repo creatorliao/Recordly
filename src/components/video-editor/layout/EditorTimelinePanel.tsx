@@ -11,6 +11,7 @@ import type { useTimelineProjection } from "../hooks/useTimelineProjection";
 import type { useZoomRegionCommands } from "../hooks/useZoomRegionCommands";
 import type { useTimelineState } from "../state/useTimelineState";
 import TimelineEditor, { type TimelineEditorHandle } from "../timeline/TimelineEditor";
+import { TIMELINE_AXIS_HEIGHT_PX, TIMELINE_COLLAPSE_SLOT_PX } from "../timeline/timelineLayout";
 
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
@@ -76,20 +77,22 @@ export function EditorTimelinePanel(props: Props) {
 			className={`relative flex min-h-[108px] flex-shrink-0 flex-col ${isResizing ? "" : "transition-[height] duration-150 ease-out"}`}
 			style={{ height }}
 		>
-			<div
-				className="absolute left-0 right-0 top-0 z-30 flex h-1 cursor-row-resize items-center justify-center border-t border-foreground/15 bg-editor-bg/95"
-				onPointerDown={onResizeStart}
-				onDoubleClick={onResetHeight}
-				role="separator"
-				aria-orientation="horizontal"
-				aria-label={t("editor.timeline.resize", "Resize timeline")}
-				aria-valuemin={108}
-				aria-valuemax={560}
-				aria-valuenow={height}
-			>
-				<DotsSixVertical className="h-3.5 w-3.5 rotate-90 text-muted-foreground/70 opacity-0 hover:opacity-70" />
-			</div>
-			<TimelineEditor
+			<div className="flex min-h-0 min-w-0 flex-1">
+				<div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+					<div
+						className="absolute left-0 right-0 top-0 z-30 flex h-1 cursor-row-resize items-center justify-center border-t border-foreground/15 bg-editor-bg/95"
+						onPointerDown={onResizeStart}
+						onDoubleClick={onResetHeight}
+						role="separator"
+						aria-orientation="horizontal"
+						aria-label={t("editor.timeline.resize", "Resize timeline")}
+						aria-valuemin={108}
+						aria-valuemax={560}
+						aria-valuenow={height}
+					>
+						<DotsSixVertical className="h-3.5 w-3.5 rotate-90 text-muted-foreground/70 opacity-0 hover:opacity-70" />
+					</div>
+					<TimelineEditor
 				ref={timelineRef}
 				videoDuration={projection.timelineDuration}
 				currentTime={currentTime}
@@ -146,25 +149,42 @@ export function EditorTimelinePanel(props: Props) {
 				getSourceAudioTrackSettingsForClip={audio.getSourceAudioTrackSettingsForClip}
 				onSourceAudioAvailabilityChange={timeline.setHasClipSourceAudio}
 				onSourceAudioTracksMetaChange={audio.onSourceAudioTracksMetaChange}
-			/>
-			<button
-				type="button"
-				onClick={onToggleCollapsed}
-				className="absolute right-1 top-0 z-20 inline-flex h-7 w-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-				aria-label={
-					isCollapsed
-						? t("editor.timeline.expand", "Expand timeline")
-						: t("editor.timeline.collapse", "Collapse timeline")
-				}
-				title={
-					isCollapsed
-						? t("editor.timeline.expand", "Expand timeline")
-						: t("editor.timeline.collapse", "Collapse timeline")
-				}
-				aria-pressed={isCollapsed}
-			>
-				{isCollapsed ? <CaretUp className="h-4 w-4" /> : <CaretDown className="h-4 w-4" />}
-			</button>
+					/>
+				</div>
+				{/* 折叠槽与标尺分行：禁止再 absolute 叠到片尾时刻上。 */}
+				<div
+					className="flex shrink-0 flex-col items-center border-l border-foreground/10 bg-editor-bg"
+					style={{ width: TIMELINE_COLLAPSE_SLOT_PX }}
+				>
+					<button
+						type="button"
+						onClick={onToggleCollapsed}
+						className="inline-flex items-center justify-center text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+						style={{
+							height: TIMELINE_AXIS_HEIGHT_PX,
+							width: TIMELINE_COLLAPSE_SLOT_PX,
+						}}
+						aria-label={
+							isCollapsed
+								? t("editor.timeline.expand", "Expand timeline")
+								: t("editor.timeline.collapse", "Collapse timeline")
+						}
+						data-tooltip={
+							isCollapsed
+								? t("editor.timeline.expand", "Expand timeline")
+								: t("editor.timeline.collapse", "Collapse timeline")
+						}
+						data-tooltip-side="left"
+						aria-pressed={isCollapsed}
+					>
+						{isCollapsed ? (
+							<CaretUp className="h-3.5 w-3.5" />
+						) : (
+							<CaretDown className="h-3.5 w-3.5" />
+						)}
+					</button>
+				</div>
+			</div>
 		</div>
 	);
 }

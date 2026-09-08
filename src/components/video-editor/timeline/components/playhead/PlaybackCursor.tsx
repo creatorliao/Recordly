@@ -2,6 +2,7 @@ import { useTimelineContext } from "dnd-timeline";
 import { type RefObject, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { formatPlayheadTime } from "../../core/time";
+import { TIMELINE_CANVAS_PAD_X_PX } from "../../timelineLayout";
 
 interface PlaybackCursorProps {
 	currentTimeMs: number;
@@ -30,7 +31,7 @@ export default function PlaybackCursor({
 		const handleMouseMove = (e: MouseEvent) => {
 			if (!timelineRef.current || !onSeek) return;
 			const rect = timelineRef.current.getBoundingClientRect();
-			const clickX = e.clientX - rect.left - sidebarWidth;
+			const clickX = e.clientX - rect.left - sidebarWidth - TIMELINE_CANVAS_PAD_X_PX;
 			const relativeMs = pixelsToValue(clickX);
 			let absoluteMs = Math.max(0, Math.min(range.start + relativeMs, videoDurationMs));
 
@@ -76,13 +77,14 @@ export default function PlaybackCursor({
 	const clampedTime = Math.min(currentTimeMs, videoDurationMs);
 	if (clampedTime < range.start || clampedTime > range.end) return null;
 
-	const offset = valueToPixels(clampedTime - range.start);
+	const offset = TIMELINE_CANVAS_PAD_X_PX + valueToPixels(clampedTime - range.start);
 
 	return (
 		<div
 			className="absolute top-0 bottom-0 z-50 group/cursor"
 			style={{
-				[sideProperty === "right" ? "marginRight" : "marginLeft"]: `${sidebarWidth - 1}px`,
+				[sideProperty === "right" ? "marginRight" : "marginLeft"]:
+					`${sidebarWidth + TIMELINE_CANVAS_PAD_X_PX - 1}px`,
 				pointerEvents: "none",
 			}}
 		>
@@ -94,11 +96,15 @@ export default function PlaybackCursor({
 					setIsDragging(true);
 				}}
 			>
+				{/* 倒三角头：对齐剪映 / Premiere / OpenScreen 小直角标。禁止菱形、发光、hover scale。视觉约 10×8，热区 16×14。 */}
 				<div
-					className="absolute top-0 left-1/2 -translate-x-1/2 hover:scale-125 transition-transform"
-					style={{ width: "16px", height: "16px" }}
+					className="absolute top-0.5 left-1/2 -translate-x-1/2"
+					style={{ width: 16, height: 14 }}
+					aria-hidden
 				>
-					<div className="w-3 h-3 mx-auto mt-[2px] bg-[#2563EB] rotate-45 rounded-sm shadow-lg border border-foreground/20" />
+					<svg width="10" height="8" viewBox="0 0 10 8" className="mx-auto block">
+						<path d="M0 0h10L5 8z" fill="#2563EB" />
+					</svg>
 				</div>
 				<div
 					className={cn(

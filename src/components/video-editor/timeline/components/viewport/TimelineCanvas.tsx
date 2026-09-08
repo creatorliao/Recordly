@@ -35,7 +35,11 @@ import { useTimelineAudioPeaks } from "../../hooks/useTimelineAudioPeaks";
 import Item from "../../Item";
 import glassStyles from "../../ItemGlass.module.css";
 import Row from "../../Row";
-import { getTimelineContentMinHeightPx, getTimelineRowsMinHeightPx } from "../../timelineLayout";
+import {
+	getTimelineContentMinHeightPx,
+	getTimelineRowsMinHeightPx,
+	TIMELINE_CANVAS_PAD_X_PX,
+} from "../../timelineLayout";
 import TimelineAxis from "../axis/TimelineAxis";
 import ClipMarkerOverlay from "../overlays/ClipMarkerOverlay";
 import PlaybackCursor from "../playhead/PlaybackCursor";
@@ -263,8 +267,8 @@ function useTimelineHover({
 			const contentWidth = Math.max(1, rect.width - sidebarWidth);
 			const contentX =
 				direction === "rtl"
-					? rect.right - sidebarWidth - clientX
-					: clientX - rect.left - sidebarWidth;
+					? rect.right - sidebarWidth - TIMELINE_CANVAS_PAD_X_PX - clientX
+					: clientX - rect.left - sidebarWidth - TIMELINE_CANVAS_PAD_X_PX;
 			const clampedX = Math.max(0, Math.min(contentX, contentWidth));
 			const ratio = clampedX / contentWidth;
 			const nextMs = rangeStart + ratio * visibleDurationMs;
@@ -810,8 +814,8 @@ export default function TimelineCanvas({
 			const rect = e.currentTarget.getBoundingClientRect();
 			const clickX =
 				direction === "rtl"
-					? rect.right - sidebarWidth - e.clientX
-					: e.clientX - rect.left - sidebarWidth;
+					? rect.right - sidebarWidth - TIMELINE_CANVAS_PAD_X_PX - e.clientX
+					: e.clientX - rect.left - sidebarWidth - TIMELINE_CANVAS_PAD_X_PX;
 			if (clickX < 0) return;
 			const relativeMs = pixelsToValue(clickX);
 			const absoluteMs = Math.max(0, Math.min(range.start + relativeMs, videoDurationMs));
@@ -838,8 +842,8 @@ export default function TimelineCanvas({
 		(clientX: number, rect: DOMRect) => {
 			const clickX =
 				direction === "rtl"
-					? rect.right - sidebarWidth - clientX
-					: clientX - rect.left - sidebarWidth;
+					? rect.right - sidebarWidth - TIMELINE_CANVAS_PAD_X_PX - clientX
+					: clientX - rect.left - sidebarWidth - TIMELINE_CANVAS_PAD_X_PX;
 			const relativeMs = pixelsToValue(clickX);
 			return Math.max(0, Math.min(range.start + relativeMs, videoDurationMs));
 		},
@@ -1014,7 +1018,7 @@ export default function TimelineCanvas({
 					className="absolute top-0 bottom-0 z-[45] pointer-events-none"
 					style={{
 						[sideProperty === "right" ? "marginRight" : "marginLeft"]:
-							`${sidebarWidth - 1}px`,
+							`${sidebarWidth + TIMELINE_CANVAS_PAD_X_PX - 1}px`,
 					}}
 				>
 					<div

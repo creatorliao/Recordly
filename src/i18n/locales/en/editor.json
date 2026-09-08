@@ -123,7 +123,9 @@
 	},
 	"layout": {
 		"toggleSideBar": "Toggle sidebar",
-		"toggleSettingsPanel": "Toggle settings panel"
+		"toggleSettingsPanel": "Toggle settings panel",
+		"hideControlPanel": "Hide control panel",
+		"showControlPanel": "Show control panel"
 	},
 	"statusbar": {
 		"unsaved": "Unsaved",

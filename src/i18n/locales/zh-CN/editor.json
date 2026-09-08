@@ -123,7 +123,9 @@
 	},
 	"layout": {
 		"toggleSideBar": "切换侧栏",
-		"toggleSettingsPanel": "切换设置面板"
+		"toggleSettingsPanel": "切换设置面板",
+		"hideControlPanel": "收起控制面板",
+		"showControlPanel": "展开控制面板"
 	},
 	"statusbar": {
 		"unsaved": "未保存",
