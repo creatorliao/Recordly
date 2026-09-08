@@ -184,6 +184,41 @@ export function getWebcamOverlayPosition({
 	};
 }
 
+/**
+ * 将预览容器内小窗左上角像素坐标反算为自定义位置归一化比例。
+ * 与 getWebcamOverlayPosition（positionPreset=custom）互逆，供画布拖拽写入 positionX/Y。
+ */
+export function getWebcamCustomPositionFromPixels({
+	containerWidth,
+	containerHeight,
+	overlayWidth,
+	overlayHeight,
+	margin,
+	pixelX,
+	pixelY,
+}: {
+	containerWidth: number;
+	containerHeight: number;
+	overlayWidth: number;
+	overlayHeight: number;
+	margin: number;
+	pixelX: number;
+	pixelY: number;
+}): { positionX: number; positionY: number } {
+	const safeMargin = Math.max(0, margin);
+	const safeOverlayWidth = Math.max(0, overlayWidth);
+	const safeOverlayHeight = Math.max(0, overlayHeight);
+	const availableWidth = Math.max(0, containerWidth - safeOverlayWidth - safeMargin * 2);
+	const availableHeight = Math.max(0, containerHeight - safeOverlayHeight - safeMargin * 2);
+
+	return {
+		positionX:
+			availableWidth <= 0 ? 0 : clamp((pixelX - safeMargin) / availableWidth, 0, 1),
+		positionY:
+			availableHeight <= 0 ? 0 : clamp((pixelY - safeMargin) / availableHeight, 0, 1),
+	};
+}
+
 export function normalizeWebcamCropRegion(cropRegion?: Partial<CropRegion> | null): CropRegion {
 	const candidate = cropRegion ?? {};
 	const rawX = Number.isFinite(candidate.x) ? (candidate.x as number) : 0;

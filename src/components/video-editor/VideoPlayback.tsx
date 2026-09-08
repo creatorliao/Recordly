@@ -130,6 +130,7 @@ import {
 	getCropMatchedWebcamHeightPercent,
 	getWebcamCornerRadiusPx,
 	getWebcamCropSourceRect,
+	getWebcamCustomPositionFromPixels,
 	getWebcamOverlayDimensionsPx,
 	getWebcamOverlayPosition,
 	scaleWebcamOverlayPixels,
@@ -258,6 +259,12 @@ interface VideoPlaybackProps {
 	cropRegion?: import("./types").CropRegion;
 	webcam?: WebcamOverlaySettings;
 	webcamVideoPath?: string | null;
+	/** 画布拖摄像头小窗时回写 custom + X/Y；与侧栏精确位置双向同步 */
+	onWebcamPositionChange?: (patch: {
+		positionPreset: "custom";
+		positionX: number;
+		positionY: number;
+	}) => void;
 	trimRegions?: TrimRegion[];
 	speedRegions?: SpeedRegion[];
 	aspectRatio: AspectRatio;
@@ -342,6 +349,7 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 			cropRegion,
 			webcam,
 			webcamVideoPath,
+			onWebcamPositionChange,
 			trimRegions = [],
 			speedRegions = [],
 			aspectRatio,
@@ -420,6 +428,22 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 		const webcamVideoRef = useRef<HTMLVideoElement | null>(null);
 		const webcamBubbleRef = useRef<HTMLDivElement | null>(null);
 		const webcamBubbleInnerRef = useRef<HTMLDivElement | null>(null);
+		/** 拖拽中暂存尺寸与指针偏移，避免与 PIXI 布局循环抢写 left/top */
+		const webcamDragRef = useRef<{
+			pointerId: number;
+			offsetX: number;
+			offsetY: number;
+			overlayWidth: number;
+			overlayHeight: number;
+			bubbleWidth: number;
+			bubbleHeight: number;
+			scaledMargin: number;
+			positionX: number;
+			positionY: number;
+		} | null>(null);
+		const webcamDragRafRef = useRef<number | null>(null);
+		const onWebcamPositionChangeRef = useRef(onWebcamPositionChange);
+		onWebcamPositionChangeRef.current = onWebcamPositionChange;
 		const [webcamVideoDimensions, setWebcamVideoDimensions] = useState<{
 			width: number;
 			height: number;
@@ -873,17 +897,29 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 					scaledDimensions.width,
 					scaledDimensions.height,
 				);
-				const { x, y } = getWebcamOverlayPosition({
-					containerWidth: overlay.clientWidth,
-					containerHeight: overlay.clientHeight,
-					width: scaledDimensions.width,
-					height: scaledDimensions.height,
-					margin: scaledMargin,
-					positionPreset: webcamPositionPreset,
-					positionX: webcamPositionX,
-					positionY: webcamPositionY,
-					legacyCorner: webcamCorner,
-				});
+				const { x, y } = webcamDragRef.current
+					? getWebcamOverlayPosition({
+							containerWidth: overlay.clientWidth,
+							containerHeight: overlay.clientHeight,
+							width: scaledDimensions.width,
+							height: scaledDimensions.height,
+							margin: scaledMargin,
+							positionPreset: "custom",
+							positionX: webcamDragRef.current.positionX,
+							positionY: webcamDragRef.current.positionY,
+							legacyCorner: webcamCorner,
+						})
+					: getWebcamOverlayPosition({
+							containerWidth: overlay.clientWidth,
+							containerHeight: overlay.clientHeight,
+							width: scaledDimensions.width,
+							height: scaledDimensions.height,
+							margin: scaledMargin,
+							positionPreset: webcamPositionPreset,
+							positionX: webcamPositionX,
+							positionY: webcamPositionY,
+							legacyCorner: webcamCorner,
+						});
 
 				bubble.style.display = "block";
 				bubble.style.left = `${x}px`;
@@ -891,6 +927,14 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 				bubble.style.width = `${scaledDimensions.width}px`;
 				bubble.style.height = `${scaledDimensions.height}px`;
 				bubble.style.aspectRatio = `${scaledDimensions.width} / ${scaledDimensions.height}`;
+				// 可拖时露出抓手；拖拽过程由 pointer 事件改成 grabbing
+				if (onWebcamPositionChangeRef.current) {
+					bubble.style.pointerEvents = "auto";
+					bubble.style.cursor = webcamDragRef.current ? "grabbing" : "grab";
+				} else {
+					bubble.style.pointerEvents = "none";
+					bubble.style.cursor = "";
+				}
 				const squirclePath = getSquircleSvgPath({
 					x: 0,
 					y: 0,
@@ -1270,6 +1314,124 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 
 		const handleOverlayPointerLeave = (event: React.PointerEvent<HTMLDivElement>) => {
 			endFocusDrag(event);
+		};
+
+		const flushWebcamDragPosition = useCallback(() => {
+			webcamDragRafRef.current = null;
+			const drag = webcamDragRef.current;
+			const notify = onWebcamPositionChangeRef.current;
+			if (!drag || !notify) return;
+			notify({
+				positionPreset: "custom",
+				positionX: drag.positionX,
+				positionY: drag.positionY,
+			});
+		}, []);
+
+		const handleWebcamPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+			if (!webcamEnabled || !webcamVideoPath || !onWebcamPositionChangeRef.current) return;
+			const overlay = overlayRef.current;
+			const bubble = webcamBubbleRef.current;
+			if (!overlay || !bubble) return;
+
+			// 阻止冒泡到缩放焦点拖拽
+			event.stopPropagation();
+			event.preventDefault();
+
+			const overlayRect = overlay.getBoundingClientRect();
+			const bubbleRect = bubble.getBoundingClientRect();
+			const scaledMargin = scaleWebcamOverlayPixels(webcamMargin, overlay.clientWidth);
+			webcamDragRef.current = {
+				pointerId: event.pointerId,
+				offsetX: event.clientX - bubbleRect.left,
+				offsetY: event.clientY - bubbleRect.top,
+				overlayWidth: overlay.clientWidth,
+				overlayHeight: overlay.clientHeight,
+				bubbleWidth: bubbleRect.width,
+				bubbleHeight: bubbleRect.height,
+				scaledMargin,
+				positionX: webcamPositionX,
+				positionY: webcamPositionY,
+			};
+			bubble.style.cursor = "grabbing";
+			try {
+				bubble.setPointerCapture(event.pointerId);
+			} catch {
+				/* 捕获失败仍可用 move/up 结束拖拽 */
+			}
+		};
+
+		const handleWebcamPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+			const drag = webcamDragRef.current;
+			if (!drag || drag.pointerId !== event.pointerId) return;
+			event.stopPropagation();
+			event.preventDefault();
+
+			const overlay = overlayRef.current;
+			const bubble = webcamBubbleRef.current;
+			if (!overlay || !bubble) return;
+
+			const overlayRect = overlay.getBoundingClientRect();
+			const pixelX = event.clientX - overlayRect.left - drag.offsetX;
+			const pixelY = event.clientY - overlayRect.top - drag.offsetY;
+			const next = getWebcamCustomPositionFromPixels({
+				containerWidth: drag.overlayWidth,
+				containerHeight: drag.overlayHeight,
+				overlayWidth: drag.bubbleWidth,
+				overlayHeight: drag.bubbleHeight,
+				margin: drag.scaledMargin,
+				pixelX,
+				pixelY,
+			});
+			drag.positionX = next.positionX;
+			drag.positionY = next.positionY;
+
+			const clamped = getWebcamOverlayPosition({
+				containerWidth: drag.overlayWidth,
+				containerHeight: drag.overlayHeight,
+				width: drag.bubbleWidth,
+				height: drag.bubbleHeight,
+				margin: drag.scaledMargin,
+				positionPreset: "custom",
+				positionX: next.positionX,
+				positionY: next.positionY,
+				legacyCorner: webcamCorner,
+			});
+			bubble.style.left = `${clamped.x}px`;
+			bubble.style.top = `${clamped.y}px`;
+
+			if (webcamDragRafRef.current == null) {
+				webcamDragRafRef.current = window.requestAnimationFrame(flushWebcamDragPosition);
+			}
+		};
+
+		const endWebcamDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+			const drag = webcamDragRef.current;
+			if (!drag || drag.pointerId !== event.pointerId) return;
+			event.stopPropagation();
+			if (webcamDragRafRef.current != null) {
+				window.cancelAnimationFrame(webcamDragRafRef.current);
+				webcamDragRafRef.current = null;
+			}
+			flushWebcamDragPosition();
+			webcamDragRef.current = null;
+			const bubble = webcamBubbleRef.current;
+			if (bubble) {
+				bubble.style.cursor = onWebcamPositionChangeRef.current ? "grab" : "";
+				try {
+					bubble.releasePointerCapture(event.pointerId);
+				} catch {
+					/* 已释放 */
+				}
+			}
+		};
+
+		const handleWebcamPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+			endWebcamDrag(event);
+		};
+
+		const handleWebcamPointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+			endWebcamDrag(event);
 		};
 
 		useEffect(() => {
@@ -2586,6 +2748,18 @@ const VideoPlayback = forwardRef<VideoPlaybackRef, VideoPlaybackProps>(
 									display: webcam.enabled ? "block" : "none",
 									pointerEvents: "none",
 								}}
+								data-tooltip={
+									webcam.enabled && onWebcamPositionChange
+										? t(
+												"settings.effects.webcamDragHint",
+												"Drag to reposition",
+											)
+										: undefined
+								}
+								onPointerDown={handleWebcamPointerDown}
+								onPointerMove={handleWebcamPointerMove}
+								onPointerUp={handleWebcamPointerUp}
+								onPointerCancel={handleWebcamPointerCancel}
 							>
 								<div
 									ref={webcamBubbleInnerRef}

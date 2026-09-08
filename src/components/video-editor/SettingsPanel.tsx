@@ -1,4 +1,5 @@
 import {
+	CaretDown,
 	CursorClick,
 	Palette,
 	PresentationChart,
@@ -1257,6 +1258,10 @@ export function SettingsPanel({
 		Partial<Record<string, string>>
 	>({});
 	const [showCursorClickEffectAdvanced, setShowCursorClickEffectAdvanced] = useState(false);
+	/** 摄像头面板折叠：会话内即可，不写入偏好（D10） */
+	const [webcamSnapCornersOpen, setWebcamSnapCornersOpen] = useState(false);
+	const [webcamPrecisePositionOpen, setWebcamPrecisePositionOpen] = useState(false);
+	const [webcamFootageOpen, setWebcamFootageOpen] = useState(false);
 	const cursorPreviewUrls = builtInCursorPreviewUrls;
 	const showDevMotionControls = import.meta.env.DEV;
 	const cursorStyleOptions = BUILTIN_CURSOR_STYLE_OPTIONS;
@@ -2349,12 +2354,16 @@ export function SettingsPanel({
 							})
 						}
 					>
-						<SelectTrigger className="h-7 w-[160px] rounded-[2px] border-foreground/10 bg-foreground/5 text-xs text-foreground hover:bg-foreground/10">
+						<SelectTrigger className="h-7 w-[160px] rounded-[2px] border-foreground/10 bg-foreground/5 text-[12px] font-medium text-foreground hover:bg-foreground/10">
 							<SelectValue />
 						</SelectTrigger>
-						<SelectContent className="border-foreground/10 bg-editor-surface-alt text-foreground">
+						<SelectContent className="rounded-[2px] border-foreground/10 bg-editor-surface-alt text-[12px] font-medium text-foreground shadow-none">
 							{CAPTION_ANIMATION_OPTIONS.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
+								<SelectItem
+									key={option.value}
+									value={option.value}
+									className="h-7 py-0 text-[12px] font-medium"
+								>
 									{tSettings(option.labelKey)}
 								</SelectItem>
 							))}
@@ -2401,14 +2410,15 @@ export function SettingsPanel({
 						value={autoCaptionSettings.fontFamily}
 						onValueChange={(value) => updateAutoCaptionSettings({ fontFamily: value })}
 					>
-						<SelectTrigger className="h-8 w-full rounded-md border-foreground/10 bg-foreground/5 text-xs text-foreground">
+						<SelectTrigger className="h-7 w-full rounded-[2px] border-foreground/10 bg-foreground/5 text-[12px] font-medium text-foreground">
 							<SelectValue />
 						</SelectTrigger>
-						<SelectContent className="max-h-[260px] border-foreground/10 bg-editor-surface-alt text-foreground">
+						<SelectContent className="max-h-[260px] rounded-[2px] border-foreground/10 bg-editor-surface-alt text-[12px] font-medium text-foreground shadow-none">
 							{captionFontOptions.map((font) => (
 								<SelectItem
 									key={font.value}
 									value={font.value}
+									className="h-7 py-0 text-[12px] font-medium"
 									style={{ fontFamily: font.value }}
 								>
 									{font.label}
@@ -2522,12 +2532,16 @@ export function SettingsPanel({
 				<section className="flex flex-col gap-2">
 					<SectionLabel>{t("common.app.language", "Language")}</SectionLabel>
 					<Select value={locale} onValueChange={(value) => setLocale(value as AppLocale)}>
-						<SelectTrigger className="h-7 w-full rounded-[2px] border-foreground/10 bg-foreground/5 text-xs text-foreground hover:bg-foreground/10">
+						<SelectTrigger className="h-7 w-full rounded-[2px] border-foreground/10 bg-foreground/5 text-[12px] font-medium text-foreground hover:bg-foreground/10">
 							<SelectValue />
 						</SelectTrigger>
-						<SelectContent className="border-foreground/10 bg-editor-surface-alt text-foreground">
+						<SelectContent className="rounded-[2px] border-foreground/10 bg-editor-surface-alt text-[12px] font-medium text-foreground shadow-none">
 							{SUPPORTED_LOCALES.map((candidateLocale) => (
-								<SelectItem key={candidateLocale} value={candidateLocale}>
+								<SelectItem
+									key={candidateLocale}
+									value={candidateLocale}
+									className="h-7 py-0 text-[12px] font-medium"
+								>
 									{APP_LANGUAGE_LABELS[candidateLocale]}
 								</SelectItem>
 							))}
@@ -3510,16 +3524,6 @@ export function SettingsPanel({
 									return parseFloat(text.replace(/×$/, ""));
 								}}
 							/>
-							{showDevMotionControls ? (
-								<div className="rounded-lg border border-foreground/10 bg-foreground/[0.03] px-3 py-2">
-									<div className="text-[10px] text-muted-foreground">
-										{tSettings(
-											"effects.cursorDebugMovedToDev",
-											"Cursor spring tuning is available in Settings > Dev.",
-										)}
-									</div>
-								</div>
-							) : null}
 						</div>
 					</section>
 				);
@@ -3537,7 +3541,13 @@ export function SettingsPanel({
 							</button>
 						</div>
 						<div className="flex flex-col gap-1.5">
-							<div className="flex items-center justify-between rounded-lg bg-foreground/[0.03] px-2.5 py-1.5">
+							<div
+								className="flex items-center justify-between rounded-lg bg-foreground/[0.03] px-2.5 py-1.5"
+								data-tooltip={tSettings(
+									"effects.webcamShowTip",
+									"Show the webcam bubble in the preview",
+								)}
+							>
 								<span className="text-[10px] text-muted-foreground">
 									{tSettings("effects.show", "Show")}
 								</span>
@@ -3547,7 +3557,13 @@ export function SettingsPanel({
 									className="data-[state=checked]:bg-[#2563EB] scale-75"
 								/>
 							</div>
-							<div className="flex items-center justify-between rounded-lg bg-foreground/[0.03] px-2.5 py-1.5">
+							<div
+								className="flex items-center justify-between rounded-lg bg-foreground/[0.03] px-2.5 py-1.5"
+								data-tooltip={tSettings(
+									"effects.webcamReactToZoomTip",
+									"Scale the bubble when the canvas zooms",
+								)}
+							>
 								<span className="text-[10px] text-muted-foreground">
 									{tSettings("effects.webcamReactToZoom")}
 								</span>
@@ -3557,7 +3573,13 @@ export function SettingsPanel({
 									className="data-[state=checked]:bg-[#2563EB] scale-75"
 								/>
 							</div>
-							<div className="flex items-center justify-between rounded-lg bg-foreground/[0.03] px-2.5 py-1.5">
+							<div
+								className="flex items-center justify-between rounded-lg bg-foreground/[0.03] px-2.5 py-1.5"
+								data-tooltip={tSettings(
+									"effects.webcamMirrorTip",
+									"Flip the webcam horizontally",
+								)}
+							>
 								<span className="text-[10px] text-muted-foreground">
 									{tSettings("effects.webcamMirror", "Mirror webcam")}
 								</span>
@@ -3628,97 +3650,159 @@ export function SettingsPanel({
 								/>
 							</div>
 							<div className="rounded-lg bg-foreground/[0.03] px-2.5 py-2">
-								<div className="mb-2 text-[10px] text-muted-foreground">
+								<div className="mb-1 text-[10px] text-muted-foreground">
 									{tSettings("effects.webcamPosition", "Position")}
 								</div>
-								<div className="grid grid-cols-3 gap-1.5">
-									{WEBCAM_POSITION_PRESETS.map((option) => {
-										const isActive = webcamPositionPreset === option.preset;
-										return (
-											<Button
-												key={option.preset}
-												type="button"
-												onClick={() =>
-													applyWebcamPositionPreset(option.preset)
-												}
-												title={tSettings(option.i18nKey)}
-												className={cn(
-													"h-8 rounded-lg border px-0 text-sm font-semibold transition-all",
-													isActive
-														? "border-[#2563EB] bg-[#2563EB] text-white"
-														: "border-foreground/10 bg-foreground/5 text-muted-foreground hover:border-foreground/20 hover:bg-foreground/10",
-												)}
-											>
-												{option.label}
-											</Button>
-										);
-									})}
-								</div>
-								<div className="mt-2 flex items-center justify-between rounded-lg bg-black/10 px-2.5 py-1.5">
+								<p
+									className="mb-1.5 text-[10px] leading-4 text-muted-foreground/80"
+									data-tooltip={tSettings(
+										"effects.webcamPositionHint",
+										"Drag the bubble in the preview to place it",
+									)}
+								>
+									{tSettings(
+										"effects.webcamPositionHint",
+										"Drag the bubble in the preview to place it",
+									)}
+								</p>
+								<p className="mb-2 text-[10px] text-muted-foreground/70">
+									{tSettings("effects.webcamPositionModePrefix", "Current:")}{" "}
+									{webcamPositionPreset === "custom"
+										? tSettings(
+												"effects.webcamPositionModeCustom",
+												"Free placement",
+											)
+										: tSettings(
+												WEBCAM_POSITION_PRESETS.find(
+													(option) =>
+														option.preset === webcamPositionPreset,
+												)?.i18nKey ?? "effects.webcamPosBottomRight",
+											)}
+								</p>
+								<button
+									type="button"
+									onClick={() => setWebcamSnapCornersOpen((open) => !open)}
+									className="mb-1.5 flex w-full items-center justify-between rounded-lg bg-black/10 px-2.5 py-1.5 text-left"
+								>
+									<span className="text-[10px] text-muted-foreground">
+										{tSettings("effects.webcamSnapCorners", "Snap corners")}
+									</span>
+									<CaretDown
+										className={cn(
+											"h-3 w-3 text-muted-foreground transition-transform",
+											webcamSnapCornersOpen && "rotate-180",
+										)}
+									/>
+								</button>
+								{webcamSnapCornersOpen ? (
+									<div className="mb-1.5 grid grid-cols-3 gap-1.5">
+										{WEBCAM_POSITION_PRESETS.map((option) => {
+											const isActive =
+												webcamPositionPreset === option.preset;
+											return (
+												<Button
+													key={option.preset}
+													type="button"
+													onClick={() =>
+														applyWebcamPositionPreset(option.preset)
+													}
+													data-tooltip={tSettings(option.i18nKey)}
+													className={cn(
+														"h-8 rounded-lg border px-0 text-sm font-semibold transition-all",
+														isActive
+															? "border-[#2563EB] bg-[#2563EB] text-white"
+															: "border-foreground/10 bg-foreground/5 text-muted-foreground hover:border-foreground/20 hover:bg-foreground/10",
+													)}
+												>
+													{option.label}
+												</Button>
+											);
+										})}
+									</div>
+								) : null}
+								<button
+									type="button"
+									onClick={() => setWebcamPrecisePositionOpen((open) => !open)}
+									className="flex w-full items-center justify-between rounded-lg bg-black/10 px-2.5 py-1.5 text-left"
+								>
 									<span className="text-[10px] text-muted-foreground">
 										{tSettings(
-											"effects.webcamCustomPosition",
-											"Custom position",
+											"effects.webcamPrecisePosition",
+											"Precise position",
 										)}
 									</span>
-									<Switch
-										checked={webcamPositionPreset === "custom"}
-										onCheckedChange={(checked) =>
-											applyWebcamPositionPreset(
-												checked ? "custom" : DEFAULT_WEBCAM_POSITION_PRESET,
-											)
-										}
-										className="data-[state=checked]:bg-[#2563EB] scale-75"
+									<CaretDown
+										className={cn(
+											"h-3 w-3 text-muted-foreground transition-transform",
+											webcamPrecisePositionOpen && "rotate-180",
+										)}
 									/>
-								</div>
+								</button>
+								{webcamPrecisePositionOpen ? (
+									<div className="mt-1.5 flex flex-col gap-1.5">
+										<SliderControl
+											label={tSettings(
+												"effects.webcamHorizontal",
+												"Horizontal",
+											)}
+											value={webcamPositionX * 100}
+											defaultValue={DEFAULT_WEBCAM_POSITION_X * 100}
+											min={0}
+											max={100}
+											step={1}
+											onChange={(v) =>
+												updateWebcam({
+													positionPreset: "custom",
+													positionX: v / 100,
+												})
+											}
+											formatValue={(v) => `${Math.round(v)}%`}
+											parseInput={(text) =>
+												parseFloat(text.replace(/%$/, ""))
+											}
+										/>
+										<SliderControl
+											label={tSettings(
+												"effects.webcamVertical",
+												"Vertical",
+											)}
+											value={webcamPositionY * 100}
+											defaultValue={DEFAULT_WEBCAM_POSITION_Y * 100}
+											min={0}
+											max={100}
+											step={1}
+											onChange={(v) =>
+												updateWebcam({
+													positionPreset: "custom",
+													positionY: v / 100,
+												})
+											}
+											formatValue={(v) => `${Math.round(v)}%`}
+											parseInput={(text) =>
+												parseFloat(text.replace(/%$/, ""))
+											}
+										/>
+									</div>
+								) : null}
 							</div>
-							{webcamPositionPreset === "custom" ? (
-								<>
-									<SliderControl
-										label={tSettings("effects.webcamHorizontal", "Horizontal")}
-										value={webcamPositionX * 100}
-										defaultValue={DEFAULT_WEBCAM_POSITION_X * 100}
-										min={0}
-										max={100}
-										step={1}
-										onChange={(v) =>
-											updateWebcam({
-												positionPreset: "custom",
-												positionX: v / 100,
-											})
-										}
-										formatValue={(v) => `${Math.round(v)}%`}
-										parseInput={(text) => parseFloat(text.replace(/%$/, ""))}
-									/>
-									<SliderControl
-										label={tSettings("effects.webcamVertical", "Vertical")}
-										value={webcamPositionY * 100}
-										defaultValue={DEFAULT_WEBCAM_POSITION_Y * 100}
-										min={0}
-										max={100}
-										step={1}
-										onChange={(v) =>
-											updateWebcam({
-												positionPreset: "custom",
-												positionY: v / 100,
-											})
-										}
-										formatValue={(v) => `${Math.round(v)}%`}
-										parseInput={(text) => parseFloat(text.replace(/%$/, ""))}
-									/>
-								</>
-							) : null}
-							<SliderControl
-								label={tSettings("effects.webcamMargin", "Margin")}
-								value={webcam?.margin ?? DEFAULT_WEBCAM_MARGIN}
-								defaultValue={DEFAULT_WEBCAM_MARGIN}
-								min={0}
-								max={96}
-								step={1}
-								onChange={(v) => updateWebcam({ margin: v })}
-								formatValue={(v) => `${Math.round(v)}px`}
-								parseInput={(text) => parseFloat(text.replace(/px$/, ""))}
-							/>
+							<div
+								data-tooltip={tSettings(
+									"effects.webcamMarginTip",
+									"Gap between the bubble and the canvas edge",
+								)}
+							>
+								<SliderControl
+									label={tSettings("effects.webcamMargin", "Margin")}
+									value={webcam?.margin ?? DEFAULT_WEBCAM_MARGIN}
+									defaultValue={DEFAULT_WEBCAM_MARGIN}
+									min={0}
+									max={96}
+									step={1}
+									onChange={(v) => updateWebcam({ margin: v })}
+									formatValue={(v) => `${Math.round(v)}px`}
+									parseInput={(text) => parseFloat(text.replace(/px$/, ""))}
+								/>
+							</div>
 							<SliderControl
 								label={tSettings("effects.webcamRoundness")}
 								value={webcam?.roundness ?? DEFAULT_WEBCAM_ROUNDNESS}
@@ -3741,46 +3825,66 @@ export function SettingsPanel({
 								formatValue={(v) => `${Math.round(v * 100)}%`}
 								parseInput={(text) => parseFloat(text.replace(/%$/, "")) / 100}
 							/>
-							<div className="rounded-lg bg-foreground/[0.03] px-2.5 py-2">
-								<div className="flex flex-col gap-2">
+							<div className="rounded-lg bg-foreground/[0.03] px-2.5 py-1.5">
+								<button
+									type="button"
+									onClick={() => setWebcamFootageOpen((open) => !open)}
+									className="flex w-full items-center justify-between text-left"
+								>
 									<div className="min-w-0">
 										<div className="text-[10px] text-muted-foreground">
 											{tSettings("effects.webcamFootage")}
 										</div>
-										<div className="mt-0.5 break-all text-[10px] leading-4 text-muted-foreground/70">
+										{!webcamFootageOpen ? (
+											<div className="mt-0.5 truncate text-[10px] leading-4 text-muted-foreground/70">
+												{webcamFileName ??
+													tSettings("effects.webcamFootageDescription")}
+											</div>
+										) : null}
+									</div>
+									<CaretDown
+										className={cn(
+											"h-3 w-3 shrink-0 text-muted-foreground transition-transform",
+											webcamFootageOpen && "rotate-180",
+										)}
+									/>
+								</button>
+								{webcamFootageOpen ? (
+									<div className="mt-2 flex flex-col gap-2">
+										<div className="break-all text-[10px] leading-4 text-muted-foreground/70">
 											{webcamFileName ??
 												tSettings("effects.webcamFootageDescription")}
 										</div>
-									</div>
-									<div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-										<Button
-											type="button"
-											variant="outline"
-											onClick={onUploadWebcam}
-											className="h-7 min-w-0 gap-1.5 border-foreground/10 bg-foreground/5 px-2 text-[10px] text-foreground hover:bg-foreground/10 hover:text-foreground"
-										>
-											<Upload className="h-3 w-3" />
-											<span className="min-w-0 truncate">
-												{webcam?.sourcePath
-													? tSettings("effects.replaceWebcamFootage")
-													: tSettings("effects.uploadWebcamFootage")}
-											</span>
-										</Button>
-										{webcam?.sourcePath ? (
+										<div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
 											<Button
 												type="button"
 												variant="outline"
-												onClick={onClearWebcam}
+												onClick={onUploadWebcam}
 												className="h-7 min-w-0 gap-1.5 border-foreground/10 bg-foreground/5 px-2 text-[10px] text-foreground hover:bg-foreground/10 hover:text-foreground"
 											>
-												<Trash2 className="h-3 w-3" />
+												<Upload className="h-3 w-3" />
 												<span className="min-w-0 truncate">
-													{tSettings("effects.removeWebcamFootage")}
+													{webcam?.sourcePath
+														? tSettings("effects.replaceWebcamFootage")
+														: tSettings("effects.uploadWebcamFootage")}
 												</span>
 											</Button>
-										) : null}
+											{webcam?.sourcePath ? (
+												<Button
+													type="button"
+													variant="outline"
+													onClick={onClearWebcam}
+													className="h-7 min-w-0 gap-1.5 border-foreground/10 bg-foreground/5 px-2 text-[10px] text-foreground hover:bg-foreground/10 hover:text-foreground"
+												>
+													<Trash2 className="h-3 w-3" />
+													<span className="min-w-0 truncate">
+														{tSettings("effects.removeWebcamFootage")}
+													</span>
+												</Button>
+											) : null}
+										</div>
 									</div>
-								</div>
+								) : null}
 							</div>
 						</div>
 					</section>

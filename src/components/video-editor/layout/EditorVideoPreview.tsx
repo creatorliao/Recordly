@@ -122,6 +122,12 @@ export function EditorVideoPreview({
 			webcamVideoPath={
 				appearance.webcam.sourcePath ? appearance.resolvedWebcamVideoUrl : null
 			}
+			onWebcamPositionChange={(patch) => {
+				appearance.setWebcam((previous) => ({
+					...previous,
+					...patch,
+				}));
+			}}
 			trimRegions={timeline.trimRegions}
 			speedRegions={effectiveSpeedRegions}
 			annotationRegions={timeline.annotationRegions}

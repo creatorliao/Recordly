@@ -4,6 +4,7 @@ import {
 	getCropMatchedWebcamHeightPercent,
 	getWebcamCornerRadiusPx,
 	getWebcamCropSourceRect,
+	getWebcamCustomPositionFromPixels,
 	getWebcamOverlayDimensionsPx,
 	getWebcamOverlayPosition,
 	isWebcamCropRegionDefault,
@@ -81,6 +82,54 @@ describe("getWebcamOverlayPosition", () => {
 				legacyCorner: "bottom-right",
 			}),
 		).toEqual({ x: 580, y: 580 });
+	});
+});
+
+describe("getWebcamCustomPositionFromPixels", () => {
+	it("inverts getWebcamOverlayPosition for custom placement", () => {
+		const containerWidth = 1000;
+		const containerHeight = 800;
+		const width = 400;
+		const height = 200;
+		const margin = 20;
+		const positionX = 0.35;
+		const positionY = 0.7;
+		const { x, y } = getWebcamOverlayPosition({
+			containerWidth,
+			containerHeight,
+			width,
+			height,
+			margin,
+			positionPreset: "custom",
+			positionX,
+			positionY,
+			legacyCorner: "bottom-right",
+		});
+		expect(
+			getWebcamCustomPositionFromPixels({
+				containerWidth,
+				containerHeight,
+				overlayWidth: width,
+				overlayHeight: height,
+				margin,
+				pixelX: x,
+				pixelY: y,
+			}),
+		).toEqual({ positionX, positionY });
+	});
+
+	it("clamps dragged pixels into the available inset area", () => {
+		expect(
+			getWebcamCustomPositionFromPixels({
+				containerWidth: 1000,
+				containerHeight: 800,
+				overlayWidth: 400,
+				overlayHeight: 200,
+				margin: 20,
+				pixelX: -100,
+				pixelY: 9999,
+			}),
+		).toEqual({ positionX: 0, positionY: 1 });
 	});
 });
 
