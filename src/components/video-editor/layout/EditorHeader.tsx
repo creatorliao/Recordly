@@ -19,13 +19,13 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { useI18n } from "@/contexts/I18nContext";
+import { ASPECT_RATIOS, type AspectRatio, getAspectRatioLabel } from "@/utils/aspectRatioUtils";
 import type { useExportDimensions } from "../export/useExportDimensions";
 import type { useExportSession } from "../export/useExportSession";
 import type { useExportSettings } from "../export/useExportSettings";
 import type { useExportStatusViewModel } from "../export/useExportStatusViewModel";
 import type { useProjectState } from "../state/useProjectState";
 import { EditorExportMenu } from "./EditorExportMenu";
-import { ASPECT_RATIOS, type AspectRatio, getAspectRatioLabel } from "@/utils/aspectRatioUtils";
 
 type Props = {
 	t: ReturnType<typeof useI18n>["t"];
@@ -48,8 +48,6 @@ type Props = {
 	handleRedo: () => void;
 	handleProjectNameSubmit: (event?: FormEvent<HTMLFormElement>) => void;
 	closeProjectNameEditor: () => void;
-	settingsPanelVisible: boolean;
-	onToggleSettingsPanel: () => void;
 	exportSettings: ReturnType<typeof useExportSettings>;
 	exportSession: ReturnType<typeof useExportSession>;
 	exportDimensions: ReturnType<typeof useExportDimensions>;
@@ -69,6 +67,8 @@ type Props = {
 	setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
 	isCropped: boolean;
 	handleOpenCropEditor: () => void;
+	settingsPanelVisible: boolean;
+	onToggleSettingsPanel: () => void;
 };
 
 function MenubarMenu({
@@ -120,8 +120,6 @@ export function EditorHeader(props: Props) {
 		handleRedo,
 		handleProjectNameSubmit,
 		closeProjectNameEditor,
-		settingsPanelVisible,
-		onToggleSettingsPanel,
 		exportSettings,
 		exportSession,
 		exportDimensions,
@@ -141,6 +139,8 @@ export function EditorHeader(props: Props) {
 		setAspectRatio,
 		isCropped,
 		handleOpenCropEditor,
+		settingsPanelVisible,
+		onToggleSettingsPanel,
 	} = props;
 	const {
 		isEditingProjectName,
@@ -161,6 +161,29 @@ export function EditorHeader(props: Props) {
 				className={`flex h-full items-center ${headerLeftControlsPaddingClass}`}
 				style={{ WebkitAppRegion: "no-drag" } as CSSProperties}
 			>
+				<button
+					type="button"
+					onClick={onToggleSettingsPanel}
+					className="mr-1.5 inline-flex h-7 w-7 items-center justify-center rounded-[5px] text-foreground/80 outline-none transition-colors hover:bg-foreground/10 hover:text-foreground"
+					data-tooltip={
+						settingsPanelVisible
+							? t("editor.layout.hideControlPanel", "Hide control panel")
+							: t("editor.layout.showControlPanel", "Show control panel")
+					}
+					aria-label={
+						settingsPanelVisible
+							? t("editor.layout.hideControlPanel", "Hide control panel")
+							: t("editor.layout.showControlPanel", "Show control panel")
+					}
+					aria-pressed={settingsPanelVisible}
+				>
+					<SidebarSimple
+						size={18}
+						weight={settingsPanelVisible ? "fill" : "regular"}
+					/>
+				</button>
+				{/* 独立铬件与菜单簇分隔，避免看起来像「文件」的小弟 */}
+				<span className="mr-1.5 h-4 w-px shrink-0 bg-foreground/15" aria-hidden />
 				<MenubarMenu
 					label={t("editor.menubar.file", "File(F)")}
 					triggerRef={projectBrowserTriggerRef}
@@ -265,7 +288,7 @@ export function EditorHeader(props: Props) {
 						type="button"
 						onClick={() => setIsEditingProjectName(true)}
 						className="inline-flex max-w-[min(52vw,460px)] items-baseline gap-1 rounded-[7px] px-2.5 py-0.5 transition-colors hover:bg-foreground/5"
-						title={t("editor.project.renameTitle", "Rename project")}
+						data-tooltip={t("editor.project.renameTitle", "Rename project")}
 						aria-label={t("editor.project.renameTitle", "Rename project")}
 					>
 						{hasUnsavedChanges ? (
@@ -318,7 +341,7 @@ export function EditorHeader(props: Props) {
 					type="button"
 					onClick={handleOpenCropEditor}
 					className="inline-flex h-6 items-center gap-1 px-1.5 text-[11px] text-foreground/70 transition-colors hover:bg-foreground/10 hover:text-foreground"
-					title={t("settings.crop.title")}
+					data-tooltip={t("settings.crop.title")}
 					aria-label={t("settings.crop.title")}
 				>
 					<Crop size={13} />
@@ -343,16 +366,6 @@ export function EditorHeader(props: Props) {
 					revealExportedFile={revealExportedFile}
 					exportMessage={exportMessage}
 				/>
-				<button
-					type="button"
-					onClick={onToggleSettingsPanel}
-					className="inline-flex h-6 w-6 items-center justify-center rounded-[5px] text-foreground/70 transition-colors hover:bg-foreground/10 hover:text-foreground"
-					title={t("editor.layout.toggleSettingsPanel", "Toggle settings panel")}
-					aria-label={t("editor.layout.toggleSettingsPanel", "Toggle settings panel")}
-					aria-pressed={settingsPanelVisible}
-				>
-					<SidebarSimple size={16} weight={settingsPanelVisible ? "fill" : "regular"} />
-				</button>
 			</div>
 		</div>
 	);

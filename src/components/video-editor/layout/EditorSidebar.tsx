@@ -22,6 +22,7 @@ type Props = {
 	activeSection: EditorEffectSection;
 	setActiveSection: Dispatch<SetStateAction<EditorEffectSection>>;
 	settingsPanelVisible: boolean;
+	setSettingsPanelVisible: Dispatch<SetStateAction<boolean>>;
 	settingsPanelProps: ComponentProps<typeof SettingsPanel>;
 	projectLibraryEntries: ProjectLibraryEntry[];
 	handleOpenProjectFromLibrary: (projectPath: string) => void;
@@ -35,6 +36,7 @@ export function EditorSidebar({
 	activeSection,
 	setActiveSection,
 	settingsPanelVisible,
+	setSettingsPanelVisible,
 	settingsPanelProps,
 	projectLibraryEntries,
 	handleOpenProjectFromLibrary,
@@ -66,84 +68,113 @@ export function EditorSidebar({
 		[t],
 	);
 	const settingsLabel = t("settings.sections.settings", "Settings");
+	// 高亮 = 抽屉开着且正是这一页。抽屉收起后 section 可保留，但轨上图标必须全部熄灭（对齐 VS Code）。
+	const isSectionHighlighted = (sectionId: EditorEffectSection) =>
+		settingsPanelVisible && activeSection === sectionId;
 
-	const renderItem = (section: (typeof toolSections)[number], isActive: boolean) => (
-		<motion.button
-			key={section.id}
-			type="button"
-			onClick={() => setActiveSection(section.id)}
-			data-tooltip={section.label}
-			data-tooltip-side="right"
-			className="group relative flex h-9 w-9 items-center justify-center outline-none focus-visible:outline-none"
-			animate={{ opacity: isActive ? 1 : 0.55 }}
-			transition={{ duration: 0.14 }}
-		>
-			{isActive ? (
-				<span className="absolute left-0 top-1/2 h-9 w-[2px] -translate-y-1/2 bg-[#2563EB]" />
-			) : null}
-			<motion.span
-				className="relative z-10"
-				animate={{ color: isActive ? "#2563EB" : "hsl(var(--foreground))" }}
+	const renderItem = (section: (typeof toolSections)[number]) => {
+		const isCurrent = activeSection === section.id;
+		const isHighlighted = isSectionHighlighted(section.id);
+		return (
+			<motion.button
+				key={section.id}
+				type="button"
+				onClick={() => {
+					if (settingsPanelVisible && isCurrent) {
+						setSettingsPanelVisible(false);
+						return;
+					}
+					setActiveSection(section.id);
+					setSettingsPanelVisible(true);
+				}}
+				data-tooltip={section.label}
+				data-tooltip-side="right"
+				className="group relative flex h-9 w-9 items-center justify-center outline-none focus-visible:outline-none"
+				animate={{ opacity: isHighlighted ? 1 : 0.55 }}
 				transition={{ duration: 0.14 }}
 			>
-				<section.icon className="h-6 w-6" weight={isActive ? "fill" : "regular"} />
-			</motion.span>
-		</motion.button>
-	);
+				{isHighlighted ? (
+					<span className="absolute left-0 top-1/2 h-9 w-[2px] -translate-y-1/2 bg-[#2563EB]" />
+				) : null}
+				<motion.span
+					className="relative z-10"
+					animate={{ color: isHighlighted ? "#2563EB" : "hsl(var(--foreground))" }}
+					transition={{ duration: 0.14 }}
+				>
+					<section.icon className="h-6 w-6" weight={isHighlighted ? "fill" : "regular"} />
+				</motion.span>
+			</motion.button>
+		);
+	};
 
+	const settingsHighlighted = isSectionHighlighted("settings");
 	const settingsButton = (
 		<motion.button
 			type="button"
-			onClick={() => setActiveSection("settings")}
+			onClick={() => {
+				if (settingsPanelVisible && activeSection === "settings") {
+					setSettingsPanelVisible(false);
+					return;
+				}
+				setActiveSection("settings");
+				setSettingsPanelVisible(true);
+			}}
 			data-tooltip={settingsLabel}
 			data-tooltip-side="right"
 			className="group relative flex h-9 w-9 items-center justify-center outline-none focus-visible:outline-none"
-			animate={{ opacity: activeSection === "settings" ? 1 : 0.55 }}
+			animate={{ opacity: settingsHighlighted ? 1 : 0.55 }}
 			transition={{ duration: 0.14 }}
 		>
-			{activeSection === "settings" ? (
+			{settingsHighlighted ? (
 				<span className="absolute left-0 top-1/2 h-9 w-[2px] -translate-y-1/2 bg-[#2563EB]" />
 			) : null}
 			<motion.span
 				className="relative z-10"
 				animate={{
-					color: activeSection === "settings" ? "#2563EB" : "hsl(var(--foreground))",
+					color: settingsHighlighted ? "#2563EB" : "hsl(var(--foreground))",
 				}}
 				transition={{ duration: 0.14 }}
 			>
-				<Gear
-					className="h-6 w-6"
-					weight={activeSection === "settings" ? "fill" : "regular"}
-				/>
+				<Gear className="h-6 w-6" weight={settingsHighlighted ? "fill" : "regular"} />
 			</motion.span>
 		</motion.button>
 	);
 
+	// 项目库 300、其余抽屉页 280；关合时宽动画到 0，避免硬卸导致闪断
+	const drawerWidthPx = activeSection === "projects" ? 300 : 280;
+
 	return (
-		<div className="flex flex-shrink-0">
+		<div className="flex h-full flex-shrink-0">
 			<div className="flex h-full w-12 flex-shrink-0 flex-col items-center justify-between border-r border-foreground/16 py-2">
 				<div className="flex flex-col items-center gap-1">
-					{toolSections.map((section) =>
-						renderItem(section, activeSection === section.id),
-					)}
+					{toolSections.map((section) => renderItem(section))}
 				</div>
 				{settingsButton}
 			</div>
-			{settingsPanelVisible ? (
-				activeSection === "projects" ? (
-					<ProjectsPanel
-						entries={projectLibraryEntries}
-						onOpenProject={handleOpenProjectFromLibrary}
-						onImportFile={handleImportMediaOrProject}
-						onNewRecording={() => void handleReturnToRecording()}
-						isEmptyWorkspace={isEmptyWorkspace}
-					/>
-				) : activeSection === "extensions" ? (
-					<ExtensionManager />
-				) : (
-					<SettingsPanel {...settingsPanelProps} />
-				)
-			) : null}
+			<motion.div
+				initial={false}
+				animate={{ width: settingsPanelVisible ? drawerWidthPx : 0 }}
+				transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+				className="h-full shrink-0 overflow-hidden"
+				style={{ pointerEvents: settingsPanelVisible ? "auto" : "none" }}
+				aria-hidden={!settingsPanelVisible}
+			>
+				<div className="h-full" style={{ width: drawerWidthPx }}>
+					{activeSection === "projects" ? (
+						<ProjectsPanel
+							entries={projectLibraryEntries}
+							onOpenProject={handleOpenProjectFromLibrary}
+							onImportFile={handleImportMediaOrProject}
+							onNewRecording={() => void handleReturnToRecording()}
+							isEmptyWorkspace={isEmptyWorkspace}
+						/>
+					) : activeSection === "extensions" ? (
+						<ExtensionManager />
+					) : (
+						<SettingsPanel {...settingsPanelProps} />
+					)}
+				</div>
+			</motion.div>
 		</div>
 	);
 }

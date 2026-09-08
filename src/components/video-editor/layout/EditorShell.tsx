@@ -283,8 +283,6 @@ export function EditorShell(props: Props) {
 				handleRedo={history.handleRedo}
 				handleProjectNameSubmit={saveActions.handleProjectNameSubmit}
 				closeProjectNameEditor={saveActions.closeProjectNameEditor}
-				settingsPanelVisible={ui.settingsPanelVisible}
-				onToggleSettingsPanel={() => ui.setSettingsPanelVisible((v) => !v)}
 				exportSettings={exportSettings}
 				exportSession={exportSession}
 				exportDimensions={exportDimensions}
@@ -304,15 +302,21 @@ export function EditorShell(props: Props) {
 				setAspectRatio={ui.setAspectRatio}
 				isCropped={ui.isCropped}
 				handleOpenCropEditor={ui.handleOpenCropEditor}
+				settingsPanelVisible={ui.settingsPanelVisible}
+				onToggleSettingsPanel={() =>
+					ui.setSettingsPanelVisible((visible) => !visible)
+				}
 			/>
 			<EditorAnnouncementBanner />
-			<div className="relative flex min-h-0 flex-1">
+			{/* 主工作区 + 通窗底栏。底栏仿 VS Code：横跨左轨与内容，给窗口一条明确下边界；禁止再当横向第三列。 */}
+			<div className="relative flex min-h-0 flex-1 flex-col">
 				<div className="relative z-10 flex min-h-0 flex-1">
 					<EditorSidebar
 						t={t}
 						activeSection={ui.activeEffectSection}
 						setActiveSection={ui.setActiveEffectSection}
 						settingsPanelVisible={ui.settingsPanelVisible}
+						setSettingsPanelVisible={ui.setSettingsPanelVisible}
 						settingsPanelProps={settingsPanelProps}
 						projectLibraryEntries={project.projectLibraryEntries}
 						handleOpenProjectFromLibrary={openActions.handleOpenProjectFromLibrary}
@@ -320,7 +324,7 @@ export function EditorShell(props: Props) {
 						handleReturnToRecording={openActions.handleReturnToRecording}
 						isEmptyWorkspace={!project.videoPath}
 					/>
-					<div className="flex min-w-0 min-h-0 flex-1 flex-col gap-1 border-r border-foreground/10">
+					<div className="flex min-h-0 min-w-0 flex-1 flex-col">
 						<EditorPreviewPanel
 							t={t}
 							videoPath={project.videoPath}
@@ -380,17 +384,17 @@ export function EditorShell(props: Props) {
 							isResizing={isTimelineResizing}
 						/>
 					</div>
-					<footer className="flex h-[22px] shrink-0 items-center justify-between border-t border-foreground/10 px-3 text-[12px] leading-[22px] text-muted-foreground">
-						<span>
-							{hasUnsavedChanges
-								? t("editor.statusbar.unsaved", "Unsaved")
-								: t("editor.statusbar.saved", "Saved")}
-						</span>
-						<span className="font-mono tabular-nums">
-							{formatStatusTime(ui.currentTime)} / {formatStatusTime(ui.duration)}
-						</span>
-					</footer>
 				</div>
+				<footer className="flex h-[22px] w-full shrink-0 items-center justify-between border-t border-foreground/10 bg-editor-bg px-3 text-[12px] leading-[22px] text-muted-foreground">
+					<span>
+						{hasUnsavedChanges
+							? t("editor.statusbar.unsaved", "Unsaved")
+							: t("editor.statusbar.saved", "Saved")}
+					</span>
+					<span className="font-mono tabular-nums">
+						{formatStatusTime(ui.currentTime)} / {formatStatusTime(ui.duration)}
+					</span>
+				</footer>
 			</div>
 			{editorDialogs}
 			<CropEditorDialog
