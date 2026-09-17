@@ -395,6 +395,116 @@ gguf.total  gguf.architecture  gguf.context_length  gguf.totalFileSize
 
 ---
 
+## 六·复核与落地路线（2026-09-17 追加）
+
+> 触发：用户要求「这一部分帮我综合考量，看怎么样去落地会比较合适」。
+> 依据：把 `hf` 真正拿来用了一轮之后（P15 代理接入、P16 拉 SenseVoice/Dolphin 模型并跑引擎）暴露出来的实情。
+> 口径：**上面 §六 的原始三条保留不删**（留痕），本节给出复核后的改法与顺序。
+
+### 6.1 三条动作逐条复核：两条要改，一条要拆
+
+| 原动作 | 复核结论 | 改法 |
+|:--|:--|:--|
+| **A1** 纳入标准工具链 + **固化 `HTTPS_PROXY`** | ✅ 方向对，**但"固化环境变量"这个做法是错的** | 改成「**自带端口探测的 shim**」（6.2）；全局 `setx HTTPS_PROXY` 会连累所有 Python 工具，且隧道停机时全线报错 |
+| **A2** `hf skills add -g --claude` + 一次装三个 | ⚠️ **参数与本机约定不符，且装多了** | 去掉 `--claude`（`-g` 本来就在 `~/.agents/skills`，正是本机约定）；**先只装 `hf-cli`**（6.3） |
+| **A3** 体积取证 + 本机真跑 + `hf jobs` | ⚠️ **把成本差三个数量级的三件事混成一条**，且 `hf jobs` 答的不是本机的问题 | 拆成 A3a / A3b / A3c（6.4） |
+
+### 6.2 A1 落地：为什么是 shim，而不是环境变量
+
+**实测事实**：
+
+| 事实 | 证据 |
+|:--|:--|
+| `hf.exe` 在 `D:\_hf_tools\bin\`（uv 自定义 bin 目录） | 【实测·本机】`Get-Command hf` 为空 |
+| **本机有两套 PATH**：User 级含 `C:\Users\creator\.local\bin`、`…Python312\Scripts`；**智能体进程继承到的 PATH 不含这两条** | 【实测·本机】`proxy-manager`、`para` 裸调用均失败（`术语…不被识别`），而 `AppData\Local\hermes\bin`（uv/uvx 所在）**在**智能体 PATH 内 |
+| ⇒ **任何依赖 PATH 的方案对智能体都无效** | 智能体侧只能靠**绝对路径**或**落在它可见 PATH 里的 shim** |
+
+**shim 逻辑（草案，约 15 行）**：
+
+```text
+① 探测 127.0.0.1:<port> 是否在监听（TCP connect，≤1 s；端口从 proxy-manager 配置/状态读，不写死 1080）
+② 在听 → 设 HTTPS_PROXY / HTTP_PROXY / ALL_PROXY = http://127.0.0.1:<port>，NO_PROXY=localhost,127.0.0.1
+   → 调用真 hf.exe（绝对路径）
+③ 不在听 → **不设代理**（否则就是 43 s 静默超时），提示「代理未启动」并给出 `HF_ENDPOINT` 镜像兜底用法
+```
+
+**为什么不要 `setx HTTPS_PROXY`（三条硬理由）**：
+
+1. 它会让**所有**读环境变量的 Python 工具走代理——隧道一停，**无关项目也一起失败**；
+2. DSH/智能体进程的环境是**启动时快照**，改完不重启本会话也不生效（等于假装固化了）；
+3. 端口本身是变量（`shadowsocks update-port`）→ 写进用户环境就等于**多出第二个真相源**。
+
+> **与 proxy-manager 的关系**：shim 是**权宜**，长期归 proxy-manager（其 VOC `R20260917-01` 已登记 CLI 代理剖面 `ensure cli` / `env cli` / `run --with-proxy`）。**不要同时养两套**：那边交付后，shim 退化为薄壳（只调 `proxy-manager env cli --json`）。
+
+### 6.3 A2 落地：装什么、装几个
+
+**实测 `hf skills add --help` 逐字**：默认落点 `.agents/skills`（项目）或 `~/.agents/skills`（用户级）；`--claude` 只是**额外**软链到 Claude 旧目录。
+→ `-g` **已经**落在 `C:\Users\creator\.agents\skills\`（本机技能目录就是这个），**`--claude` 是多余的**，且与本机「只留 `AGENTS.md` + `.agents/skills`」的约定相冲。
+
+**关键考量：技能目录 = 全局触发面**。本机技能目录已有约百个技能，**每装一个就多一组可能误触发的关键词**。按"缺什么补什么"：
+
+| 技能 | 装不装 | 理由 |
+|:--|:--|:--|
+| `hf-cli` | ✅ **建议装** | 由**本机已装 CLI 版本现场生成**（不是下载），与 1.31.0 对齐；解决"命令怎么拼" |
+| `hf-mem` | ⚠️ 按需 | 只估 GGUF/Safetensors **LLM**；我们的主线是 whisper **ggml** → **它算不了**（§4.5） |
+| `huggingface-local-models` | ⚠️ 按需 | 选型偏向 llama.cpp/GGUF 生态，与 sherpa-onnx / whisper.cpp 线路不完全重合 |
+| `huggingface-best` | ❌ 不装 | 与上一个触发词高度重叠，容易互相抢路由 |
+
+> 落地口径：**先只装 `hf-cli`**（一条命令、可 `hf skills update`、可移除）；真出现"帮我选本地能跑的模型"需求再装 `huggingface-local-models`。一次装三个 = 主动扩大误触发面，与"不过度设计"相冲。
+
+### 6.4 A3 落地：三段各自的口径与成本
+
+**A3a · 零成本取证（每次选型必做，成本 0）**
+
+```powershell
+$env:HTTPS_PROXY='http://127.0.0.1:1080'; $env:HTTP_PROXY='http://127.0.0.1:1080'
+$hf = 'D:\_hf_tools\bin\hf.exe'
+& $hf models info <repo> --expand gguf        # 只看 GGUF 元数据（--expand gguf 已实测合法）
+$u = "https://huggingface.co/api/models/<repo>?blobs=true"
+curl.exe -s -x http://127.0.0.1:1080 $u       # 逐文件字节数 + lfs.oid(=sha256)
+```
+
+⚠️ **PowerShell 陷阱（会害人误判）**：URL 必须**先赋给变量**再传；直接拼在 `curl.exe` 参数里会把 `?blobs=true` 拆成第二个参数，HF 返回 `{"error":"Invalid username or password."}` —— 本轮子调研据此**误判过 15 个 repo 不存在**。另：HF 对**不存在的 repo 返回 401 而非 404**。
+
+**A3b · 本机实测（判"我这台机器"的唯一硬证据，成本 = 一次推理）**
+
+采样口径：**按进程名采样峰值工作集**；**不要**用 `Start-Process -PassThru` 的 PID（本轮实测它只返回 **5 MiB**，是错的）。
+
+```powershell
+$p = Start-Process -FilePath <exe> -ArgumentList <args> -PassThru -NoNewWindow
+$peak = 0
+while (-not $p.HasExited) {
+  Get-Process -Name <进程名> -ErrorAction SilentlyContinue |
+    ForEach-Object { if ($_.PeakWorkingSet64 -gt $peak) { $peak = $_.PeakWorkingSet64 } }
+  Start-Sleep -Milliseconds 200
+}
+"{0:N0} MiB" -f ($peak / 1MB)
+```
+
+**口径校准（本轮实测）**：进程内分配 400 MiB → 采样 **412 MiB** ✅（方法是可靠的）
+
+**真值（P16 实测）**：whisper small **882 MiB** / turbo-q5_0 **932 MiB** / **SenseVoice int8 + VAD 908 MiB** → **换引擎内存几乎不涨**，代价全在体积与许可证上。
+⚠️ **CPU 计时方差可达 3.7×**（同配置同素材：84.5 s → 312 s）→ **必须成对、同窗口跑**；绝对秒数只当量级用。
+
+**A3c · 云端 `hf jobs`：降级为"要不要租卡"的决策工具（不是本机判定器）**
+
+- 【实测·本机】`hf auth whoami` → **`Error: Not logged in`** ⇒ `hf jobs` **现在根本不可用**（要 token；GPU 档位还要付费，Free 额度仅 $0.10/月）；
+- 更要紧的是**它答错了问题**：`--flavor t4-small` 回答的是"在 T4 上能不能跑"，而本机的真实约束是 **CC 5.0**（`P16` §二已判死 CUDA 全路线）⇒ **不要拿云端结论替代本机结论**；
+- **保留用途**：真要评估"某个大模型值不值得为它租卡"时，先用 `hf jobs hardware`（免费，已实测 15 档价目）算钱，再决定跑不跑。
+
+### 6.5 建议的落地顺序（一次一件事）
+
+| 序 | 做什么 | 谁做 | 前置 | 验收标准 |
+|:--|:--|:--|:--|:--|
+| 1 | 造 `hf.cmd` shim（端口探测 + 不硬编码端口 + 镜像兜底提示），落到**智能体可见 PATH** | 用户点头后我做 | 无 | **新会话**里 `hf version` / `hf models info …` **直接可用**，无需手设环境变量 |
+| 2 | `hf skills add -g hf-cli`（**只这一个**） | 用户点头后我做 | 1 | `C:\Users\creator\.agents\skills\hf-cli\` 存在；`hf skills list` 可见 |
+| 3 | 选型时照跑 A3a + A3b（口径已落到本文件与 `P16`） | 已具备 | — | 新的"能不能跑"结论必须是**实测数字**，不再是估算 |
+| 4 | proxy-manager 实施其 VOC 后，**shim 退化为薄壳** | proxy-manager 侧 | 其阶段 1 | 代理只有**一处真相源** |
+
+**本节明确不建议做的**：全局 `setx HTTPS_PROXY`；把 `hf jobs` 当常规验证手段；三个官方技能一次全装；为"判能不能跑"引入无 LICENSE 的工具（沿用 §六原判断）。
+
+---
+
 ## 七、坑与边界
 
 | # | 坑 | 证据 | 规避 |
