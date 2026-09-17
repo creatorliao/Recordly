@@ -1,0 +1,47 @@
+# 纯白无描边字幕样式配置（实测可用）
+# 用途：subtitle-burn CLI 没有 --outline / --shadow 参数，本文件补上这两个能力。
+# 用法：先 build 生成 ASS，再用 set-ass-style.ps1 按本配置改写 Style 行，最后 burn。
+# 实测环境：subtitle-burn 0.1.0 / libass / 720x1280 竖屏
+
+[font]
+# 字体家族名（须为 subtitle-burn fonts list --cjk 中出现过的名字）
+name          = "Source Han Sans CN Regular"
+# 是否加粗（CLI: --no-bold）
+bold          = false
+
+[style]
+# 文字颜色：纯白
+primary       = "FFFFFF"
+# 描边宽度（ASS Style 第 17 字段，0 = 无描边）
+outline       = 0
+# 阴影宽度（ASS Style 第 18 字段，0 = 无阴影；3~6 为实测可用区间）
+shadow        = 3
+# 背景框样式（保留模板默认，勿改）
+#   1 = 描边+阴影（无底框）
+#   3 = 不透明底框（clean-bar 用的就是这个）
+border_style  = "keep"
+
+# ---------------------------------------------------------------
+# 实测数据（决定上面取值的依据）
+# ---------------------------------------------------------------
+# 字体筛选（本机 52 个 CJK 家族中挑出的清秀候选，均已实测 libass 接受）：
+#   Source Han Sans CN Regular   最清秀，笔画均衡      <- 本次选用
+#   Noto Sans SC                 略粗，现代感强
+#   Microsoft YaHei Light        纤细，但小字号偏弱
+#   DengXian Light               很细，长句易糊
+#   OPPOSans H                   粗，现代
+#
+# 阴影强度对比（punch-pop，浅背景）：
+#   Shadow=0   纯白无任何衬底，浅背景上发虚          <- 不推荐
+#   Shadow=3   轻微立体感，浅背景也能读              <- 推荐
+#   Shadow=4   更稳，但字边缘开始显重
+#   Shadow=6   明显变粗，接近描边观感
+#
+# 必须知道的边界（实测）：
+#   1) 去掉描边后，可读性完全取决于背景明暗：
+#      深色背景（深色衣服）→ 无描边也清晰；
+#      浅色背景（浅色墙面）→ 需阴影兜底，否则读不清。
+#   2) 本片 clean-bar 模板自带 BorderStyle=3 半透明底栏，
+#      它只在文字后方起衬底作用，是 clean-bar 最耐读的原因。
+#   3) title-mask 是中心定位，字幕会落在浅色墙面与人物面部之间，
+#      是 5 个模板里语义可读性最差的一个（与描边方案无关）。

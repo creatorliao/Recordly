@@ -1,0 +1,53 @@
+[Script Info]
+; ============================================================================
+; 剪映同款字幕模板 · 逐字弹入（Per-Character Pop）
+; ----------------------------------------------------------------------------
+; 生成方式：由 SRT 转写而来，手工拆字为多条 Dialogue 事件
+; 适用：口播/短视频金句、需要「一个字一个字跳出来」的强调效果
+; 画幅：720x1280 竖屏（其它画幅须等比换算下面所有坐标）
+;
+; 实现原理（ASS 无法用单条事件做逐字动画，必须拆事件）：
+;   1) 一行 N 个字 → N 条 Dialogue 事件
+;   2) 每条用 \an5\pos(x,y) 把单个字钉在绝对坐标（\an5 = 中心对齐）
+;   3) \fscx0\fscy0 起始缩放到 0，再用 \t(0,320,...) 弹到 100%
+;   4) 相邻字起始时间错峰 45ms，形成从左到右的波
+;
+; 坐标算法：字宽 = 字号(58) + 字距(2) = 60；一组 N 字总宽 = 60N
+;           首字中心 x = (720 - 60N) / 2 + 30
+;
+; 已知限制（实测）：
+;   - 字体度量与实际字宽有细微差异，长句可能出现字距不匀
+;   - 标点跟着前一个字一起弹出，无法单独控制
+;   - 每条字幕都要预先拆好字，无法在播放时动态计算
+; ============================================================================
+ScriptType: v4.00+
+PlayResX: 720
+PlayResY: 1280
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: PopChar,Source Han Sans CN Regular,58,&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,0,3,5,36,36,120,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+
+; ---- 第 4 条字幕「第二段是结果」（源时间 9.520 - 11.020）----
+; 6 字：第 二 段 是 结 果  ->  总宽 360，首字中心 x = (720-360)/2 + 30 = 210
+Dialogue: 1,0:00:09.52,0:00:11.02,PopChar,,0,0,0,,{\an5\pos(210,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}第
+Dialogue: 1,0:00:09.56,0:00:11.02,PopChar,,0,0,0,,{\an5\pos(270,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}二
+Dialogue: 1,0:00:09.61,0:00:11.02,PopChar,,0,0,0,,{\an5\pos(330,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}段
+Dialogue: 1,0:00:09.65,0:00:11.02,PopChar,,0,0,0,,{\an5\pos(390,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}是
+Dialogue: 1,0:00:09.70,0:00:11.02,PopChar,,0,0,0,,{\an5\pos(450,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}结
+Dialogue: 1,0:00:09.74,0:00:11.02,PopChar,,0,0,0,,{\an5\pos(510,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}果
+
+; ---- 第 5 条字幕「第三段是合伙人」（源时间 11.020 - 12.540）----
+; 7 字 -> 总宽 420，首字中心 x = (720-420)/2 + 30 = 180
+Dialogue: 1,0:00:11.02,0:00:12.54,PopChar,,0,0,0,,{\an5\pos(180,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}第
+Dialogue: 1,0:00:11.06,0:00:12.54,PopChar,,0,0,0,,{\an5\pos(240,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}三
+Dialogue: 1,0:00:11.11,0:00:12.54,PopChar,,0,0,0,,{\an5\pos(300,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}段
+Dialogue: 1,0:00:11.15,0:00:12.54,PopChar,,0,0,0,,{\an5\pos(360,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}是
+Dialogue: 1,0:00:11.20,0:00:12.54,PopChar,,0,0,0,,{\an5\pos(420,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}合
+Dialogue: 1,0:00:11.24,0:00:12.54,PopChar,,0,0,0,,{\an5\pos(480,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}伙
+Dialogue: 1,0:00:11.29,0:00:12.54,PopChar,,0,0,0,,{\an5\pos(540,600)\fscx0\fscy0\t(0,320,\fscx100\fscy100)}人
