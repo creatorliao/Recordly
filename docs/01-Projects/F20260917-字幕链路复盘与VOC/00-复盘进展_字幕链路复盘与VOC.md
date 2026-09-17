@@ -35,9 +35,10 @@
 | **补充 · 实测基线与最优参数** | ✅ 完成 | `P13-实测基线与最优参数_转写链路.md`（**构建/更新项目时的参数台账**：模型×引擎×设备速度与质量、线程/上下文/VAD/量化实测、最优参数速查卡、已知坑 11 条） |
 | **补充 · Hugging Face 工具链与智能体接入** | ✅ 完成 | `P14-HuggingFace工具链与智能体接入调查.md`（官方 `hf` CLI 实测 + 「能不能在本机跑」判定方法 + CI 与官方智能体技能市场；含 **hf CLI 代理坑** 与 **whisper.cpp 不支持 `-hf`** 两处更正） |
 | **补充 · HuggingFace 代理接入与 VOC 提交** | ✅ 完成并**已提交 VOC** | `P15-HuggingFace代理接入与VOC提交留痕.md`（**10 项代理实测 + 可直接照抄的 hf 用法**；VOC 已提交 `proxy-manager`，含 CLI+Skill 方案评估） |
+| **补充 · 字幕链路更优模型调研** | ✅ 完成并**已回写三仓 VOC** | `P16-字幕链路更优模型调研_HuggingFace可本机运行.md`（**四个引擎同音频对照 + 标点三策略实测 + `-ml 16` 重切实测 + 说话人分离实测**；含 GPU 全路线死因） |
 | 配套资产 | ✅ | `assets/whisper-json-to-ai.ps1`（`-ojf` JSON → `.ai.md` / `.words.jsonl` / `.word.vtt`，已实测跑通，含 CJK 完整性闸门） |
 
-**本次复盘已走完 P01→P05，并追加 P06–P15 十份补充文档。**
+**本次复盘已走完 P01→P05，并追加 P06–P16 十一份补充文档。**
 
 > ⭐ **构建/更新项目时优先读这两份**：`P13`（照抄参数与基线）→ `P12`（决定产物格式）。其余文档是复盘与认知背景。
 
@@ -48,6 +49,7 @@
 | `P05-VOC输入_给subtitle-burn-master.md`（REQ-1…REQ-10） | `subtitle-burn-master` | ⬜ 待回写（用户侧） |
 | `P11-VOC输入_模板横向对比选型.md` | `subtitle-burn-master` → **VOC-08**<br>`subtitle-generate-master` → **VOC-21** | ✅ **已回写**（2026-09-17，两仓工作区干净，基线 `ac329eb` / `c19a475`） |
 | `P15-HuggingFace代理接入与VOC提交留痕.md` | `proxy-manager`：`R20260917-01`（需求清单 + 方案评估）+ R01 `16-需求_HuggingFace代理自动接入.md` | ✅ **已提交**（2026-09-17；**实施待用户稍后更新**） |
+| `P16-字幕链路更优模型调研_HuggingFace可本机运行.md` | `subtitle-generate-master` → **VOC-24～VOC-28**<br>`subtitle-optimize-master` → **VOC-06～VOC-11**<br>`subtitle-burn-master` → **VOC-12 / VOC-13** | ✅ **已回写**（2026-09-17；**只记账，是否解锁由各仓自己定**） |
 
 ## 三、本次复盘的关键素材（事实来源）
 
@@ -128,3 +130,8 @@
    - `P12` = 决定产物格式（8 种引擎输出 / AI 友好度 / 中文词级前置条件）
    - `assets/whisper-json-to-ai.ps1` = 把 `-ojf` JSON 转成 AI 友好三件套的现成脚本
 7. **要从 HuggingFace 拉模型 / 用 `hf` 连不上时，先读 `P15`**（根因是缺代理环境变量，不是网络；含可直接照抄的命令与镜像兜底）。
+8. **要换 ASR 引擎 / 加标点层 / 改断句策略时，先读 `P16`**：
+   - 换引擎候选与实测对照（SenseVoice / Dolphin / whisper small / turbo）→ `P16` §三、§四
+   - **零依赖**改进（`-ml 16` + 已有 `-ojf` 打开词级时间戳）→ `P16` §4.4
+   - 为什么本机 GPU 帮不上忙（CC 5.0 全路线死因）→ `P16` §二
+   - 三个子调研全文（ASR / 结构层 / 文本层）→ `D:\_p16_research\*.md`
